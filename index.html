@@ -1937,6 +1937,11 @@ function formatTimeUserFriendly(minutes) {
                 alert('No active application selected');
                 return;
             }
+	    const careStartDate = document.getElementById('careStartDate').value
+	    if(!careStartDate) {
+		alert('Start date for care must be specified!');
+                return;
+	    }
             
             const results = document.getElementById('calculationResults');
             results.innerHTML = '<h4>Care Calculation Process</h4>';
@@ -2126,35 +2131,58 @@ function formatTimeUserFriendly(minutes) {
                     a.personId === child.id &&
                     a.type === 'school'
                 );
+
+		const childPreschoolActivities = data.activities.filter(a => 
+                    a.applicationId == data.activeApplicationId && 
+                    a.personId === child.id &&
+                    a.type === 'preschool'
+                );
                 
-                const schoolAge = (childSchoolActivities.length > 0 && childAge > 5) || childAge > 7;
+                const schoolAge = (childSchoolActivities.length > 0 && childAge >= 5) || childAge >= 7;
+		const preschoolAge = ((!schoolAge) && ((childPreschoolActivities.length > 0) || (childSchoolActivities.length > 0)));
                 
                 let schoolOverlap = false;
                 let schoolYearCareResult = null;
-                
-                if (schoolAge && isPrimary) {
-                    // Check for school schedule overlap
-                    for (let schoolActivity of childSchoolActivities) {
-                        const schoolSchedule = data.schedules.find(s => s.id === schoolActivity.scheduleId);
-                        if (schoolSchedule && schedulesOverlap(finalSchedule, schoolSchedule)) {
+               
+// If the child is schoolaged or preschool aged, determine if the school schedule affects care
+// If it does, remove the school or preschool schedule from the finalSchedule
+// If this is the primary, and the schedule affects care then use the calculateComplexCareResult function to determine the schoolYearCareResult
+// Otherwise, if this is not the primary use standard careResult
+	if(schoolAge || preschoolAge)
+	{
+		for (let schoolActivity of childSchoolActivities) 
+		{
+			const schoolSchedule = data.schedules.find(s => s.id === schoolActivity.scheduleId);
+                        if (schoolSchedule && schedulesOverlap(finalSchedule, schoolSchedule)) 
+			{
                             schoolOverlap = true;
-                            
-                            // Calculate school year care
-                            const schoolYearSchedule = subtractSchedule(finalSchedule, schoolSchedule);
-                            schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule);
-							schoolYearCareResult = calculateComplexCareResult(schoolYearCareResult, careResult);
-                            break;
-                        }
-                    }
-                    
-                    if (schoolOverlap) {
-                        results.innerHTML += '<p>This child is school aged, and this is the primary provider.</p>';
-                    } else {
-                        results.innerHTML += '<p>This child is school aged, but care with this provider is unaffected.</p>';
-                    }
-                } else if (schoolAge) {
-                    results.innerHTML += '<p>This child is school aged, but care with this provider is unaffected.</p>';
-                }
+			    const schoolYearSchedule = subtractSchedule(finalSchedule, schoolSchedule);
+			    schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule);
+			    break;
+			}
+		}
+		for (let preschoolActivity of childPreschoolActivities) 
+		{
+			const preschoolSchedule = data.schedules.find(s => s.id === preschoolActivity.scheduleId);
+                        if (preschoolSchedule && schedulesOverlap(finalSchedule, preschoolSchedule)) 
+			{
+                            schoolOverlap = true;
+			    const schoolYearSchedule = subtractSchedule(finalSchedule, preschoolSchedule);
+			    schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, preschoolSchedule);
+			    break;
+			}
+		}
+		if(schoolOverlap && isPrimary)
+		{
+			schoolYearCareResult = calculateComplexCareResult(schoolYearCareResult, careResult);
+			results.innerHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged, and this is the primary provider.</p>`;
+		}
+		else
+		{
+			results.innerHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged, but care with this provider is unaffected.</p>`;	
+		}
+		
+	}
                 
                 results.innerHTML += `<p>This child requires care an average of ${(careResult.totalTime / 60.0).toFixed(1)} hours per month with this provider.</p>`;
                 
@@ -2170,21 +2198,22 @@ function formatTimeUserFriendly(minutes) {
                     providerId: provider.id,
                     clientId: child.id,
                     applicationId: parseInt(data.activeApplicationId),
+		    startDate: careStartDate,
                     providerType: provider.type,
                     meets110: meets110,
                     multProvs: multProvs,
                     schoolAge: schoolAge,
                     schoolOverlap: schoolOverlap,
                     care110: care110,
-                    SummerFullDays: Math.Ceil(careResult.fullDays),
+                    SummerFullDays: Math.ceil(careResult.fullDays),
                     SummerHalfDays: Math.ceil(careResult.halfDays),
                     SummerPartialDays: Math.ceil(careResult.partialDays),
                     SummerSleepTime: careResult.sleepTime,
                     SummerTotalTime: careResult.totalTime,
                     SummerNonStandardTime: careResult.nonStandardTime,
-                    fullDays: schoolYearCareResult ? schoolYearCareResult.fullDays : careResult.fullDays,
-                    halfDays: schoolYearCareResult ? schoolYearCareResult.halfDays : careResult.halfDays,
-                    partialDays: schoolYearCareResult ? schoolYearCareResult.partialDays : careResult.partialDays,
+                    fullDays: Math.ceil(schoolYearCareResult ? schoolYearCareResult.fullDays : careResult.fullDays),
+                    halfDays: Math.ceil(schoolYearCareResult ? schoolYearCareResult.halfDays : careResult.halfDays),
+                    partialDays: Math.ceil(schoolYearCareResult ? schoolYearCareResult.partialDays : careResult.partialDays),
                     sleepTime: schoolYearCareResult ? schoolYearCareResult.sleepTime : careResult.sleepTime,
                     totalTime: schoolYearCareResult ? schoolYearCareResult.totalTime : careResult.totalTime,
                     nonStandardTime: schoolYearCareResult ? schoolYearCareResult.nonStandardTime : careResult.nonStandardTime,
@@ -2195,6 +2224,16 @@ function formatTimeUserFriendly(minutes) {
                 
                 results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
             }
+		/*
+			ToDo: need to complete this section, instead of displaying the stringified result, need to send for processing
+			to determine based on the situation, what exactly to authorize for this child to this provider, in an array of types
+			Then using that array of types, display using a lookup by type for the specific service code
+			Need to add a care start date on the calculate care page that must be completed before calculating care.
+			Example: If the finalCareResult is for an FFN, and multProvs is false, if the household meets the 110 hour rule then 
+			care would be authorized at max(schoolAge ? 115:230,Math.ceil(schoolAge ? totalTime/60.0 : SummerTotalTime/60.0)) if the 
+			result is more than 230, then the first 230 would be normal care, and the rest 230 at a time, would be 9 coded lines.
+			
+		*/
             
             results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
         }
@@ -2424,24 +2463,11 @@ function formatTimeUserFriendly(minutes) {
             form.innerHTML = `
                 <p>Active Application: ${data.activeApplicationId}</p>
                 <p>Ready to calculate care for all children in this application.</p>
+		<p><label>Care Start Date:</label><input type="date" id="careStartDate"></p>
                 <button onclick="calculateCare()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Calculate All Care</button>
             `;
         }
 
-       /* function calculateCare() {
-            if (!data.activeApplicationId) {
-                alert('No active application selected');
-                return;
-            }
-            
-            // Placeholder for the complex calculation logic
-            const results = document.getElementById('calculationResults');
-            results.innerHTML = `
-                <p><strong>Calculation initiated for Application ${data.activeApplicationId}</strong></p>
-                <p>This is where the complex care calculation results will be displayed.</p>
-                <p>Ready for the calculation logic implementation.</p>
-            `;
-        }*/
 
         function displaySchedule(schedule) {
             const display = document.getElementById('scheduleDisplay');
