@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .nav-tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            margin-right: 2px;
+        }
+        .nav-tab.active {
+            background: #007bff;
+            color: white;
+            border-bottom: 2px solid #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .list-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        .schedule-cell {
+            border: 1px solid #ddd;
+            padding: 5px;
+            min-height: 60px;
+            background: white;
+        }
+        .schedule-header {
+            background: #f8f9fa;
+            font-weight: bold;
+            text-align: center;
+        }
+        .period {
+            background: #e3f2fd;
+            margin: 2px 0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .active-app {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .time-input {
+            width: 120px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .schedule-cell.empty-week {
+            background-color: #f0f0f0;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Schedule Management System</h1>
+        
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showTab('people')">People</div>
+            <div class="nav-tab" onclick="showTab('providers')">Providers</div>
+            <div class="nav-tab" onclick="showTab('applications')">Applications</div>
+            <div class="nav-tab" onclick="showTab('household')">Household</div>
+            <div class="nav-tab" onclick="showTab('activities')">Activities</div>
+            <div class="nav-tab" onclick="showTab('provider-links')">Provider Links</div>
+            <div class="nav-tab" onclick="showTab('schedules')">Schedules</div>
+            <div class="nav-tab" onclick="showTab('calculation')">Calculate Care</div>
+        </div>
+
+        <!-- People Tab -->
+        <div id="people" class="tab-content active">
+            <div class="section">
+                <h3>Add New Person</h3>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="personName" placeholder="Enter person's name">
+                    <div id="personNameError" class="error"></div>
+                </div>
+                <div class="form-group">
+                    <label>Birthdate:</label>
+                    <input type="date" id="personBirthdate">
+                    <div id="personBirthdateError" class="error"></div>
+                </div>
+                <button onclick="addPerson()">Add Person</button>
+            </div>
+            
+            <div class="section">
+                <h3>People List</h3>
+                <div id="peopleList"></div>
+            </div>
+        </div>
+
+        <!-- Providers Tab -->
+        <div id="providers" class="tab-content">
+            <div class="section">
+                <h3>Add New Provider</h3>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="providerName" placeholder="Enter provider name">
+                </div>
+                <div class="form-group">
+                    <label>Type:</label>
+                    <select id="providerType">
+                        <option value="C">Center (C)</option>
+                        <option value="F">FFN (F)</option>
+                        <option value="H">LFH (H)</option>
+                    </select>
+                </div>
+                <button onclick="addProvider()">Add Provider</button>
+            </div>
+            
+            <div class="section">
+                <h3>Providers List</h3>
+                <div id="providersList"></div>
+            </div>
+        </div>
+
+        <!-- Applications Tab -->
+        <div id="applications" class="tab-content">
+            <div class="section">
+                <h3>Add New Application</h3>
+                <div class="form-group">
+                    <label>Head of Household:</label>
+                    <select id="headOfHousehold">
+                        <option value="">Select a person</option>
+                    </select>
+                </div>
+                <button onclick="addApplication()">Add Application</button>
+            </div>
+            
+            <div class="section">
+                <h3>Applications List</h3>
+                <div id="applicationsList"></div>
+            </div>
+            
+            <div class="section">
+                <h3>Active Application</h3>
+                <div id="activeApplication">No active application selected</div>
+            </div>
+        </div>
+
+        <!-- Household Tab -->
+        <div id="household" class="tab-content">
+            <div class="section">
+                <h3>Add Household Member</h3>
+                <div id="householdForm">
+                    <p>Please select an active application first.</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Household Members</h3>
+                <div id="householdList"></div>
+            </div>
+        </div>
+
+        <!-- Activities Tab -->
+        <div id="activities" class="tab-content">
+            <div class="section">
+                <h3>Add Activity</h3>
+                <div id="activityForm">
+                    <p>Please select an active application first.</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Activities</h3>
+                <div id="activitiesList"></div>
+            </div>
+        </div>
+
+        <!-- Provider Links Tab -->
+        <div id="provider-links" class="tab-content">
+            <div class="section">
+                <h3>Add Provider-Child Link</h3>
+                <div id="providerLinkForm">
+                    <p>Please select an active application first.</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Provider-Child Links</h3>
+                <div id="providerLinksList"></div>
+            </div>
+        </div>
+
+        <!-- Schedules Tab -->
+        <div id="schedules" class="tab-content">
+            <div class="section">
+                <h3>Edit Schedule</h3>
+                <div class="form-group">
+                    <label>Select Schedule:</label>
+                    <select id="scheduleSelector" onchange="loadSchedule()">
+                        <option value="">Select a schedule to edit</option>
+                    </select>
+                </div>
+                
+                <div id="scheduleEditor" style="display: none;">
+                    <button onclick="clearSchedule()" class="danger">Clear Schedule</button>
+                    
+                    <div class="form-group">
+                        <h4>Add Period</h4>
+                        <label>Week:</label>
+                        <select id="periodWeek">
+                            <option value="1">Week 1</option>
+                            <option value="2">Week 2</option>
+                            <option value="3">Week 3</option>
+                            <option value="4">Week 4</option>
+                        </select>
+                        
+                        <label>Day:</label>
+                        <select id="periodDay">
+                            <option value="Sun">Sunday</option>
+                            <option value="Mon">Monday</option>
+                            <option value="Tue">Tuesday</option>
+                            <option value="Wed">Wednesday</option>
+                            <option value="Thu">Thursday</option>
+                            <option value="Fri">Friday</option>
+                            <option value="Sat">Saturday</option>
+                        </select>
+                        
+                        <label>Start Time:</label>
+                        <input type="text" id="periodStartTime" class="time-input" placeholder="9:00 AM">
+                        
+                        <label>End Time:</label>
+                        <input type="text" id="periodEndTime" class="time-input" placeholder="5:00 PM">
+                        
+                        <button onclick="addPeriod()">Add Period</button>
+                        <div id="periodError" class="error"></div>
+                    </div>
+                    
+                    <div id="scheduleDisplay"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculate Care Tab -->
+        <div id="calculation" class="tab-content">
+            <div class="section">
+                <h3>Calculate Care</h3>
+                <div id="calculationForm">
+                    <p>Please select an active application first.</p>
+                </div>
+                
+                <div class="section">
+                    <h3>Calculation Results</h3>
+                    <div id="calculationResults">
+                        <p>No calculation performed yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structures and storage
+        let data = {
+            people: JSON.parse(localStorage.getItem('people') || '[]'),
+            providers: JSON.parse(localStorage.getItem('providers') || '[]'),
+            applications: JSON.parse(localStorage.getItem('applications') || '[]'),
+            householdMembers: JSON.parse(localStorage.getItem('householdMembers') || '[]'),
+            activities: JSON.parse(localStorage.getItem('activities') || '[]'),
+            providerLinks: JSON.parse(localStorage.getItem('providerLinks') || '[]'),
+            schedules: JSON.parse(localStorage.getItem('schedules') || '[]'),
+            activeApplicationId: localStorage.getItem('activeApplicationId') || null
+        };
+
+        // ID counters
+        let nextPersonId = Math.max(10000, ...(data.people.map(p => p.id) || [9999])) + 1;
+        let nextProviderId = Math.max(100001, ...(data.providers.map(p => p.id) || [100000])) + 1;
+        let nextApplicationId = Math.max(2003000000, ...(data.applications.map(a => a.id) || [2002999999])) + 1;
+        let nextActivityId = Math.max(1, ...(data.activities.map(a => a.id) || [0])) + 1;
+        let nextScheduleId = Math.max(1, ...(data.schedules.map(s => s.id) || [0])) + 1;
+
+        // Utility functions
+        function saveData() {
+            Object.keys(data).forEach(key => {
+                if (key !== 'activeApplicationId') {
+                    localStorage.setItem(key, JSON.stringify(data[key]));
+                } else {
+                    localStorage.setItem(key, data[key] || '');
+                }
+            });
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Refresh content when switching tabs
+            switch(tabName) {
+                case 'people': refreshPeopleList(); break;
+                case 'providers': refreshProvidersList(); break;
+                case 'applications': refreshApplicationsList(); break;
+                case 'household': refreshHouseholdForm(); refreshHouseholdList(); break;
+                case 'activities': refreshActivityForm(); refreshActivitiesList(); break;
+                case 'provider-links': refreshProviderLinkForm(); refreshProviderLinksList(); break;
+                case 'schedules': refreshScheduleSelector(); break;
+                case 'calculation': refreshCalculationForm(); break;
+            }
+        }
+
+        function formatTime(minutes) {
+            // Handle special case where 1440 should display as 12:00 AM (end of day)
+            if (minutes === 1440) minutes = 0;
+            
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+            return `${displayHours}:${mins.toString().padStart(2, '0')} ${period}`;
+        }
+
+        function parseTime(timeString) {
+            const match = timeString.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+            if (!match) return null;
+            
+            let hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+            const period = match[3].toUpperCase();
+            
+            if (hours === 12 && period === 'AM') hours = 0;
+            if (hours !== 12 && period === 'PM') hours += 12;
+            
+            const totalMinutes = hours * 60 + minutes;
+            
+            // Special case: 12:00 AM should be treated as 1440 (end of day) when used as end time
+            // This will be handled in the calling function by context
+            return totalMinutes;
+        }
+
+        // People functions
+        function addPerson() {
+            const name = document.getElementById('personName').value.trim();
+            const birthdate = document.getElementById('personBirthdate').value;
+            
+            // Clear previous errors
+            document.getElementById('personNameError').textContent = '';
+            document.getElementById('personBirthdateError').textContent = '';
+            
+            let hasError = false;
+            
+            if (!name) {
+                document.getElementById('personNameError').textContent = 'Name is required';
+                hasError = true;
+            }
+            
+            if (!birthdate) {
+                document.getElementById('personBirthdateError').textContent = 'Birthdate is required';
+                hasError = true;
+            } else if (new Date(birthdate) > new Date()) {
+                document.getElementById('personBirthdateError').textContent = 'Birthdate cannot be in the future';
+                hasError = true;
+            }
+            
+            if (hasError) return;
+            
+            const person = {
+                id: nextPersonId++,
+                name: name,
+                birthdate: birthdate
+            };
+            
+            data.people.push(person);
+            saveData();
+            
+            document.getElementById('personName').value = '';
+            document.getElementById('personBirthdate').value = '';
+            
+            refreshPeopleList();
+            refreshApplicationsList(); // Update head of household dropdown
+        }
+
+        function deletePerson(id) {
+            if (confirm('Are you sure you want to delete this person?')) {
+                data.people = data.people.filter(p => p.id !== id);
+                saveData();
+                refreshPeopleList();
+                refreshApplicationsList();
+            }
+        }
+
+        function refreshPeopleList() {
+            const list = document.getElementById('peopleList');
+            list.innerHTML = '';
+            
+            data.people.forEach(person => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <span>ID: ${person.id} - ${person.name} (Born: ${person.birthdate})</span>
+                    <button class="danger" onclick="deletePerson(${person.id})">Delete</button>
+                `;
+                list.appendChild(div);
+            });
+            
+            // Update head of household dropdown
+            const select = document.getElementById('headOfHousehold');
+            select.innerHTML = '<option value="">Select a person</option>';
+            data.people.forEach(person => {
+                const option = document.createElement('option');
+                option.value = person.id;
+                option.textContent = `${person.name} (ID: ${person.id})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Provider functions
+        function addProvider() {
+            const name = document.getElementById('providerName').value.trim();
+            const type = document.getElementById('providerType').value;
+            
+            if (!name) {
+                alert('Provider name is required');
+                return;
+            }
+            
+            const provider = {
+                id: nextProviderId++,
+                name: name,
+                type: type
+            };
+            
+            data.providers.push(provider);
+            saveData();
+            
+            document.getElementById('providerName').value = '';
+            
+            refreshProvidersList();
+        }
+
+        function deleteProvider(id) {
+            if (confirm('Are you sure you want to delete this provider?')) {
+                data.providers = data.providers.filter(p => p.id !== id);
+                saveData();
+                refreshProvidersList();
+            }
+        }
+
+        function refreshProvidersList() {
+            const list = document.getElementById('providersList');
+            list.innerHTML = '';
+            
+            data.providers.forEach(provider => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                const typeName = provider.type === 'C' ? 'Center' : provider.type === 'F' ? 'FFN' : 'LFH';
+                div.innerHTML = `
+                    <span>ID: ${provider.id} - ${provider.name} (${typeName})</span>
+                    <button class="danger" onclick="deleteProvider(${provider.id})">Delete</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Application functions
+        function addApplication() {
+            const headOfHouseholdId = parseInt(document.getElementById('headOfHousehold').value);
+            
+            if (!headOfHouseholdId) {
+                alert('Please select a head of household');
+                return;
+            }
+            
+            const application = {
+                id: nextApplicationId++,
+                headOfHouseholdId: headOfHouseholdId
+            };
+            
+            data.applications.push(application);
+            saveData();
+            
+            document.getElementById('headOfHousehold').value = '';
+            
+            refreshApplicationsList();
+        }
+
+        function deleteApplication(id) {
+            if (confirm('Are you sure you want to delete this application?')) {
+                data.applications = data.applications.filter(a => a.id !== id);
+                // Clean up related data
+                data.householdMembers = data.householdMembers.filter(h => h.applicationId !== id);
+                data.activities = data.activities.filter(a => a.applicationId !== id);
+                data.providerLinks = data.providerLinks.filter(p => p.applicationId !== id);
+                
+                if (data.activeApplicationId == id) {
+                    data.activeApplicationId = null;
+                }
+                
+                saveData();
+                refreshApplicationsList();
+                refreshHouseholdForm();
+                refreshActivityForm();
+                refreshProviderLinkForm();
+            }
+        }
+
+        function setActiveApplication(id) {
+            data.activeApplicationId = id;
+            saveData();
+            refreshApplicationsList();
+            refreshHouseholdForm();
+            refreshActivityForm();
+            refreshProviderLinkForm();
+        }
+
+        function refreshApplicationsList() {
+            const list = document.getElementById('applicationsList');
+            list.innerHTML = '';
+            
+            data.applications.forEach(app => {
+                const person = data.people.find(p => p.id === app.headOfHouseholdId);
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                if (data.activeApplicationId == app.id) {
+                    div.classList.add('active-app');
+                }
+                div.innerHTML = `
+                    <span>ID: ${app.id} - Head: ${person ? person.name : 'Unknown'}</span>
+                    <div>
+                        <button onclick="setActiveApplication(${app.id})">Set Active</button>
+                        <button class="danger" onclick="deleteApplication(${app.id})">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            
+            // Update active application display
+            const activeDiv = document.getElementById('activeApplication');
+            if (data.activeApplicationId) {
+                const app = data.applications.find(a => a.id == data.activeApplicationId);
+                const person = app ? data.people.find(p => p.id === app.headOfHouseholdId) : null;
+                activeDiv.innerHTML = `Active: Application ${data.activeApplicationId} - Head: ${person ? person.name : 'Unknown'}`;
+            } else {
+                activeDiv.innerHTML = 'No active application selected';
+            }
+        }
+
+        // Household functions
+        function refreshHouseholdForm() {
+            const form = document.getElementById('householdForm');
+            
+            if (!data.activeApplicationId) {
+                form.innerHTML = '<p>Please select an active application first.</p>';
+                return;
+            }
+            
+            const app = data.applications.find(a => a.id == data.activeApplicationId);
+            if (!app) {
+                form.innerHTML = '<p>Active application not found.</p>';
+                return;
+            }
+            
+            // Get available people (exclude head of household and already added members)
+            const existingMemberIds = data.householdMembers
+                .filter(h => h.applicationId == data.activeApplicationId)
+                .map(h => h.personId);
+            existingMemberIds.push(app.headOfHouseholdId);
+            
+            const availablePeople = data.people.filter(p => !existingMemberIds.includes(p.id));
+            
+            form.innerHTML = `
+                <div class="form-group">
+                    <label>Person:</label>
+                    <select id="householdPerson">
+                        <option value="">Select a person</option>
+                        ${availablePeople.map(p => `<option value="${p.id}">${p.name} (ID: ${p.id})</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Member Type:</label>
+                    <select id="householdMemberType">
+                        <option value="C">Child (C)</option>
+                        <option value="A">Adult (A)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Included:</label>
+                    <select id="householdIncluded">
+                        <option value="Y">Yes (Y)</option>
+                        <option value="N">No (N)</option>
+                    </select>
+                </div>
+                <button onclick="addHouseholdMember()">Add Household Member</button>
+            `;
+        }
+
+        function addHouseholdMember() {
+            const personId = parseInt(document.getElementById('householdPerson').value);
+            const memberType = document.getElementById('householdMemberType').value;
+            const included = document.getElementById('householdIncluded').value;
+            
+            if (!personId) {
+                alert('Please select a person');
+                return;
+            }
+            
+            const householdMember = {
+                applicationId: parseInt(data.activeApplicationId),
+                personId: personId,
+                memberType: memberType,
+                included: included
+            };
+            
+            data.householdMembers.push(householdMember);
+            saveData();
+            
+            refreshHouseholdForm();
+            refreshHouseholdList();
+            refreshActivityForm();
+            refreshProviderLinkForm();
+        }
+
+        function deleteHouseholdMember(applicationId, personId) {
+            if (confirm('Are you sure you want to remove this household member?')) {
+                data.householdMembers = data.householdMembers.filter(h => 
+                    !(h.applicationId === applicationId && h.personId === personId));
+                saveData();
+                refreshHouseholdForm();
+                refreshHouseholdList();
+                refreshActivityForm();
+                refreshProviderLinkForm();
+            }
+        }
+
+        function refreshHouseholdList() {
+            const list = document.getElementById('householdList');
+            list.innerHTML = '';
+            
+            if (!data.activeApplicationId) {
+                list.innerHTML = '<p>No active application selected.</p>';
+                return;
+            }
+            
+            const members = data.householdMembers.filter(h => h.applicationId == data.activeApplicationId);
+            
+            members.forEach(member => {
+                const person = data.people.find(p => p.id === member.personId);
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                const memberTypeName = member.memberType === 'C' ? 'Child' : 'Adult';
+                const includedName = member.included === 'Y' ? 'Yes' : 'No';
+                div.innerHTML = `
+                    <span>${person ? person.name : 'Unknown'} (${memberTypeName}, Included: ${includedName})</span>
+                    <button class="danger" onclick="deleteHouseholdMember(${member.applicationId}, ${member.personId})">Remove</button>
+                `;
+                list.appendChild(div);
+            });
+            
+            if (members.length === 0) {
+                list.innerHTML = '<p>No household members added yet.</p>';
+            }
+        }
+
+        // Activity functions
+        function refreshActivityForm() {
+            const form = document.getElementById('activityForm');
+            
+            if (!data.activeApplicationId) {
+                form.innerHTML = '<p>Please select an active application first.</p>';
+                return;
+            }
+            
+            const app = data.applications.find(a => a.id == data.activeApplicationId);
+            if (!app) {
+                form.innerHTML = '<p>Active application not found.</p>';
+                return;
+            }
+            
+            // Get eligible people (head of household + included household members)
+            const eligiblePeople = [];
+            
+            // Add head of household
+            const headPerson = data.people.find(p => p.id === app.headOfHouseholdId);
+            if (headPerson) {
+                eligiblePeople.push({...headPerson, isHead: true, memberType: 'A'});
+            }
+            
+            // Add included household members
+            const includedMembers = data.householdMembers.filter(h => 
+                h.applicationId == data.activeApplicationId && h.included === 'Y');
+            
+            includedMembers.forEach(member => {
+                const person = data.people.find(p => p.id === member.personId);
+                if (person) {
+                    eligiblePeople.push({...person, isHead: false, memberType: member.memberType});
+                }
+            });
+            
+            form.innerHTML = `
+                <div class="form-group">
+                    <label>Person:</label>
+                    <select id="activityPerson" onchange="updateActivityTypeOptions()">
+                        <option value="">Select a person</option>
+                        ${eligiblePeople.map(p => `<option value="${p.id}" data-member-type="${p.memberType}">${p.name} (${p.isHead ? 'Head of Household' : p.memberType === 'A' ? 'Adult' : 'Child'})</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Activity Name:</label>
+                    <input type="text" id="activityName" placeholder="Enter activity name">
+                </div>
+                <div class="form-group">
+                    <label>Activity Type:</label>
+                    <select id="activityType">
+                        <option value="">Select activity type</option>
+                    </select>
+                </div>
+                <button onclick="addActivity()">Add Activity</button>
+            `;
+        }
+
+        function updateActivityTypeOptions() {
+            const personSelect = document.getElementById('activityPerson');
+            const typeSelect = document.getElementById('activityType');
+            const selectedOption = personSelect.options[personSelect.selectedIndex];
+            
+            typeSelect.innerHTML = '<option value="">Select activity type</option>';
+            
+            if (selectedOption && selectedOption.dataset.memberType) {
+                const memberType = selectedOption.dataset.memberType;
+                
+                if (memberType === 'A') { // Adult or Head of Household
+                    typeSelect.innerHTML += '<option value="Activity">Activity</option>';
+                    typeSelect.innerHTML += '<option value="Sleep">Sleep</option>';
+                } else if (memberType === 'C') { // Child
+                    typeSelect.innerHTML += '<option value="school">School</option>';
+                    typeSelect.innerHTML += '<option value="preschool">Preschool</option>';
+                    typeSelect.innerHTML += '<option value="non care">Non Care</option>';
+                }
+            }
+        }
+
+        function addActivity() {
+            const personId = parseInt(document.getElementById('activityPerson').value);
+            const name = document.getElementById('activityName').value.trim();
+            const type = document.getElementById('activityType').value;
+            
+            if (!personId || !name || !type) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            // Determine schedule type based on activity type
+            let scheduleType;
+            switch(type) {
+                case 'Activity': scheduleType = 'A'; break;
+                case 'Sleep': scheduleType = 'L'; break;
+                case 'school': scheduleType = 'S'; break;
+                case 'preschool': scheduleType = 'P'; break;
+                case 'non care': scheduleType = 'N'; break;
+                default: scheduleType = 'A';
+            }
+            
+            // Create schedule
+            const schedule = createEmptySchedule(scheduleType);
+            
+            const activity = {
+                id: nextActivityId++,
+                applicationId: parseInt(data.activeApplicationId),
+                personId: personId,
+                name: name,
+                type: type,
+                scheduleId: schedule.id
+            };
+            
+            data.activities.push(activity);
+            saveData();
+            
+            document.getElementById('activityPerson').value = '';
+            document.getElementById('activityName').value = '';
+            document.getElementById('activityType').value = '';
+            
+            refreshActivitiesList();
+            refreshScheduleSelector();
+        }
+
+        function deleteActivity(id) {
+            if (confirm('Are you sure you want to delete this activity?')) {
+                const activity = data.activities.find(a => a.id === id);
+                if (activity) {
+                    // Remove associated schedule
+                    data.schedules = data.schedules.filter(s => s.id !== activity.scheduleId);
+                }
+                data.activities = data.activities.filter(a => a.id !== id);
+                saveData();
+                refreshActivitiesList();
+                refreshScheduleSelector();
+            }
+        }
+
+        function refreshActivitiesList() {
+            const list = document.getElementById('activitiesList');
+            list.innerHTML = '';
+            
+            if (!data.activeApplicationId) {
+                list.innerHTML = '<p>No active application selected.</p>';
+                return;
+            }
+            
+            const activities = data.activities.filter(a => a.applicationId == data.activeApplicationId);
+            
+            activities.forEach(activity => {
+                const person = data.people.find(p => p.id === activity.personId);
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <span>${activity.name} - ${person ? person.name : 'Unknown'} (${activity.type})</span>
+                    <button class="danger" onclick="deleteActivity(${activity.id})">Delete</button>
+                `;
+                list.appendChild(div);
+            });
+            
+            if (activities.length === 0) {
+                list.innerHTML = '<p>No activities added yet.</p>';
+            }
+        }
+
+        // Provider Link functions
+        function refreshProviderLinkForm() {
+            const form = document.getElementById('providerLinkForm');
+            
+            if (!data.activeApplicationId) {
+                form.innerHTML = '<p>Please select an active application first.</p>';
+                return;
+            }
+            
+            // Get eligible children (included household members who are children)
+            const eligibleChildren = [];
+            const includedMembers = data.householdMembers.filter(h => 
+                h.applicationId == data.activeApplicationId && h.included === 'Y' && h.memberType === 'C');
+            
+            includedMembers.forEach(member => {
+                const person = data.people.find(p => p.id === member.personId);
+                if (person) {
+                    eligibleChildren.push(person);
+                }
+            });
+            
+            if (eligibleChildren.length === 0) {
+                form.innerHTML = '<p>No eligible children in the current application.</p>';
+                return;
+            }
+            
+            form.innerHTML = `
+                <div class="form-group">
+                    <label>Provider:</label>
+                    <select id="linkProvider">
+                        <option value="">Select a provider</option>
+                        ${data.providers.map(p => `<option value="${p.id}">${p.name} (${p.type})</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Child:</label>
+                    <select id="linkChild">
+                        <option value="">Select a child</option>
+                        ${eligibleChildren.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                    </select>
+                </div>
+                <button onclick="addProviderLink()">Add Provider-Child Link</button>
+            `;
+        }
+
+        function addProviderLink() {
+            const providerId = parseInt(document.getElementById('linkProvider').value);
+            const personId = parseInt(document.getElementById('linkChild').value);
+            
+            if (!providerId || !personId) {
+                alert('Please select both provider and child');
+                return;
+            }
+            
+            // Check if link already exists
+            const existingLink = data.providerLinks.find(l => 
+                l.applicationId == data.activeApplicationId && 
+                l.providerId === providerId && 
+                l.personId === personId);
+            
+            if (existingLink) {
+                alert('This provider-child link already exists');
+                return;
+            }
+            
+            // Check if this is the first provider for this child
+            const existingLinksForChild = data.providerLinks.filter(l => 
+                l.applicationId == data.activeApplicationId && 
+                l.personId === personId);
+            
+            const isPrimary = existingLinksForChild.length === 0 ? 'Y' : 'N';
+            
+            // Create schedule for the link
+            const schedule = createEmptySchedule('R');
+            
+            const providerLink = {
+                providerId: providerId,
+                applicationId: parseInt(data.activeApplicationId),
+                personId: personId,
+                scheduleId: schedule.id,
+                primary: isPrimary
+            };
+            
+            data.providerLinks.push(providerLink);
+            saveData();
+            
+            document.getElementById('linkProvider').value = '';
+            document.getElementById('linkChild').value = '';
+            
+            refreshProviderLinksList();
+            refreshScheduleSelector();
+        }
+
+        function setPrimaryProvider(providerId, applicationId, personId) {
+            // Set all other provider links for this child to non-primary
+            data.providerLinks.forEach(link => {
+                if (link.applicationId === applicationId && link.personId === personId) {
+                    link.primary = 'N';
+                }
+            });
+            
+            // Set the selected link as primary
+            const targetLink = data.providerLinks.find(l => 
+                l.providerId === providerId && 
+                l.applicationId === applicationId && 
+                l.personId === personId);
+            
+            if (targetLink) {
+                targetLink.primary = 'Y';
+                saveData();
+                refreshProviderLinksList();
+            }
+        }
+
+        function deleteProviderLink(providerId, applicationId, personId) {
+            if (confirm('Are you sure you want to delete this provider-child link?')) {
+                const link = data.providerLinks.find(l => 
+                    l.providerId === providerId && 
+                    l.applicationId === applicationId && 
+                    l.personId === personId);
+                
+                if (link) {
+                    // Remove associated schedule
+                    data.schedules = data.schedules.filter(s => s.id !== link.scheduleId);
+                    
+                    // If this was the primary provider, make another one primary if available
+                    if (link.primary === 'Y') {
+                        const otherLinks = data.providerLinks.filter(l => 
+                            l.applicationId === applicationId && 
+                            l.personId === personId && 
+                            !(l.providerId === providerId && l.applicationId === applicationId && l.personId === personId));
+                        
+                        if (otherLinks.length > 0) {
+                            otherLinks[0].primary = 'Y';
+                        }
+                    }
+                }
+                
+                data.providerLinks = data.providerLinks.filter(l => 
+                    !(l.providerId === providerId && 
+                      l.applicationId === applicationId && 
+                      l.personId === personId));
+                      
+                saveData();
+                refreshProviderLinksList();
+                refreshScheduleSelector();
+            }
+        }
+
+        function refreshProviderLinksList() {
+            const list = document.getElementById('providerLinksList');
+            list.innerHTML = '';
+            
+            if (!data.activeApplicationId) {
+                list.innerHTML = '<p>No active application selected.</p>';
+                return;
+            }
+            
+            const links = data.providerLinks.filter(l => l.applicationId == data.activeApplicationId);
+            
+            links.forEach(link => {
+                const provider = data.providers.find(p => p.id === link.providerId);
+                const person = data.people.find(p => p.id === link.personId);
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                
+                const primaryText = link.primary === 'Y' ? ' (PRIMARY)' : '';
+                const primaryButton = link.primary === 'N' ? 
+                    `<button onclick="setPrimaryProvider(${link.providerId}, ${link.applicationId}, ${link.personId})">Set as Primary</button>` : '';
+                
+                div.innerHTML = `
+                    <span>${provider ? provider.name : 'Unknown Provider'} - ${person ? person.name : 'Unknown Child'}${primaryText}</span>
+                    <div>
+                        ${primaryButton}
+                        <button class="danger" onclick="deleteProviderLink(${link.providerId}, ${link.applicationId}, ${link.personId})">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            
+            if (links.length === 0) {
+                list.innerHTML = '<p>No provider-child links added yet.</p>';
+            }
+        }
+
+        // Schedule utility functions for calculations
+        
+        // Get the greatest common divisor of two numbers
+        function gcd(a, b) {
+            while (b !== 0) {
+                let temp = b;
+                b = a % b;
+                a = temp;
+            }
+            return a;
+        }
+        
+        // Get the least common multiple of two numbers
+        function lcm(a, b) {
+            return (a * b) / gcd(a, b);
+        }
+        
+        // Get the number of weeks in a schedule
+        function getScheduleWeekCount(schedule) {
+            return Math.max(...Object.keys(schedule.weeks).map(Number));
+        }
+        
+        // Check if two schedules have overlapping periods
+        function schedulesOverlap(schedule1, schedule2) {
+            const weeks1 = getScheduleWeekCount(schedule1);
+            const weeks2 = getScheduleWeekCount(schedule2);
+            const totalWeeks = lcm(weeks1, weeks2);
+            
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Check each week and day in the LCM period
+            for (let week = 1; week <= totalWeeks; week++) {
+                for (let day of days) {
+                    // Get periods for this week/day from both schedules
+                    const week1 = ((week - 1) % weeks1) + 1;
+                    const week2 = ((week - 1) % weeks2) + 1;
+                    
+                    const periods1 = schedule1.weeks[week1] ? schedule1.weeks[week1][day] || [] : [];
+                    const periods2 = schedule2.weeks[week2] ? schedule2.weeks[week2][day] || [] : [];
+                    
+                    // Check for overlaps between periods
+                    for (let p1 of periods1) {
+                        for (let p2 of periods2) {
+                            // Two periods overlap if one starts before the other ends
+                            if (p1.start < p2.end && p2.start < p1.end) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        }
+        
+        // Combine two schedules into one
+        function combineSchedules(schedule1, schedule2) {
+            const weeks1 = getScheduleWeekCount(schedule1);
+            const weeks2 = getScheduleWeekCount(schedule2);
+            const totalWeeks = lcm(weeks1, weeks2);
+            
+            const combinedSchedule = {
+                id: nextScheduleId++,
+                type: 'A',
+                weeks: {}
+            };
+            
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Initialize all weeks
+            for (let week = 1; week <= totalWeeks; week++) {
+                combinedSchedule.weeks[week] = {};
+                for (let day of days) {
+                    combinedSchedule.weeks[week][day] = [];
+                }
+            }
+            
+            // Process each week and day
+            for (let week = 1; week <= totalWeeks; week++) {
+                for (let day of days) {
+                    const week1 = ((week - 1) % weeks1) + 1;
+                    const week2 = ((week - 1) % weeks2) + 1;
+                    
+                    const periods1 = schedule1.weeks[week1] ? schedule1.weeks[week1][day] || [] : [];
+                    const periods2 = schedule2.weeks[week2] ? schedule2.weeks[week2][day] || [] : [];
+                    
+                    // Combine all periods and sort by start time
+                    const allPeriods = [...periods1, ...periods2].sort((a, b) => a.start - b.start);
+                    
+                    // Merge overlapping or adjacent periods
+                    const mergedPeriods = [];
+                    for (let period of allPeriods) {
+                        if (mergedPeriods.length === 0) {
+                            mergedPeriods.push({...period});
+                        } else {
+                            const lastPeriod = mergedPeriods[mergedPeriods.length - 1];
+                            
+                            // If periods overlap or are adjacent and same type, merge them
+                            if (lastPeriod.end >= period.start && lastPeriod.type === period.type) {
+                                lastPeriod.end = Math.max(lastPeriod.end, period.end);
+                            } else if (lastPeriod.end >= period.start) {
+                                // Overlapping but different types - handle priority (Sleep over Activity)
+                                if (period.type === 'L' || lastPeriod.type === 'L') {
+                                    // Split periods to preserve sleep type
+                                    if (lastPeriod.type === 'L') {
+                                        // Current period is sleep, split incoming period
+                                        if (period.start < lastPeriod.start) {
+                                            mergedPeriods.splice(-1, 0, {
+                                                start: period.start,
+                                                end: lastPeriod.start,
+                                                type: period.type
+                                            });
+                                        }
+                                        if (period.end > lastPeriod.end) {
+                                            mergedPeriods.push({
+                                                start: lastPeriod.end,
+                                                end: period.end,
+                                                type: period.type
+                                            });
+                                        }
+                                    } else {
+                                        // Incoming period is sleep, adjust current and add sleep
+                                        if (period.start > lastPeriod.start) {
+                                            lastPeriod.end = period.start;
+                                            mergedPeriods.push({...period});
+                                        } else {
+                                            mergedPeriods[mergedPeriods.length - 1] = {...period};
+                                        }
+                                        if (period.end < lastPeriod.end) {
+                                            mergedPeriods.push({
+                                                start: period.end,
+                                                end: lastPeriod.end,
+                                                type: lastPeriod.type
+                                            });
+                                        }
+                                    }
+                                } else {
+                                    // Both same non-sleep type, merge
+                                    lastPeriod.end = Math.max(lastPeriod.end, period.end);
+                                }
+                            } else {
+                                mergedPeriods.push({...period});
+                            }
+                        }
+                    }
+                    
+                    combinedSchedule.weeks[week][day] = mergedPeriods;
+                }
+            }
+            
+            return combinedSchedule;
+        }
+        
+        // Get overlap between two schedules
+        function getScheduleOverlap(schedule1, schedule2) {
+            const weeks1 = getScheduleWeekCount(schedule1);
+            const weeks2 = getScheduleWeekCount(schedule2);
+            const totalWeeks = lcm(weeks1, weeks2);
+            
+            const overlapSchedule = {
+                id: nextScheduleId++,
+                type: 'A',
+                weeks: {}
+            };
+            
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Initialize all weeks
+            for (let week = 1; week <= totalWeeks; week++) {
+                overlapSchedule.weeks[week] = {};
+                for (let day of days) {
+                    overlapSchedule.weeks[week][day] = [];
+                }
+            }
+            
+            // Find overlaps for each week and day
+            for (let week = 1; week <= totalWeeks; week++) {
+                for (let day of days) {
+                    const week1 = ((week - 1) % weeks1) + 1;
+                    const week2 = ((week - 1) % weeks2) + 1;
+                    
+                    const periods1 = schedule1.weeks[week1] ? schedule1.weeks[week1][day] || [] : [];
+                    const periods2 = schedule2.weeks[week2] ? schedule2.weeks[week2][day] || [] : [];
+                    
+                    const overlaps = [];
+                    
+                    for (let p1 of periods1) {
+                        for (let p2 of periods2) {
+                            if (p1.start < p2.end && p2.start < p1.end) {
+                                const overlapStart = Math.max(p1.start, p2.start);
+                                const overlapEnd = Math.min(p1.end, p2.end);
+                                const overlapType = (p1.type === 'L' || p2.type === 'L') ? 'L' : 'A';
+                                
+                                overlaps.push({
+                                    start: overlapStart,
+                                    end: overlapEnd,
+                                    type: overlapType
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Merge adjacent overlaps of same type
+                    overlaps.sort((a, b) => a.start - b.start);
+                    const mergedOverlaps = [];
+                    for (let overlap of overlaps) {
+                        if (mergedOverlaps.length === 0) {
+                            mergedOverlaps.push(overlap);
+                        } else {
+                            const last = mergedOverlaps[mergedOverlaps.length - 1];
+                            if (last.end >= overlap.start && last.type === overlap.type) {
+                                last.end = Math.max(last.end, overlap.end);
+                            } else {
+                                mergedOverlaps.push(overlap);
+                            }
+                        }
+                    }
+                    
+                    overlapSchedule.weeks[week][day] = mergedOverlaps;
+                }
+            }
+            
+            return overlapSchedule;
+        }
+        
+        // Subtract one schedule from another
+        function subtractSchedule(schedule1, schedule2) {
+            const weeks1 = getScheduleWeekCount(schedule1);
+            const weeks2 = getScheduleWeekCount(schedule2);
+            const totalWeeks = lcm(weeks1, weeks2);
+            
+            const resultSchedule = {
+                id: nextScheduleId++,
+                type: schedule1.type,
+                weeks: {}
+            };
+            
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Initialize all weeks
+            for (let week = 1; week <= totalWeeks; week++) {
+                resultSchedule.weeks[week] = {};
+                for (let day of days) {
+                    resultSchedule.weeks[week][day] = [];
+                }
+            }
+            
+            // Process each week and day
+            for (let week = 1; week <= totalWeeks; week++) {
+                for (let day of days) {
+                    const week1 = ((week - 1) % weeks1) + 1;
+                    const week2 = ((week - 1) % weeks2) + 1;
+                    
+                    const periods1 = schedule1.weeks[week1] ? schedule1.weeks[week1][day] || [] : [];
+                    const periods2 = schedule2.weeks[week2] ? schedule2.weeks[week2][day] || [] : [];
+                    
+                    // For each period in schedule1, subtract overlaps with schedule2
+                    for (let p1 of periods1) {
+                        let remainingPeriods = [{...p1}];
+                        
+                        for (let p2 of periods2) {
+                            const newRemainingPeriods = [];
+                            
+                            for (let remaining of remainingPeriods) {
+                                if (remaining.start >= p2.end || remaining.end <= p2.start) {
+                                    // No overlap
+                                    newRemainingPeriods.push(remaining);
+                                } else {
+                                    // There's overlap, split the remaining period
+                                    if (remaining.start < p2.start) {
+                                        newRemainingPeriods.push({
+                                            start: remaining.start,
+                                            end: p2.start,
+                                            type: remaining.type
+                                        });
+                                    }
+                                    if (remaining.end > p2.end) {
+                                        newRemainingPeriods.push({
+                                            start: p2.end,
+                                            end: remaining.end,
+                                            type: remaining.type
+                                        });
+                                    }
+                                }
+                            }
+                            
+                            remainingPeriods = newRemainingPeriods;
+                        }
+                        
+                        resultSchedule.weeks[week][day].push(...remainingPeriods);
+                    }
+                    
+                    // Sort periods by start time
+                    resultSchedule.weeks[week][day].sort((a, b) => a.start - b.start);
+                }
+            }
+            
+            return resultSchedule;
+        }
+        
+        // Convert schedule to condensed standard format string
+        function scheduleToCondensedString(schedule) {
+            const weekCount = getScheduleWeekCount(schedule);
+            const days = ['S', 'M', 'T', 'W', 'R', 'F', 'A']; // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            let result = '[';
+            
+            for (let week = 1; week <= weekCount; week++) {
+                if (week > 1) result += ',';
+                result += `(W${week})[`;
+                
+                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                    if (dayIndex > 0) result += ',';
+                    const dayName = dayNames[dayIndex];
+                    const dayCode = days[dayIndex];
+                    
+                    result += `${dayCode}[`;
+                    
+                    const periods = schedule.weeks[week] ? schedule.weeks[week][dayName] || [] : [];
+                    
+                    for (let periodIndex = 0; periodIndex < periods.length; periodIndex++) {
+                        if (periodIndex > 0) result += ',';
+                        const period = periods[periodIndex];
+                        result += `${period.type}${period.start}-${period.end}`;
+                    }
+                    
+                    result += ']';
+                }
+                
+                result += ']';
+            }
+            
+            result += ']';
+            return result;
+        }
+        
+        // Parse condensed standard format string back to schedule object
+        function parseCondensedScheduleString(condensedString) {
+            const schedule = {
+                id: nextScheduleId++,
+                type: 'A',
+                weeks: {}
+            };
+            
+            // Remove outer brackets
+            let content = condensedString.slice(1, -1);
+            
+            // Parse weeks
+            const weekRegex = /\(W(\d+)\)\[(.*?)\](?=,\(W\d+\)|\]|$)/g;
+            let weekMatch;
+            
+            while ((weekMatch = weekRegex.exec(content)) !== null) {
+                const weekNum = parseInt(weekMatch[1]);
+                const weekContent = weekMatch[2];
+                
+                schedule.weeks[weekNum] = {};
+                
+                // Parse days
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayRegex = /[SMTWRFA]\[(.*?)\]/g;
+                let dayMatch;
+                let dayIndex = 0;
+                
+                while ((dayMatch = dayRegex.exec(weekContent)) !== null && dayIndex < 7) {
+                    const dayName = dayNames[dayIndex];
+                    const dayContent = dayMatch[1];
+                    
+                    schedule.weeks[weekNum][dayName] = [];
+                    
+                    if (dayContent) {
+                        // Parse periods
+                        const periodRegex = /([ALSPRN])(\d+)-(\d+)/g;
+                        let periodMatch;
+                        
+                        while ((periodMatch = periodRegex.exec(dayContent)) !== null) {
+                            schedule.weeks[weekNum][dayName].push({
+                                type: periodMatch[1],
+                                start: parseInt(periodMatch[2]),
+                                end: parseInt(periodMatch[3])
+                            });
+                        }
+                    }
+                    
+                    dayIndex++;
+                }
+            }
+            
+            return schedule;
+        }
+        
+// Convert schedule to user-friendly format
+function scheduleToUserFriendlyString(schedule) {
+    const weekCount = getScheduleWeekCount(schedule);
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let result = [];
+    
+    for (let week = 1; week <= weekCount; week++) {
+        let weekResult = `Week ${week}: `;
+        let weekParts = [];
+        let processedDays = new Set();
+        
+        // Check if week has any periods at all
+        let hasAnyPeriods = false;
+        for (let dayName of dayNames) {
+            const periods = schedule.weeks[week] ? schedule.weeks[week][dayName] || [] : [];
+            if (periods.length > 0) {
+                hasAnyPeriods = true;
+                break;
+            }
+        }
+        
+        if (!hasAnyPeriods) {
+            weekResult += 'Empty Schedule';
+            result.push(weekResult);
+            continue;
+        }
+        
+        // Process each day in order
+        for (let i = 0; i < dayNames.length; i++) {
+            const currentDay = dayNames[i];
+            
+            if (processedDays.has(currentDay)) continue;
+            
+            const currentPeriods = schedule.weeks[week] ? schedule.weeks[week][currentDay] || [] : [];
+            
+            // Skip days with no periods
+            if (currentPeriods.length === 0) continue;
+            
+            // Find all days with identical schedules
+            let matchingDays = [currentDay];
+            
+            for (let j = i + 1; j < dayNames.length; j++) {
+                const compareDay = dayNames[j];
+                if (processedDays.has(compareDay)) continue;
+                
+                const comparePeriods = schedule.weeks[week] ? schedule.weeks[week][compareDay] || [] : [];
+                
+                if (periodsMatch(currentPeriods, comparePeriods)) {
+                    matchingDays.push(compareDay);
+                }
+            }
+            
+            // Mark all matching days as processed
+            matchingDays.forEach(day => processedDays.add(day));
+            
+            // Format the day group
+            let dayGroupStr = formatDayGroup(matchingDays, dayNames);
+            
+            // Format the periods for this group
+            let periodsStr = formatPeriods(currentPeriods);
+            
+            weekParts.push(`${dayGroupStr} ${periodsStr}`);
+        }
+        
+        weekResult += weekParts.join(', ');
+        result.push(weekResult);
+    }
+    
+    return result.join('. ') + '.';
+}
+
+// Helper function to check if two period arrays are identical
+function periodsMatch(periods1, periods2) {
+    if (periods1.length !== periods2.length) return false;
+    
+    // Sort both arrays by start time for comparison
+    const sorted1 = [...periods1].sort((a, b) => a.start - b.start);
+    const sorted2 = [...periods2].sort((a, b) => a.start - b.start);
+    
+    for (let i = 0; i < sorted1.length; i++) {
+        if (sorted1[i].start !== sorted2[i].start || sorted1[i].end !== sorted2[i].end) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Helper function to format a group of days
+function formatDayGroup(days, allDayNames) {
+    if (days.length === 1) {
+        return days[0];
+    }
+    
+    // Check if days are consecutive and more than 2
+    if (days.length > 2 && areConsecutive(days, allDayNames)) {
+        return `${days[0]}-${days[days.length - 1]}`;
+    } else {
+        return days.join('/');
+    }
+}
+
+// Helper function to check if days are consecutive
+function areConsecutive(days, allDayNames) {
+    // Get indices of the days
+    const indices = days.map(day => allDayNames.indexOf(day)).sort((a, b) => a - b);
+    
+    // Check if indices are consecutive
+    for (let i = 1; i < indices.length; i++) {
+        if (indices[i] !== indices[i-1] + 1) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Helper function to format periods for display
+function formatPeriods(periods) {
+    // Sort periods by start time
+    const sortedPeriods = [...periods].sort((a, b) => a.start - b.start);
+    
+    return sortedPeriods.map(period => {
+        const startStr = formatTimeUserFriendly(period.start);
+        const endStr = formatTimeUserFriendly(period.end);
+        return `${startStr}-${endStr}`;
+    }).join('/');
+}
+
+// Helper function to format time in user-friendly format
+function formatTimeUserFriendly(minutes) {
+    // Handle special case where 1440 should display as 12a (end of day)
+    if (minutes === 1440) minutes = 0;
+    
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const period = hours >= 12 ? 'p' : 'a';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    if (mins === 0) {
+        return `${displayHours}${period}`;
+    } else {
+        return `${displayHours}:${mins.toString().padStart(2, '0')}${period}`;
+    }
+}
+        
+        // CareResults class and functions
+        class CareResults {
+            constructor() {
+                this.fullDays = 0;
+                this.halfDays = 0;
+                this.partialDays = 0;
+                this.sleepTime = 0;
+                this.totalTime = 0;
+                this.nonStandardTime = 0;
+            }
+        }
+        
+        // Calculate care results from a single schedule
+        function calculateCareFromSchedule(schedule) {
+            const results = new CareResults();
+            const weekCount = getScheduleWeekCount(schedule);
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            let totalDays = 0;
+            
+            // Process each week and day
+            for (let week = 1; week <= weekCount; week++) {
+                for (let dayName of dayNames) {
+                    const periods = schedule.weeks[week] ? schedule.weeks[week][dayName] || [] : [];
+                    
+                    let dayTotalMinutes = 0;
+                    let daySleepMinutes = 0;
+                    let dayNonStandardMinutes = 0;
+                    
+                    for (let period of periods) {
+                        const periodMinutes = period.end - period.start;
+                        dayTotalMinutes += periodMinutes;
+                        
+                        if (period.type === 'L') {
+                            daySleepMinutes += periodMinutes;
+                        }
+                        
+                        // Non-standard time: 0-360 (midnight to 6am) and 1080-1440 (6pm-midnight)
+                        const nonStandardStart = Math.max(0, Math.min(360, Math.max(period.start, 0)));
+                        const nonStandardEnd1 = Math.min(360, period.end);
+                        if (nonStandardEnd1 > nonStandardStart) {
+                            dayNonStandardMinutes += nonStandardEnd1 - nonStandardStart;
+                        }
+                        
+                        const nonStandardStart2 = Math.max(1080, period.start);
+                        const nonStandardEnd2 = Math.min(1440, period.end);
+                        if (nonStandardEnd2 > nonStandardStart2) {
+                            dayNonStandardMinutes += nonStandardEnd2 - nonStandardStart2;
+                        }
+                    }
+                    
+                    // Apply maximums
+                    dayTotalMinutes = Math.min(dayTotalMinutes, 960);
+                    daySleepMinutes = Math.min(daySleepMinutes, 960);
+                    dayNonStandardMinutes = Math.min(dayNonStandardMinutes, 960);
+                    
+                    // Calculate day types based on total minutes
+                    if (dayTotalMinutes > 0) {
+                        totalDays++;
+                        
+                        if (dayTotalMinutes < 300) {
+                            results.halfDays += 1;
+                        } else if (dayTotalMinutes <= 600) {
+                            results.fullDays += 1;
+                        } else if (dayTotalMinutes <= 900) {
+                            results.fullDays += 1;
+                            results.halfDays += 1;
+                        } else {
+                            results.fullDays += 1;
+                            results.halfDays += 2;
+                        }
+                        
+                        results.totalTime += dayTotalMinutes;
+                        results.sleepTime += daySleepMinutes;
+                        results.nonStandardTime += dayNonStandardMinutes;
+                    }
+                }
+            }
+				
+			// Calculate weekly averages
+            if (weekCount > 0) {
+                results.fullDays = results.fullDays / weekCount;
+                results.halfDays = results.halfDays / weekCount;
+                results.partialDays = results.partialDays / weekCount;
+                results.totalTime = results.totalTime / weekCount;
+                results.sleepTime = results.sleepTime / weekCount;
+                results.nonStandardTime = results.nonStandardTime / weekCount;
+            }
+            
+            // Convert to monthly averages (weekly * 52 / 12)
+            results.fullDays = results.fullDays * 52.0 / 12.0;
+            results.halfDays = results.halfDays * 52.0 / 12.0;
+            results.partialDays = results.partialDays * 52.0 / 12.0;
+            results.totalTime = results.totalTime * 52.0 / 12.0;
+            results.sleepTime = results.sleepTime * 52.0 / 12.0;
+            results.nonStandardTime = results.nonStandardTime * 52.0 / 12.0;
+            
+            return results;
+        }
+        
+        // Calculate care results from activity schedule and school schedule
+        function calculateCareFromTwoSchedules(activitySchedule, schoolSchedule) {
+            const results = new CareResults();
+            const weekCount1 = getScheduleWeekCount(activitySchedule);
+            const weekCount2 = getScheduleWeekCount(schoolSchedule);
+            const totalWeeks = lcm(weekCount1, weekCount2);
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const schoolDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+            
+            // Process each week and day
+            for (let week = 1; week <= totalWeeks; week++) {
+                for (let dayName of dayNames) {
+                    const week1 = ((week - 1) % weekCount1) + 1;
+                    const week2 = ((week - 1) % weekCount2) + 1;
+                    
+                    const activityPeriods = activitySchedule.weeks[week1] ? 
+                        activitySchedule.weeks[week1][dayName] || [] : [];
+                    const schoolPeriods = schoolSchedule.weeks[week2] ? 
+                        schoolSchedule.weeks[week2][dayName] || [] : [];
+                    
+                    // Filter school periods to only include school/preschool types
+                    const validSchoolPeriods = schoolPeriods.filter(p => p.type === 'S' || p.type === 'P');
+                    
+                    let dayTotalMinutes = 0;
+                    let daySleepMinutes = 0;
+                    let dayNonStandardMinutes = 0;
+                    
+                    // Calculate total activity time
+                    for (let period of activityPeriods) {
+                        const periodMinutes = period.end - period.start;
+                        dayTotalMinutes += periodMinutes;
+                        
+                        if (period.type === 'L') {
+                            daySleepMinutes += periodMinutes;
+                        }
+                        
+                        // Calculate non-standard time
+                        const nonStandardStart = Math.max(0, Math.min(360, Math.max(period.start, 0)));
+                        const nonStandardEnd1 = Math.min(360, period.end);
+                        if (nonStandardEnd1 > nonStandardStart) {
+                            dayNonStandardMinutes += nonStandardEnd1 - nonStandardStart;
+                        }
+                        
+                        const nonStandardStart2 = Math.max(1080, period.start);
+                        const nonStandardEnd2 = Math.min(1440, period.end);
+                        if (nonStandardEnd2 > nonStandardStart2) {
+                            dayNonStandardMinutes += nonStandardEnd2 - nonStandardStart2;
+                        }
+                    }
+                    
+                    // Apply maximums
+                    dayTotalMinutes = Math.min(dayTotalMinutes, 960);
+                    daySleepMinutes = Math.min(daySleepMinutes, 960);
+                    dayNonStandardMinutes = Math.min(dayNonStandardMinutes, 960);
+                    
+                    // Calculate day types
+                    if (dayTotalMinutes > 0) {
+                        let isPartialDay = false;
+                        
+                        // Check for partial day conditions (Mon-Fri only)
+                        if (schoolDays.includes(dayName) && validSchoolPeriods.length > 0 && dayTotalMinutes < 300) {
+                            // Check if activity is both before and after school
+                            const sortedActivity = activityPeriods.sort((a, b) => a.start - b.start);
+                            const sortedSchool = validSchoolPeriods.sort((a, b) => a.start - b.start);
+                            
+                            if (sortedActivity.length > 0 && sortedSchool.length > 0) {
+                                const firstActivity = sortedActivity[0];
+                                const lastActivity = sortedActivity[sortedActivity.length - 1];
+                                const firstSchool = sortedSchool[0];
+                                const lastSchool = sortedSchool[sortedSchool.length - 1];
+                                
+                                // Check if there's activity before school starts and after school ends
+                                const hasActivityBefore = firstActivity.start < firstSchool.start;
+                                const hasActivityAfter = lastActivity.end > lastSchool.end;
+                                
+                                if (hasActivityBefore && hasActivityAfter) {
+                                    isPartialDay = true;
+                                    results.partialDays += 1;
+                                }
+                            }
+                        }
+                        
+                        if (!isPartialDay) {
+                            if (dayTotalMinutes < 300) {
+                                results.halfDays += 1;
+                            } else if (dayTotalMinutes <= 600) {
+                                results.fullDays += 1;
+                            } else if (dayTotalMinutes <= 900) {
+                                results.fullDays += 1;
+                                results.halfDays += 1;
+                            } else {
+                                results.fullDays += 1;
+                                results.halfDays += 2;
+                            }
+                        }
+                        
+                        results.totalTime += dayTotalMinutes;
+                        results.sleepTime += daySleepMinutes;
+                        results.nonStandardTime += dayNonStandardMinutes;
+                    }
+                }
+            }
+            
+            // Calculate weekly averages
+            if (totalWeeks > 0) {
+                results.fullDays = results.fullDays / totalWeeks;
+                results.halfDays = results.halfDays / totalWeeks;
+                results.partialDays = results.partialDays / totalWeeks;
+                results.totalTime = results.totalTime / totalWeeks;
+                results.sleepTime = results.sleepTime / totalWeeks;
+                results.nonStandardTime = results.nonStandardTime / totalWeeks;
+            }
+            
+            // Convert to monthly averages
+            results.fullDays = results.fullDays * 52.0 / 12.0;
+            results.halfDays = results.halfDays * 52.0 / 12.0;
+            results.partialDays = results.partialDays * 52.0 / 12.0;
+            results.totalTime = results.totalTime * 52.0 / 12.0;
+            results.sleepTime = results.sleepTime * 52.0 / 12.0;
+            results.nonStandardTime = results.nonStandardTime * 52.0 / 12.0;
+            
+            return results;
+        }
+	
+        
+        // Compare two CareResults and return the larger one
+        function getLargerCareResult(result1, result2) {
+            const score1 = (Math.ceil(result1.fullDays) * 2) + Math.ceil(result1.halfDays) + Math.ceil(result1.partialDays);
+            const score2 = (Math.ceil(result2.fullDays) * 2) + Math.ceil(result2.halfDays) + Math.ceil(result2.partialDays);
+            
+            if (score1 > score2) {
+                return result1;
+            } else if (score2 > score1) {
+                return result2;
+            } else {
+                // Scores are equal, compare total time
+                return result1.totalTime >= result2.totalTime ? result1 : result2;
+            }
+        }
+        
+        // School age additional care vs standard increase care calculation function
+        function calculateComplexCareResult(result1, result2) {
+            // First calculation: result1 * 40 + result2 * 12, then divide by 52
+            const calc1 = new CareResults();
+            calc1.fullDays = ((result1.fullDays * 40.0) + (result2.fullDays * 12.0)) / 52.0;
+            calc1.halfDays = ((result1.halfDays * 40.0) + (result2.halfDays * 12.0)) / 52.0;
+            calc1.partialDays = ((result1.partialDays * 40.0) + (result2.partialDays * 12.0)) / 52.0;
+            calc1.totalTime = ((result1.totalTime * 40.0) + (result2.totalTime * 12.0)) / 52.0;
+            calc1.sleepTime = ((result1.sleepTime * 40.0) + (result2.sleepTime * 12.0)) / 52.0;
+            calc1.nonStandardTime = ((result1.nonStandardTime * 40.0) + (result2.nonStandardTime * 12.0)) / 52.0;
+            
+            // Round up days
+            calc1.fullDays = Math.ceil(calc1.fullDays);
+            calc1.halfDays = Math.ceil(calc1.halfDays);
+            calc1.partialDays = Math.ceil(calc1.partialDays);
+            
+            // Second calculation: result1 * 40 + 60 full days + 36000 minutes, then divide by 52
+            const calc2 = new CareResults();
+            calc2.fullDays = ((result1.fullDays * 40.0) + 60.0) / 52.0;
+            calc2.halfDays = (result1.halfDays * 40.0) / 52.0;
+            calc2.partialDays = (result1.partialDays * 40.0) / 52.0;
+            calc2.totalTime = ((result1.totalTime * 40.0) + 36000.0) / 52.0;
+            calc2.sleepTime = (result1.sleepTime * 40.0) / 52.0;
+            calc2.nonStandardTime = (result1.nonStandardTime * 40.0) / 52.0;
+            
+            // Round up days
+            calc2.fullDays = Math.ceil(calc2.fullDays);
+            calc2.halfDays = Math.ceil(calc2.halfDays);
+            calc2.partialDays = Math.ceil(calc2.partialDays);
+            
+            return getLargerCareResult(calc1, calc2);
+        }
+        
+        // Check if first care result is larger than or equal to second
+        function careResultIsLargerOrEqual(result1, result2) {
+            const score1 = (Math.ceil(result1.fullDays) * 2) + Math.ceil(result1.halfDays) + Math.ceil(result1.partialDays);
+            const score2 = (Math.ceil(result2.fullDays) * 2) + Math.ceil(result2.halfDays) + Math.ceil(result2.partialDays);
+            
+            if (score1 > score2) {
+                return true;
+            } else if (score1 === score2) {
+                return result1.totalTime >= result2.totalTime;
+            } else {
+                return false;
+            }
+        }
+        
+        // Calculate age in years from birthdate
+        function calculateAge(birthdate) {
+            const today = new Date();
+            const birth = new Date(birthdate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+        
+        // Generate unique calculation result ID
+        let nextCalculationResultId = 1;
+        
+        // Main calculation function
+        function calculateCare() {
+            if (!data.activeApplicationId) {
+                alert('No active application selected');
+                return;
+            }
+            
+            const results = document.getElementById('calculationResults');
+            results.innerHTML = '<h4>Care Calculation Process</h4>';
+            
+            const app = data.applications.find(a => a.id == data.activeApplicationId);
+            if (!app) {
+                results.innerHTML += '<p class="error">Active application not found.</p>';
+                return;
+            }
+            
+            // Step 1: Error Checking
+            let hasErrors = false;
+            results.innerHTML += '<h5>Step 1: Error Checking</h5>';
+            
+            // Get all adults in household
+            const headPerson = data.people.find(p => p.id === app.headOfHouseholdId);
+            const adultMembers = data.householdMembers.filter(h => 
+                h.applicationId == data.activeApplicationId && 
+                h.included === 'Y' && 
+                h.memberType === 'A'
+            );
+            
+            const allAdults = [headPerson];
+            adultMembers.forEach(member => {
+                const person = data.people.find(p => p.id === member.personId);
+                if (person) allAdults.push(person);
+            });
+            
+            // Check adult activity overlaps
+            for (let adult of allAdults) {
+                const adultActivities = data.activities.filter(a => 
+                    a.applicationId == data.activeApplicationId && 
+                    a.personId === adult.id
+                );
+                
+                if (adultActivities.length > 1) {
+                    for (let i = 0; i < adultActivities.length; i++) {
+                        for (let j = i + 1; j < adultActivities.length; j++) {
+                            const schedule1 = data.schedules.find(s => s.id === adultActivities[i].scheduleId);
+                            const schedule2 = data.schedules.find(s => s.id === adultActivities[j].scheduleId);
+                            
+                            if (schedule1 && schedule2 && schedulesOverlap(schedule1, schedule2)) {
+                                results.innerHTML += `<p class="error">ERROR: ${adult.name} has overlapping activity schedules: "${adultActivities[i].name}" and "${adultActivities[j].name}"</p>`;
+                                hasErrors = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check children for multiple school activities
+            const childMembers = data.householdMembers.filter(h => 
+                h.applicationId == data.activeApplicationId && 
+                h.included === 'Y' && 
+                h.memberType === 'C'
+            );
+            
+            for (let child of childMembers) {
+                const person = data.people.find(p => p.id === child.personId);
+                const childActivities = data.activities.filter(a => 
+                    a.applicationId == data.activeApplicationId && 
+                    a.personId === child.personId &&
+                    (a.type === 'school' || a.type === 'preschool')
+                );
+                
+                if (childActivities.length > 1) {
+                    results.innerHTML += `<p class="error">ERROR: ${person ? person.name : 'Unknown child'} has multiple school/preschool activities</p>`;
+                    hasErrors = true;
+                }
+            }
+            
+            if (hasErrors) {
+                results.innerHTML += '<p class="error">Calculation cannot continue due to errors above.</p>';
+                return;
+            } else {
+                results.innerHTML += '<p style="color: green;">No issues found.</p>';
+            }
+            
+            // Step 2: Calculate care for application
+            results.innerHTML += `<h5>Step 2: Calculating care for application ${data.activeApplicationId}</h5>`;
+            
+            // Determine number of adults
+            const adultCount = allAdults.length;
+            results.innerHTML += `<p>This is a ${adultCount} parent household.</p>`;
+            
+            // Create combined schedules for each adult
+            const adultCombinedSchedules = [];
+            for (let adult of allAdults) {
+                const adultActivities = data.activities.filter(a => 
+                    a.applicationId == data.activeApplicationId && 
+                    a.personId === adult.id
+                );
+                
+                if (adultActivities.length === 0) {
+                    // No activities, create empty schedule
+                    const emptySchedule = createEmptySchedule('A');
+                    adultCombinedSchedules.push(emptySchedule);
+                    results.innerHTML += `<p>${adult.name}'s Schedule: No scheduled periods</p>`;
+                } else if (adultActivities.length === 1) {
+                    // Single activity
+                    const schedule = data.schedules.find(s => s.id === adultActivities[0].scheduleId);
+                    if (schedule) {
+                        adultCombinedSchedules.push(schedule);
+                        results.innerHTML += `<p>${adult.name}'s Schedule: ${scheduleToUserFriendlyString(schedule)}</p>`;
+                    }
+                } else {
+                    // Multiple activities, combine them
+                    let combinedSchedule = data.schedules.find(s => s.id === adultActivities[0].scheduleId);
+                    for (let i = 1; i < adultActivities.length; i++) {
+                        const nextSchedule = data.schedules.find(s => s.id === adultActivities[i].scheduleId);
+                        if (nextSchedule) {
+                            combinedSchedule = combineSchedules(combinedSchedule, nextSchedule);
+                        }
+                    }
+                    adultCombinedSchedules.push(combinedSchedule);
+                    results.innerHTML += `<p>${adult.name}'s Schedule: ${scheduleToUserFriendlyString(combinedSchedule)}</p>`;
+                }
+            }
+            
+            // Calculate household adults combined schedule (overlap of all adults)
+            let householdSchedule = adultCombinedSchedules[0];
+            for (let i = 1; i < adultCombinedSchedules.length; i++) {
+                householdSchedule = getScheduleOverlap(householdSchedule, adultCombinedSchedules[i]);
+            }
+            
+            results.innerHTML += `<p>Household Adults Combined Schedule: ${scheduleToUserFriendlyString(householdSchedule)}</p>`;
+            
+            // Check 110 hour rule
+            const householdCareResult = calculateCareFromSchedule(householdSchedule);
+            const meets110 = householdCareResult.totalTime >= 6540;
+            results.innerHTML += `<p>This household ${meets110 ? 'meets' : "doesn't meet"} the 110 hour rule.</p>`;
+            
+            // Process each child-provider pair
+            const providerLinks = data.providerLinks.filter(l => l.applicationId == data.activeApplicationId);
+            
+            for (let link of providerLinks) {
+                const provider = data.providers.find(p => p.id === link.providerId);
+                const child = data.people.find(p => p.id === link.personId);
+                const providerSchedule = data.schedules.find(s => s.id === link.scheduleId);
+                
+                if (!provider || !child || !providerSchedule) continue;
+                
+                const providerTypeMap = { 'C': 'Center', 'F': 'FFN', 'H': 'LFH' };
+                results.innerHTML += `<h6>Child ${child.name} is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h6>`;
+                
+                // Check for non-care activities
+                const childNonCareActivities = data.activities.filter(a => 
+                    a.applicationId == data.activeApplicationId && 
+                    a.personId === child.id &&
+                    a.type === 'non care'
+                );
+                
+                let finalSchedule = householdSchedule;
+                
+                // Subtract non-care schedules
+                for (let nonCareActivity of childNonCareActivities) {
+                    const nonCareSchedule = data.schedules.find(s => s.id === nonCareActivity.scheduleId);
+                    if (nonCareSchedule) {
+                        finalSchedule = subtractSchedule(finalSchedule, nonCareSchedule);
+                    }
+                }
+                
+                // Get overlap with provider schedule
+                finalSchedule = getScheduleOverlap(finalSchedule, providerSchedule);
+                
+                // Calculate care result
+                const careResult = calculateCareFromSchedule(finalSchedule);
+                
+                // Check if child has multiple providers
+                const childProviderLinks = providerLinks.filter(l => l.personId === child.id);
+                const multProvs = childProviderLinks.length > 1;
+                const isPrimary = link.primary === 'Y';
+                
+                if (multProvs) {
+                    results.innerHTML += `<p>This child is attending multiple providers${isPrimary ? ' and this is the primary provider.' : ' but this is not the primary provider.'}</p>`;
+                    
+                    if (careResult.totalTime === 0) {
+                        results.innerHTML += '<p>No care is needed with this provider.</p>';
+                        continue;
+                    }
+                }
+                
+                // Check if child is school-aged
+                const childAge = calculateAge(child.birthdate);
+                const childSchoolActivities = data.activities.filter(a => 
+                    a.applicationId == data.activeApplicationId && 
+                    a.personId === child.id &&
+                    a.type === 'school'
+                );
+                
+                const schoolAge = (childSchoolActivities.length > 0 && childAge > 5) || childAge > 7;
+                
+                let schoolOverlap = false;
+                let schoolYearCareResult = null;
+                
+                if (schoolAge && isPrimary) {
+                    // Check for school schedule overlap
+                    for (let schoolActivity of childSchoolActivities) {
+                        const schoolSchedule = data.schedules.find(s => s.id === schoolActivity.scheduleId);
+                        if (schoolSchedule && schedulesOverlap(finalSchedule, schoolSchedule)) {
+                            schoolOverlap = true;
+                            
+                            // Calculate school year care
+                            const schoolYearSchedule = subtractSchedule(finalSchedule, schoolSchedule);
+                            schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule);
+							schoolYearCareResult = calculateComplexCareResult(schoolYearCareResult, careResult);
+                            break;
+                        }
+                    }
+                    
+                    if (schoolOverlap) {
+                        results.innerHTML += '<p>This child is school aged, and this is the primary provider.</p>';
+                    } else {
+                        results.innerHTML += '<p>This child is school aged, but care with this provider is unaffected.</p>';
+                    }
+                } else if (schoolAge) {
+                    results.innerHTML += '<p>This child is school aged, but care with this provider is unaffected.</p>';
+                }
+                
+                results.innerHTML += `<p>This child requires care an average of ${(careResult.totalTime / 60.0).toFixed(1)} hours per month with this provider.</p>`;
+                
+                // Check 110 hour rule for single provider
+                const care110 = careResult.totalTime >= 6540 && !multProvs;
+                if (care110) {
+                    results.innerHTML += '<p>Care for this child meets the 110 hour rule.</p>';
+                }
+                
+                // Create calculation result object
+                const calculationResult = {
+                    id: nextCalculationResultId++,
+                    providerId: provider.id,
+                    clientId: child.id,
+                    applicationId: parseInt(data.activeApplicationId),
+                    providerType: provider.type,
+                    meets110: meets110,
+                    multProvs: multProvs,
+                    schoolAge: schoolAge,
+                    schoolOverlap: schoolOverlap,
+                    care110: care110,
+                    SummerFullDays: Math.Ceil(careResult.fullDays),
+                    SummerHalfDays: Math.ceil(careResult.halfDays),
+                    SummerPartialDays: Math.ceil(careResult.partialDays),
+                    SummerSleepTime: careResult.sleepTime,
+                    SummerTotalTime: careResult.totalTime,
+                    SummerNonStandardTime: careResult.nonStandardTime,
+                    fullDays: schoolYearCareResult ? schoolYearCareResult.fullDays : careResult.fullDays,
+                    halfDays: schoolYearCareResult ? schoolYearCareResult.halfDays : careResult.halfDays,
+                    partialDays: schoolYearCareResult ? schoolYearCareResult.partialDays : careResult.partialDays,
+                    sleepTime: schoolYearCareResult ? schoolYearCareResult.sleepTime : careResult.sleepTime,
+                    totalTime: schoolYearCareResult ? schoolYearCareResult.totalTime : careResult.totalTime,
+                    nonStandardTime: schoolYearCareResult ? schoolYearCareResult.nonStandardTime : careResult.nonStandardTime,
+                    finalScheduleString: scheduleToCondensedString(finalSchedule),
+                    childSchoolScheduleString: childSchoolActivities.length > 0 ? 
+                        scheduleToCondensedString(data.schedules.find(s => s.id === childSchoolActivities[0].scheduleId)) : ''
+                };
+                
+                results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
+            }
+            
+            results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
+        }
+		
+
+        // Schedule functions
+        function createEmptySchedule(type) {
+            const schedule = {
+                id: nextScheduleId++,
+                type: type,
+                weeks: {
+                    1: {
+                        Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+                    }
+                }
+            };
+            
+            data.schedules.push(schedule);
+            saveData();
+            return schedule;
+        }
+
+        function refreshScheduleSelector() {
+            const selector = document.getElementById('scheduleSelector');
+            selector.innerHTML = '<option value="">Select a schedule to edit</option>';
+            
+            if (!data.activeApplicationId) return;
+            
+            // Add activity schedules
+            const activities = data.activities.filter(a => a.applicationId == data.activeApplicationId);
+            activities.forEach(activity => {
+                const person = data.people.find(p => p.id === activity.personId);
+                const option = document.createElement('option');
+                option.value = `activity-${activity.scheduleId}`;
+                option.textContent = `Activity: ${activity.name} - ${person ? person.name : 'Unknown'}`;
+                selector.appendChild(option);
+            });
+            
+            // Add provider link schedules
+            const links = data.providerLinks.filter(l => l.applicationId == data.activeApplicationId);
+            links.forEach(link => {
+                const provider = data.providers.find(p => p.id === link.providerId);
+                const person = data.people.find(p => p.id === link.personId);
+                const option = document.createElement('option');
+                option.value = `link-${link.scheduleId}`;
+                option.textContent = `Provider Link: ${provider ? provider.name : 'Unknown'} - ${person ? person.name : 'Unknown'}`;
+                selector.appendChild(option);
+            });
+        }
+
+        function loadSchedule() {
+            const selector = document.getElementById('scheduleSelector');
+            const editor = document.getElementById('scheduleEditor');
+            
+            if (!selector.value) {
+                editor.style.display = 'none';
+                return;
+            }
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            
+            if (schedule) {
+                editor.style.display = 'block';
+                updateDayOptions(schedule.type);
+                updateDefaultButtons(selector.value, schedule.type);
+                displaySchedule(schedule);
+            }
+        }
+
+        function updateDayOptions(scheduleType) {
+            const daySelect = document.getElementById('periodDay');
+            daySelect.innerHTML = '';
+            
+            if (scheduleType === 'S' || scheduleType === 'P') { // School or Preschool
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].forEach((day, index) => {
+                    const dayCode = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'][index];
+                    daySelect.innerHTML += `<option value="${dayCode}">${day}</option>`;
+                });
+            } else {
+                ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach((day, index) => {
+                    const dayCode = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index];
+                    daySelect.innerHTML += `<option value="${dayCode}">${day}</option>`;
+                });
+            }
+        }
+
+        function updateDefaultButtons(selectorValue, scheduleType) {
+            const editor = document.getElementById('scheduleEditor');
+            
+            // Remove existing default buttons
+            const existingButtons = editor.querySelectorAll('.default-schedule-btn');
+            existingButtons.forEach(btn => btn.remove());
+            
+            // Add default schedule buttons
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.marginBottom = '15px';
+            
+            // Add Week button
+            const addWeekBtn = document.createElement('button');
+            addWeekBtn.textContent = 'Add New Week';
+            addWeekBtn.className = 'default-schedule-btn';
+            addWeekBtn.onclick = () => addNewWeek();
+            buttonContainer.appendChild(addWeekBtn);
+            
+            // M-F 8a-5p button
+            const btn1 = document.createElement('button');
+            btn1.textContent = 'M-F 8a-5p';
+            btn1.className = 'default-schedule-btn';
+            btn1.onclick = () => loadDefaultSchedule('8a-5p');
+            buttonContainer.appendChild(btn1);
+            
+            // M-F 8:30a-3:30p button
+            const btn2 = document.createElement('button');
+            btn2.textContent = 'M-F 8:30a-3:30p';
+            btn2.className = 'default-schedule-btn';
+            btn2.onclick = () => loadDefaultSchedule('830a-330p');
+            buttonContainer.appendChild(btn2);
+            
+            // 24/7 button (only for provider-child links)
+            if (selectorValue.startsWith('link-')) {
+                const btn3 = document.createElement('button');
+                btn3.textContent = '24/7';
+                btn3.className = 'default-schedule-btn';
+                btn3.onclick = () => loadDefaultSchedule('24-7');
+                buttonContainer.appendChild(btn3);
+            }
+            
+            // Insert after the clear button
+            const clearButton = editor.querySelector('button.danger');
+            clearButton.parentNode.insertBefore(buttonContainer, clearButton.nextSibling);
+        }
+
+        function addNewWeek() {
+            const selector = document.getElementById('scheduleSelector');
+            if (!selector.value) return;
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+            
+            // Find the next available week number
+            const existingWeeks = Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b);
+            const nextWeek = Math.max(...existingWeeks) + 1;
+            
+            if (nextWeek > 4) {
+                alert('Maximum of 4 weeks allowed in a schedule');
+                return;
+            }
+            
+            // Add the new week
+            schedule.weeks[nextWeek] = {
+                Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+            };
+            
+            saveData();
+            displaySchedule(schedule);
+            
+            alert(`Week ${nextWeek} added to schedule`);
+        }
+
+        function loadDefaultSchedule(type) {
+            const selector = document.getElementById('scheduleSelector');
+            if (!selector.value) return;
+            
+            if (!confirm('This will replace the current schedule. Continue?')) return;
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+            
+            // Clear existing schedule
+            schedule.weeks = {
+                1: {
+                    Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+                }
+            };
+            
+            if (type === '8a-5p') {
+                // M-F 8:00 AM - 5:00 PM (480-1020)
+                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].forEach(day => {
+                    schedule.weeks[1][day].push({ 
+                        start: 480, 
+                        end: 1020, 
+                        type: schedule.type 
+                    });
+                });
+            } else if (type === '830a-330p') {
+                // M-F 8:30 AM - 3:30 PM (510-930)
+                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].forEach(day => {
+                    schedule.weeks[1][day].push({ 
+                        start: 510, 
+                        end: 930, 
+                        type: schedule.type 
+                    });
+                });
+            } else if (type === '24-7') {
+                // 24/7 12:00 AM - 12:00 AM (0-1440)
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                    schedule.weeks[1][day].push({ 
+                        start: 0, 
+                        end: 1440, 
+                        type: schedule.type 
+                    });
+                });
+            }
+            
+            saveData();
+            displaySchedule(schedule);
+        }
+
+        // Calculate Care functions
+        function refreshCalculationForm() {
+            const form = document.getElementById('calculationForm');
+            
+            if (!data.activeApplicationId) {
+                form.innerHTML = '<p>Please select an active application first.</p>';
+                return;
+            }
+            
+            const app = data.applications.find(a => a.id == data.activeApplicationId);
+            if (!app) {
+                form.innerHTML = '<p>Active application not found.</p>';
+                return;
+            }
+            
+            form.innerHTML = `
+                <p>Active Application: ${data.activeApplicationId}</p>
+                <p>Ready to calculate care for all children in this application.</p>
+                <button onclick="calculateCare()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Calculate All Care</button>
+            `;
+        }
+
+       /* function calculateCare() {
+            if (!data.activeApplicationId) {
+                alert('No active application selected');
+                return;
+            }
+            
+            // Placeholder for the complex calculation logic
+            const results = document.getElementById('calculationResults');
+            results.innerHTML = `
+                <p><strong>Calculation initiated for Application ${data.activeApplicationId}</strong></p>
+                <p>This is where the complex care calculation results will be displayed.</p>
+                <p>Ready for the calculation logic implementation.</p>
+            `;
+        }*/
+
+        function displaySchedule(schedule) {
+            const display = document.getElementById('scheduleDisplay');
+            
+            // Create 5x8 grid (weeks + 7 days)
+            let html = '<div class="schedule-grid">';
+            
+            // Header row
+            html += '<div class="schedule-cell schedule-header">Week</div>';
+            ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach(day => {
+                html += `<div class="schedule-cell schedule-header">${day}</div>`;
+            });
+            
+            // Week rows (always show 4 weeks)
+            for (let week = 1; week <= 4; week++) {
+                const weekExists = schedule.weeks[week] !== undefined;
+                const weekClass = weekExists ? '' : ' empty-week';
+                
+                html += `<div class="schedule-cell schedule-header${weekClass}">Week ${week}</div>`;
+                
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                    html += `<div class="schedule-cell${weekClass}">`;
+                    
+                    if (weekExists && schedule.weeks[week][day]) {
+                        const periods = schedule.weeks[week][day].sort((a, b) => a.start - b.start);
+                        periods.forEach(period => {
+                            html += `<div class="period" onclick="removePeriod(${schedule.id}, ${week}, '${day}', ${period.start}, ${period.end})">${formatTime(period.start)} - ${formatTime(period.end)}</div>`;
+                        });
+                    }
+                    
+                    html += '</div>';
+                });
+            }
+            
+            html += '</div>';
+            display.innerHTML = html;
+        }
+
+        function clearSchedule() {
+            const selector = document.getElementById('scheduleSelector');
+            if (!selector.value) return;
+            
+            if (!confirm('Are you sure you want to clear this schedule?')) return;
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            
+            if (schedule) {
+                schedule.weeks = {
+                    1: {
+                        Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+                    }
+                };
+                saveData();
+                displaySchedule(schedule);
+            }
+        }
+
+        function addPeriod() {
+            const selector = document.getElementById('scheduleSelector');
+            if (!selector.value) return;
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+            
+            const week = parseInt(document.getElementById('periodWeek').value);
+            const day = document.getElementById('periodDay').value;
+            const startTimeStr = document.getElementById('periodStartTime').value.trim();
+            const endTimeStr = document.getElementById('periodEndTime').value.trim();
+            
+            document.getElementById('periodError').textContent = '';
+            
+            let startTime = parseTime(startTimeStr);
+            let endTime = parseTime(endTimeStr);
+            
+            if (startTime === null) {
+                document.getElementById('periodError').textContent = 'Invalid start time format. Use H:mm AM/PM';
+                return;
+            }
+            
+            if (endTime === null) {
+                document.getElementById('periodError').textContent = 'Invalid end time format. Use H:mm AM/PM';
+                return;
+            }
+            
+            // Special handling for 12:00 AM as end time - treat as end of day (1440)
+            if (endTimeStr.match(/^12:00\s*AM$/i)) {
+                endTime = 1440;
+            }
+            
+            // Ensure the target week exists, and create any missing weeks up to it
+            ensureWeeksExist(schedule, week);
+            
+            // Handle periods that cross midnight (end time is next day)
+            if (endTime <= startTime && endTime !== 1440) {
+                // This is an overnight period, split it
+                
+                // First period: start time to midnight on current day
+                if (!addPeriodToSchedule(schedule, week, day, startTime, 1440)) {
+                    return; // Error already set
+                }
+                
+                // Second period: midnight to end time on next day
+                const nextDay = getNextDay(day);
+                let nextWeek = week;
+                
+                if (day === 'Sat') {
+                    // For Saturday overflow, find the next existing Sunday
+                    const existingWeeks = Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b);
+                    const nextExistingWeek = existingWeeks.find(w => w > week);
+                    nextWeek = nextExistingWeek || 1; // Use next existing week or wrap to week 1
+                }
+                
+                if (!addPeriodToSchedule(schedule, nextWeek, nextDay, 0, endTime)) {
+                    // If second period fails, remove the first period we just added
+                    schedule.weeks[week][day].pop();
+                    return;
+                }
+            } else {
+                // Normal period within same day
+                if (!addPeriodToSchedule(schedule, week, day, startTime, endTime)) {
+                    return; // Error already set
+                }
+            }
+            
+            // Clear form
+            document.getElementById('periodStartTime').value = '';
+            document.getElementById('periodEndTime').value = '';
+            
+            saveData();
+            displaySchedule(schedule);
+        }
+
+        function ensureWeeksExist(schedule, targetWeek) {
+            // Create all weeks up to the target week if they don't exist
+            for (let w = 1; w <= targetWeek; w++) {
+                if (!schedule.weeks[w]) {
+                    schedule.weeks[w] = {
+                        Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+                    };
+                }
+            }
+        }
+
+        function getNextDay(day) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const index = days.indexOf(day);
+            return days[(index + 1) % 7];
+        }
+
+        function addPeriodToSchedule(schedule, week, day, startTime, endTime) {
+            // Ensure week exists
+            ensureWeeksExist(schedule, week);
+            
+            // Check for overlaps
+            const existingPeriods = schedule.weeks[week][day];
+            for (let period of existingPeriods) {
+                if (!(endTime <= period.start || startTime >= period.end)) {
+                    document.getElementById('periodError').textContent = 'Period overlaps with existing period';
+                    return false;
+                }
+            }
+            
+            // Add period with type matching the schedule type
+            existingPeriods.push({ 
+                start: startTime, 
+                end: endTime, 
+                type: schedule.type 
+            });
+            return true;
+        }
+
+        function removePeriod(scheduleId, week, day, startTime, endTime) {
+            if (!confirm('Remove this period?')) return;
+            
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            if (!schedule || !schedule.weeks[week]) return;
+            
+            schedule.weeks[week][day] = schedule.weeks[week][day].filter(p => 
+                !(p.start === startTime && p.end === endTime));
+            
+            saveData();
+            displaySchedule(schedule);
+        }
+
+        // Initialize the application
+        function init() {
+            refreshPeopleList();
+            refreshProvidersList();
+            refreshApplicationsList();
+            refreshHouseholdForm();
+            refreshHouseholdList();
+            refreshActivityForm();
+            refreshActivitiesList();
+            refreshProviderLinkForm();
+            refreshProviderLinksList();
+            refreshScheduleSelector();
+            refreshCalculationForm();
+        }
+
+        // Run initialization when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
