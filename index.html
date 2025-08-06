@@ -1863,10 +1863,6 @@ function formatTimeUserFriendly(minutes) {
             calc1.sleepTime = ((result1.sleepTime * 40.0) + (result2.sleepTime * 12.0)) / 52.0;
             calc1.nonStandardTime = ((result1.nonStandardTime * 40.0) + (result2.nonStandardTime * 12.0)) / 52.0;
             
-            // Round up days
-            calc1.fullDays = Math.ceil(calc1.fullDays);
-            calc1.halfDays = Math.ceil(calc1.halfDays);
-            calc1.partialDays = Math.ceil(calc1.partialDays);
             
             // Second calculation: result1 * 40 + 60 full days + 36000 minutes, then divide by 52
             const calc2 = new CareResults();
@@ -1876,11 +1872,6 @@ function formatTimeUserFriendly(minutes) {
             calc2.totalTime = ((result1.totalTime * 40.0) + 36000.0) / 52.0;
             calc2.sleepTime = (result1.sleepTime * 40.0) / 52.0;
             calc2.nonStandardTime = (result1.nonStandardTime * 40.0) / 52.0;
-            
-            // Round up days
-            calc2.fullDays = Math.ceil(calc2.fullDays);
-            calc2.halfDays = Math.ceil(calc2.halfDays);
-            calc2.partialDays = Math.ceil(calc2.partialDays);
             
             return getLargerCareResult(calc1, calc2);
         }
@@ -2107,7 +2098,7 @@ function formatTimeUserFriendly(minutes) {
                 finalSchedule = getScheduleOverlap(finalSchedule, providerSchedule);
                 
                 // Calculate care result
-                const careResult = careToMonthly(calculateCareFromSchedule(finalSchedule));
+                const initCareResult = calculateCareFromSchedule(finalSchedule);
                 
                 // Check if child has multiple providers
                 const childProviderLinks = providerLinks.filter(l => l.personId === child.id);
@@ -2147,33 +2138,40 @@ function formatTimeUserFriendly(minutes) {
 // If it does, remove the school or preschool schedule from the finalSchedule
 // If this is the primary, and the schedule affects care then use the calculateComplexCareResult function to determine the schoolYearCareResult
 // Otherwise, if this is not the primary use standard careResult
-	if(schoolAge || preschoolAge)
+
+	if(schoolAge === true || preschoolAge === true)
 	{
-		for (let schoolActivity of childSchoolActivities) 
+		if(schoolAge === true)
 		{
-			const schoolSchedule = data.schedules.find(s => s.id === schoolActivity.scheduleId);
-                        if (schoolSchedule && schedulesOverlap(finalSchedule, schoolSchedule)) 
+			for (let schoolActivity of childSchoolActivities) 
 			{
-                            schoolOverlap = true;
-			    const schoolYearSchedule = subtractSchedule(finalSchedule, schoolSchedule);
-			    schoolYearCareResult = careToMonthly(calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule));
-			    break;
+				const schoolSchedule = data.schedules.find(s => s.id === schoolActivity.scheduleId);
+				if (schoolSchedule && schedulesOverlap(finalSchedule, schoolSchedule)) 
+				{
+					schoolOverlap = true;
+					const schoolYearSchedule = subtractSchedule(finalSchedule, schoolSchedule);
+					schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule);
+					break;
+				}
 			}
 		}
-		for (let preschoolActivity of childPreschoolActivities) 
+		else
 		{
-			const preschoolSchedule = data.schedules.find(s => s.id === preschoolActivity.scheduleId);
-                        if (preschoolSchedule && schedulesOverlap(finalSchedule, preschoolSchedule)) 
+			for (let preschoolActivity of childPreschoolActivities) 
 			{
-                            schoolOverlap = true;
-			    const schoolYearSchedule = subtractSchedule(finalSchedule, preschoolSchedule);
-			    schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, preschoolSchedule);
-			    break;
+				const preschoolSchedule = data.schedules.find(s => s.id === preschoolActivity.scheduleId);
+				if (preschoolSchedule && schedulesOverlap(finalSchedule, preschoolSchedule)) 
+				{
+					schoolOverlap = true;
+					const schoolYearSchedule = subtractSchedule(finalSchedule, preschoolSchedule);
+					schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, preschoolSchedule);
+					break;
+				}
 			}
 		}
 		if(schoolOverlap && isPrimary)
 		{
-			schoolYearCareResult = calculateComplexCareResult(schoolYearCareResult, careResult);
+			schoolYearCareResult = calculateComplexCareResult(schoolYearCareResult, initCareResult);
 			results.innerHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged, and this is the primary provider.</p>`;
 		}
 		else
@@ -2182,6 +2180,14 @@ function formatTimeUserFriendly(minutes) {
 		}
 		
 	} 
+		if(schoolYearCareResult === null)
+		{
+			schoolYearCareResult = JSON.parse(JSON.stringify(initCareResult));
+		}
+			// convert care results to monthly results
+			schoolYearCareResult = careToMonthly(schoolYearCareResult);
+			careResult = careToMonthly(initCareResult);
+	
                 results.innerHTML += `<p>This child requires care an average of ${(careResult.totalTime / 60.0).toFixed(1)} hours per month with this provider.</p>`;
                 
                 // Check 110 hour rule for single provider
