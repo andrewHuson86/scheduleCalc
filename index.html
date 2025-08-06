@@ -2089,7 +2089,7 @@ function formatTimeUserFriendly(minutes) {
                 if (!provider || !child || !providerSchedule) continue;
                 
                 const providerTypeMap = { 'C': 'Center', 'F': 'FFN', 'H': 'LFH' };
-                results.innerHTML += `<h5>Child ${child.name} (${child.birthdate}) is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h5>`;
+                results.innerHTML += `<h5>Child ${child.name} (${getFormattedDate(child.birthdate)}) is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h5>`;
                 
                 // Check for non-care activities
                 const childNonCareActivities = data.activities.filter(a => 
@@ -2214,14 +2214,16 @@ function formatTimeUserFriendly(minutes) {
                 const calculationResult = {
                     id: nextCalculationResultId++,
                     providerId: provider.id,
-		    region: provider.region,
+					region: provider.region,
                     clientId: child.id,
                     applicationId: parseInt(data.activeApplicationId),
-		    startDate: careStartDate,
-		    birthdate: child.birthdate,
+					startDate: careStartDate,
+					birthdate: child.birthdate,
+					ageMonths: calculateCompleteMonths(child.birthdate, careStartDate),
                     providerType: provider.type,
                     meets110: meets110,
                     multProvs: multProvs,
+					isPrimary: isPrimary,
                     schoolAge: schoolAge,
                     schoolOverlap: schoolOverlap,
                     care110: care110,
@@ -2674,10 +2676,11 @@ function formatTimeUserFriendly(minutes) {
             displaySchedule(schedule);
         }
 
-function getFormattedDate(dateStr) {
-let date = new Date(dateStr);
-console.log(dateStr);
-console.log(date);
+// formats a date into a string MM/DD/YYYY
+function getFormattedDate(dateStr) 
+{
+  let tdate = new Date(dateStr);
+  let date = new Date(tdate.getTime() + (tdate.getTimezoneOffset() * 60 * 1000));
   var year = date.getFullYear();
 
   var month = (1 + date.getMonth()).toString();
@@ -2687,6 +2690,38 @@ console.log(date);
   day = day.length > 1 ? day : '0' + day;
   
   return month + '/' + day + '/' + year;
+}
+
+// to get childs age in months as of a care begin date, call calculateCompleteMonths(birthdate, carebegindate)
+function calculateCompleteMonths(startDate, endDate) 
+{
+  // Convert string dates to Date objects if needed
+  const tStart = new Date(startDate);
+  const tEnd = new Date(endDate);
+  
+  const conStart = new Date(tStart.getTime() + (tStart.getTimezoneOffset() * 60 * 1000));
+  const conEnd = new Date(tEnd.getTime() + (tEnd.getTimezoneOffset() * 60 * 1000));
+
+  const start = new Date(conStart.getFullYear(), conStart.getMonth(), 1);
+  const end = new Date(conEnd.getFullYear(), conEnd.getMonth(),0);
+
+  if (start >= end) 
+  {
+    return 0;
+  }
+  
+  // Calculate the difference in months
+  let months = 0;
+  let currentDate = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+  
+  // Count complete months until we reach or pass the target month
+  while (currentDate <= end) 
+  {
+    months++;
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  }
+  
+  return months;
 }
 
         // Initialize the application
