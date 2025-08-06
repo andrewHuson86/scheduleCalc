@@ -1715,14 +1715,7 @@ function formatTimeUserFriendly(minutes) {
                 results.sleepTime = results.sleepTime / weekCount;
                 results.nonStandardTime = results.nonStandardTime / weekCount;
             }
-            
-            // Convert to monthly averages (weekly * 52 / 12)
-            results.fullDays = results.fullDays * 52.0 / 12.0;
-            results.halfDays = results.halfDays * 52.0 / 12.0;
-            results.partialDays = results.partialDays * 52.0 / 12.0;
-            results.totalTime = results.totalTime * 52.0 / 12.0;
-            results.sleepTime = results.sleepTime * 52.0 / 12.0;
-            results.nonStandardTime = results.nonStandardTime * 52.0 / 12.0;
+  
             
             return results;
         }
@@ -1840,14 +1833,6 @@ function formatTimeUserFriendly(minutes) {
                 results.nonStandardTime = results.nonStandardTime / totalWeeks;
             }
             
-            // Convert to monthly averages
-            results.fullDays = results.fullDays * 52.0 / 12.0;
-            results.halfDays = results.halfDays * 52.0 / 12.0;
-            results.partialDays = results.partialDays * 52.0 / 12.0;
-            results.totalTime = results.totalTime * 52.0 / 12.0;
-            results.sleepTime = results.sleepTime * 52.0 / 12.0;
-            results.nonStandardTime = results.nonStandardTime * 52.0 / 12.0;
-            
             return results;
         }
 	
@@ -1913,6 +1898,20 @@ function formatTimeUserFriendly(minutes) {
                 return false;
             }
         }
+		
+		//convert averageWeeklyCare to monthly
+		function careToMonthly(careResult)
+		{
+		 // Convert to monthly averages
+            careResult.fullDays = (careResult.fullDays * 52.0) / 12.0;
+            careResult.halfDays = (careResult.halfDays * 52.0) / 12.0;
+            careResult.partialDays = (careResult.partialDays * 52.0) / 12.0;
+            careResult.totalTime = (careResult.totalTime * 52.0) / 12.0;
+            careResult.sleepTime = (careResult.sleepTime * 52.0) / 12.0;
+            careResult.nonStandardTime = (careResult.nonStandardTime * 52.0) / 12.0;
+            
+            return careResult;
+		}
         
         // Calculate age in years from birthdate
         function calculateAge(birthdate) {
@@ -2070,7 +2069,7 @@ function formatTimeUserFriendly(minutes) {
             results.innerHTML += `<p>Household Adults Combined Schedule: ${scheduleToUserFriendlyString(householdSchedule)}</p>`;
             
             // Check 110 hour rule
-            const householdCareResult = calculateCareFromSchedule(householdSchedule);
+            const householdCareResult = careToMonthly(calculateCareFromSchedule(householdSchedule));
             const meets110 = householdCareResult.totalTime >= 6540;
             results.innerHTML += `<p>This household ${meets110 ? 'meets' : "doesn't meet"} the 110 hour rule.</p>`;
             
@@ -2108,7 +2107,7 @@ function formatTimeUserFriendly(minutes) {
                 finalSchedule = getScheduleOverlap(finalSchedule, providerSchedule);
                 
                 // Calculate care result
-                const careResult = calculateCareFromSchedule(finalSchedule);
+                const careResult = careToMonthly(calculateCareFromSchedule(finalSchedule));
                 
                 // Check if child has multiple providers
                 const childProviderLinks = providerLinks.filter(l => l.personId === child.id);
@@ -2157,7 +2156,7 @@ function formatTimeUserFriendly(minutes) {
 			{
                             schoolOverlap = true;
 			    const schoolYearSchedule = subtractSchedule(finalSchedule, schoolSchedule);
-			    schoolYearCareResult = calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule);
+			    schoolYearCareResult = careToMonthly(calculateCareFromTwoSchedules(schoolYearSchedule, schoolSchedule));
 			    break;
 			}
 		}
@@ -2182,8 +2181,7 @@ function formatTimeUserFriendly(minutes) {
 			results.innerHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged, but care with this provider is unaffected.</p>`;	
 		}
 		
-	}
-                
+	} 
                 results.innerHTML += `<p>This child requires care an average of ${(careResult.totalTime / 60.0).toFixed(1)} hours per month with this provider.</p>`;
                 
                 // Check 110 hour rule for single provider
