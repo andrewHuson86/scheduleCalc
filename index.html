@@ -193,6 +193,18 @@
                         <option value="H">LFH (H)</option>
                     </select>
                 </div>
+		<div class="form-group">
+                    <label>Region:</label>
+                    <select id="providerRegion">
+                        <option value="1">Region 1</option>
+                        <option value="S">Spokane</option>
+                        <option value="2">Region 2</option>
+			<option value="3">Region 3</option>
+			<option value="4">Region 4</option>
+			<option value="5">Region 5</option>
+			<option value="6">Region 6</option>
+                    </select>
+                </div>
                 <button onclick="addProvider()">Add Provider</button>
             </div>
             
@@ -499,6 +511,7 @@
         function addProvider() {
             const name = document.getElementById('providerName').value.trim();
             const type = document.getElementById('providerType').value;
+	    const region = document.getElementById('providerRegion').value;
             
             if (!name) {
                 alert('Provider name is required');
@@ -508,7 +521,8 @@
             const provider = {
                 id: nextProviderId++,
                 name: name,
-                type: type
+                type: type,
+		region: region
             };
             
             data.providers.push(provider);
@@ -1878,8 +1892,8 @@ function formatTimeUserFriendly(minutes) {
         
         // Check if first care result is larger than or equal to second
         function careResultIsLargerOrEqual(result1, result2) {
-            const score1 = (Math.ceil(result1.fullDays) * 2) + Math.ceil(result1.halfDays) + Math.ceil(result1.partialDays);
-            const score2 = (Math.ceil(result2.fullDays) * 2) + Math.ceil(result2.halfDays) + Math.ceil(result2.partialDays);
+            const score1 = Math.ceil((result1.fullDays * 2) + result1.halfDays + result1.partialDays);
+            const score2 = Math.ceil((result2.fullDays * 2) + result2.halfDays + result2.partialDays);
             
             if (score1 > score2) {
                 return true;
@@ -2075,7 +2089,7 @@ function formatTimeUserFriendly(minutes) {
                 if (!provider || !child || !providerSchedule) continue;
                 
                 const providerTypeMap = { 'C': 'Center', 'F': 'FFN', 'H': 'LFH' };
-                results.innerHTML += `<h6>Child ${child.name} is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h6>`;
+                results.innerHTML += `<h5>Child ${child.name} (${child.birthdate}) is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h5>`;
                 
                 // Check for non-care activities
                 const childNonCareActivities = data.activities.filter(a => 
@@ -2200,9 +2214,11 @@ function formatTimeUserFriendly(minutes) {
                 const calculationResult = {
                     id: nextCalculationResultId++,
                     providerId: provider.id,
+		    region: provider.region,
                     clientId: child.id,
                     applicationId: parseInt(data.activeApplicationId),
 		    startDate: careStartDate,
+		    birthdate: child.birthdate,
                     providerType: provider.type,
                     meets110: meets110,
                     multProvs: multProvs,
@@ -2657,6 +2673,21 @@ function formatTimeUserFriendly(minutes) {
             saveData();
             displaySchedule(schedule);
         }
+
+function getFormattedDate(dateStr) {
+let date = new Date(dateStr);
+console.log(dateStr);
+console.log(date);
+  var year = date.getFullYear();
+
+  var month = (1 + date.getMonth()).toString();
+  month = month.length > 1 ? month : '0' + month;
+
+  var day = date.getDate().toString();
+  day = day.length > 1 ? day : '0' + day;
+  
+  return month + '/' + day + '/' + year;
+}
 
         // Initialize the application
         function init() {
