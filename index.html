@@ -57,6 +57,11 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+		.careLine{
+			width: 100%;
+			padding-left: 40px;
+			font-size: 12px;
+		}
         button {
             background: #007bff;
             color: white;
@@ -2184,6 +2189,7 @@ function formatTimeUserFriendly(minutes) {
                 
                 let schoolOverlap = false;
                 let schoolYearCareResult = null;
+				let initSchoolYearCareResult = null;
                
 // If the child is schoolaged or preschool aged, determine if the school schedule affects care
 // If it does, remove the school or preschool schedule from the finalSchedule
@@ -2222,6 +2228,7 @@ function formatTimeUserFriendly(minutes) {
 		}
 		if(schoolOverlap && isPrimary)
 		{
+			initSchoolYearCareResult =  JSON.parse(JSON.stringify(schoolYearCareResult));
 			schoolYearCareResult = calculateComplexCareResult(schoolYearCareResult, initCareResult);
 			results.innerHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged, and this is the primary provider.</p>`;
 		}
@@ -2234,6 +2241,7 @@ function formatTimeUserFriendly(minutes) {
 		if(schoolYearCareResult === null)
 		{
 			schoolYearCareResult = JSON.parse(JSON.stringify(initCareResult));
+			initSchoolYearCareResult =  JSON.parse(JSON.stringify(schoolYearCareResult));
 		}
 	
 			// convert care results to monthly results
@@ -2273,6 +2281,9 @@ function formatTimeUserFriendly(minutes) {
                     SummerSleepTime: careResult.sleepTime,
                     SummerTotalTime: careResult.totalTime,
                     SummerNonStandardTime: careResult.nonStandardTime,
+					initSchoolFullDays: Math.ceil(initSchoolYearCareResult.fullDays),
+					initSchoolPartDays: Math.ceil(initSchoolYearCareResult.partialDays),
+					initSchoolHalfDays: Math.ceil(initSchoolYearCareResult.halfDays),
                     fullDays: Math.ceil(schoolYearCareResult.fullDays),
                     halfDays: Math.ceil(schoolYearCareResult.halfDays),
                     partialDays: Math.ceil(schoolYearCareResult.partialDays),
@@ -2283,7 +2294,12 @@ function formatTimeUserFriendly(minutes) {
                     childSchoolScheduleString: childSchoolActivities.length > 0 ? 
                         scheduleToCondensedString(data.schedules.find(s => s.id === childSchoolActivities[0].scheduleId)) : ''
                 };
-                
+                const careLines = determineAuthorizations(calculationResult);
+				results.innerHTML += `<h5> Authorize the following lines of care to this provider (${provider.id}):</h5><ul>`;
+				for (let c of careLines){
+					results.innerHTML += `<div class="careLine"><li>${c.result}</li></div>`
+				}
+				results.innerHTML += `</ul>`;
                 results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
             }
 		/*
@@ -2303,6 +2319,51 @@ function formatTimeUserFriendly(minutes) {
             results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
         }
 		
+		/* RATES_TABLE: 
+		prrType: "C", "H", "F"
+		ageGroup: "Infant", "Toddler", "Enh Toddler", "Pre-School", "School-age", "All"
+		region: "1","2", "3", "4", "5", "6", "S"
+		begDt: "2023-07-01"
+		endDt: "2999-12-31"
+		unitType: "Full Day", "Half Day", "Hour"
+		rate: 
+		*/
+		function getRate(prrType, ageGroup, region, dtOf, unitType)
+		{
+				const tDate = new Date(dtOf);
+				const myDate = new Date(tDate.getTime() + (tDate.getTimezoneOffset() * 60 * 1000));
+			
+				const myRate = RATES_TABLE.find(r => r.prrType === prrType 
+				&& r.ageGroup === ageGroup && r.region === region 
+				&& r.unitType === unitType && myDate >= new Date(new Date(r.begDt) + (tDate.getTimezoneOffset() * 60 * 1000))
+				&& myDate <= new Date(new Date(r.endDt) + (tDate.getTimezoneOffset() * 60 * 1000)));
+				return myRate ? Math.max(myRate.rate, 0) : 0; 
+		}
+		
+		// get the maximum rate for a specific unit type and provider type as of a specific date
+		function getMaxRate(prrType, dtOf, unitType)
+		{
+				const tDate = new Date(dtOf);
+				const myDate = new Date(tDate.getTime() + (tDate.getTimezoneOffset() * 60 * 1000));
+			
+				const myMaxRate = Math.max(0,...RATES_TABLE.filter(r => r.prrType === prrType &&
+				 r.unitType === unitType && myDate >= new Date(new Date(r.begDt) + (tDate.getTimezoneOffset() * 60 * 1000))
+				&& myDate <= new Date(new Date(r.endDt) + (tDate.getTimezoneOffset() * 60 * 1000))).map(i => i.rate));
+				
+				return myMaxRate; 
+		}
+		
+		// TODO!!
+		// return an array of authoriation lines for this calculationResult
+		function determineAuthorizations(calculationResult)
+		{
+			const authLines = [];
+			// First set up the metric for when sufficient care has been authorized.
+			
+			
+			authLines.push({result:'Not yet implemented.'});
+			return authLines;
+		}
 
         // Schedule functions
         function createEmptySchedule(type) {
