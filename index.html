@@ -973,6 +973,7 @@
 					<select id = "locationCare" disabled=true>
 						<option value="P">With Provider</option>
 						<option value="C">Clients Home</option>
+						<option value="M">Mutual Home</option>
 					</select>
 				</div>
                 <div class="form-group">
@@ -990,7 +991,8 @@
             const providerId = parseInt(document.getElementById('linkProvider').value);
             const personId = parseInt(document.getElementById('linkChild').value);
 			const prr = data.providers.find(p => p.id === providerId);
-			const locCare = (prr.type === 'F' ? document.getElementById('locationCare').value : 'P');
+			const subLoc = (prr.type === 'F' ? document.getElementById('locationCare').value : 'P');
+			const locCare = (subLoc === 'M' ? 'C' : subLoc);
             
             if (!providerId || !personId) {
                 alert('Please select both provider and child');
@@ -1025,7 +1027,8 @@
                 personId: personId,
                 scheduleId: schedule.id,
                 primary: isPrimary,
-				locCare: locCare
+				locCare: locCare,
+				subLoc: subLoc
             };
             
             data.providerLinks.push(providerLink);
@@ -1116,7 +1119,7 @@
                     `<button onclick="setPrimaryProvider(${link.providerId}, ${link.applicationId}, ${link.personId}, '${link.locCare}')">Set as Primary</button>` : '';
                 
                 div.innerHTML = `
-                    <span>${provider ? provider.name : 'Unknown Provider'} - ${person ? person.name : 'Unknown Child'} ${provider.type==='F' ? (link.locCare === 'C' ? ' [clients home]' : ' [with provider]'):''}${primaryText}</span>
+                    <span>${provider ? provider.name : 'Unknown Provider'} - ${person ? person.name : 'Unknown Child'} ${provider.type==='F' ? (link.locCare === 'C' ? ' [clients home' + (link.subLoc === 'M' ? ' (Mutual Home)]':']') : ' [with provider]'):''}${primaryText}</span>
                     <div>
                         ${primaryButton}
                         <button class="danger" onclick="deleteProviderLink(${link.providerId}, ${link.applicationId}, ${link.personId}, '${link.locCare}')">Delete</button>
@@ -2249,6 +2252,7 @@ function formatTimeUserFriendly(minutes) {
 					ageMonths: calculateCompleteMonths(child.birthdate, careStartDate),
                     providerType: provider.type,
 					locCare: link.locCare,
+					subLoc: link.subLoc ? link.subLoc : link.locCare,
                     meets110: meets110,
                     multProvs: multProvs,
 					isPrimary: isPrimary,
