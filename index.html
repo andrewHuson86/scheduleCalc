@@ -522,7 +522,7 @@
                 id: nextProviderId++,
                 name: name,
                 type: type,
-		region: region
+				region: region
             };
             
             data.providers.push(provider);
@@ -532,6 +532,21 @@
             
             refreshProvidersList();
         }
+		
+		function toggleLocationOfCare(){
+			const prrLink = document.getElementById('linkProvider');
+			const prrNum = Number(prrLink.value);
+			const prr = data.providers.find(p => p.id === prrNum);
+			const locCare = document.getElementById('locationCare');
+			
+			if (prr.type === 'F') {
+				locCare.disabled=false;
+			}
+			else{
+				locCare.value = 'P';
+				locCare.disabled=true;
+			}
+		}
 
         function deleteProvider(id) {
             if (confirm('Are you sure you want to delete this provider?')) {
@@ -948,11 +963,18 @@
             form.innerHTML = `
                 <div class="form-group">
                     <label>Provider:</label>
-                    <select id="linkProvider">
+                    <select id="linkProvider" onchange=toggleLocationOfCare()>
                         <option value="">Select a provider</option>
                         ${data.providers.map(p => `<option value="${p.id}">${p.name} (${p.type})</option>`).join('')}
                     </select>
                 </div>
+				<div class="form-group">
+					<label>Location of Care:</label>
+					<select id = "locationCare" disabled=true>
+						<option value="P">With Provider</option>
+						<option value="C">Clients Home</option>
+					</select>
+				</div>
                 <div class="form-group">
                     <label>Child:</label>
                     <select id="linkChild">
@@ -967,6 +989,8 @@
         function addProviderLink() {
             const providerId = parseInt(document.getElementById('linkProvider').value);
             const personId = parseInt(document.getElementById('linkChild').value);
+			const prr = data.providers.find(p => p.id === providerId);
+			const locCare = (prr.type === 'F' ? document.getElementById('locationCare').value : 'P');
             
             if (!providerId || !personId) {
                 alert('Please select both provider and child');
@@ -977,7 +1001,8 @@
             const existingLink = data.providerLinks.find(l => 
                 l.applicationId == data.activeApplicationId && 
                 l.providerId === providerId && 
-                l.personId === personId);
+                l.personId === personId &&
+				l.locCare === locCare);
             
             if (existingLink) {
                 alert('This provider-child link already exists');
@@ -999,7 +1024,8 @@
                 applicationId: parseInt(data.activeApplicationId),
                 personId: personId,
                 scheduleId: schedule.id,
-                primary: isPrimary
+                primary: isPrimary,
+				locCare: locCare
             };
             
             data.providerLinks.push(providerLink);
@@ -1012,7 +1038,7 @@
             refreshScheduleSelector();
         }
 
-        function setPrimaryProvider(providerId, applicationId, personId) {
+        function setPrimaryProvider(providerId, applicationId, personId, locCare) {
             // Set all other provider links for this child to non-primary
             data.providerLinks.forEach(link => {
                 if (link.applicationId === applicationId && link.personId === personId) {
@@ -1024,7 +1050,7 @@
             const targetLink = data.providerLinks.find(l => 
                 l.providerId === providerId && 
                 l.applicationId === applicationId && 
-                l.personId === personId);
+                l.personId === personId && l.locCare === locCare);
             
             if (targetLink) {
                 targetLink.primary = 'Y';
@@ -1033,12 +1059,12 @@
             }
         }
 
-        function deleteProviderLink(providerId, applicationId, personId) {
+        function deleteProviderLink(providerId, applicationId, personId, locCare) {
             if (confirm('Are you sure you want to delete this provider-child link?')) {
                 const link = data.providerLinks.find(l => 
                     l.providerId === providerId && 
                     l.applicationId === applicationId && 
-                    l.personId === personId);
+                    l.personId === personId && l.locCare === locCare);
                 
                 if (link) {
                     // Remove associated schedule
@@ -1049,7 +1075,7 @@
                         const otherLinks = data.providerLinks.filter(l => 
                             l.applicationId === applicationId && 
                             l.personId === personId && 
-                            !(l.providerId === providerId && l.applicationId === applicationId && l.personId === personId));
+                            !(l.providerId === providerId && l.applicationId === applicationId && l.personId === personId && l.locCare === locCare));
                         
                         if (otherLinks.length > 0) {
                             otherLinks[0].primary = 'Y';
@@ -1060,7 +1086,7 @@
                 data.providerLinks = data.providerLinks.filter(l => 
                     !(l.providerId === providerId && 
                       l.applicationId === applicationId && 
-                      l.personId === personId));
+                      l.personId === personId && l.locCare === locCare));
                       
                 saveData();
                 refreshProviderLinksList();
@@ -1087,13 +1113,13 @@
                 
                 const primaryText = link.primary === 'Y' ? ' (PRIMARY)' : '';
                 const primaryButton = link.primary === 'N' ? 
-                    `<button onclick="setPrimaryProvider(${link.providerId}, ${link.applicationId}, ${link.personId})">Set as Primary</button>` : '';
+                    `<button onclick="setPrimaryProvider(${link.providerId}, ${link.applicationId}, ${link.personId}, '${link.locCare}')">Set as Primary</button>` : '';
                 
                 div.innerHTML = `
-                    <span>${provider ? provider.name : 'Unknown Provider'} - ${person ? person.name : 'Unknown Child'}${primaryText}</span>
+                    <span>${provider ? provider.name : 'Unknown Provider'} - ${person ? person.name : 'Unknown Child'} ${provider.type==='F' ? (link.locCare === 'C' ? ' [clients home]' : ' [with provider]'):''}${primaryText}</span>
                     <div>
                         ${primaryButton}
-                        <button class="danger" onclick="deleteProviderLink(${link.providerId}, ${link.applicationId}, ${link.personId})">Delete</button>
+                        <button class="danger" onclick="deleteProviderLink(${link.providerId}, ${link.applicationId}, ${link.personId}, '${link.locCare}')">Delete</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -2198,6 +2224,7 @@ function formatTimeUserFriendly(minutes) {
 		{
 			schoolYearCareResult = JSON.parse(JSON.stringify(initCareResult));
 		}
+	
 			// convert care results to monthly results
 			schoolYearCareResult = careToMonthly(schoolYearCareResult);
 			careResult = careToMonthly(initCareResult);
@@ -2221,6 +2248,7 @@ function formatTimeUserFriendly(minutes) {
 					birthdate: child.birthdate,
 					ageMonths: calculateCompleteMonths(child.birthdate, careStartDate),
                     providerType: provider.type,
+					locCare: link.locCare,
                     meets110: meets110,
                     multProvs: multProvs,
 					isPrimary: isPrimary,
@@ -2233,12 +2261,12 @@ function formatTimeUserFriendly(minutes) {
                     SummerSleepTime: careResult.sleepTime,
                     SummerTotalTime: careResult.totalTime,
                     SummerNonStandardTime: careResult.nonStandardTime,
-                    fullDays: Math.ceil(schoolYearCareResult ? schoolYearCareResult.fullDays : careResult.fullDays),
-                    halfDays: Math.ceil(schoolYearCareResult ? schoolYearCareResult.halfDays : careResult.halfDays),
-                    partialDays: Math.ceil(schoolYearCareResult ? schoolYearCareResult.partialDays : careResult.partialDays),
-                    sleepTime: schoolYearCareResult ? schoolYearCareResult.sleepTime : careResult.sleepTime,
-                    totalTime: schoolYearCareResult ? schoolYearCareResult.totalTime : careResult.totalTime,
-                    nonStandardTime: schoolYearCareResult ? schoolYearCareResult.nonStandardTime : careResult.nonStandardTime,
+                    fullDays: Math.ceil(schoolYearCareResult.fullDays),
+                    halfDays: Math.ceil(schoolYearCareResult.halfDays),
+                    partialDays: Math.ceil(schoolYearCareResult.partialDays),
+                    sleepTime: schoolYearCareResult.sleepTime,
+                    totalTime: schoolYearCareResult.totalTime,
+                    nonStandardTime: schoolYearCareResult.nonStandardTime,
                     finalScheduleString: scheduleToCondensedString(finalSchedule),
                     childSchoolScheduleString: childSchoolActivities.length > 0 ? 
                         scheduleToCondensedString(data.schedules.find(s => s.id === childSchoolActivities[0].scheduleId)) : ''
@@ -2250,10 +2278,13 @@ function formatTimeUserFriendly(minutes) {
 			ToDo: need to complete this section, instead of displaying the stringified result, need to send for processing
 			to determine based on the situation, what exactly to authorize for this child to this provider, in an array of types
 			Then using that array of types, display using a lookup by type for the specific service code
-			Need to add a care start date on the calculate care page that must be completed before calculating care.
-			Example: If the finalCareResult is for an FFN, and multProvs is false, if the household meets the 110 hour rule then 
+			
+			Example: If the finalCareResult is for an FFN: if multProvs is false: if the household meets the 110 hour rule then 
 			care would be authorized at max(schoolAge ? 115:230,Math.ceil(schoolAge ? totalTime/60.0 : SummerTotalTime/60.0)) if the 
 			result is more than 230, then the first 230 would be normal care, and the rest 230 at a time, would be 9 coded lines.
+			if they do not meet the 110 hour rule or multProvs is true, then they are authorized just the totalNumber of hours per line
+			max of 230 hours per line. If primary is true then the first line is normal, otherwise it is 0 coded, any additional lines after the first 230
+			are always 9 coded.
 			
 		*/
             
