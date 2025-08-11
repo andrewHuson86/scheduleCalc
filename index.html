@@ -2776,15 +2776,23 @@ function formatTimeUserFriendly(minutes) {
 					// set up additional OT lines if any
 					while((totalAuthd < targetAuth) && (totalSummerAuthd < targetSummerAuth) && (amntAuthd < amntDue) && (summerAmntAuthd < summerAmntDue))
 					{
-						eqHD = Math.min(44,Math.max(0,Math.Floor(totalAuthd - targetAuth)));
-						SeqHD = Math.min(44,Math.max(0,Math.Floor(totalSummerAuthd - targetSummerAuth)));
+						eqFD = 0;
+						eqPD = 0;
+						SeqPD = 0;
+						SeqFD = 0;
+						myExcess = 0;
+						mySummerExcess = 0;
 						
-						myType = myBaseType + sleepRemain > 0 ? 'Sleep' : 'OT';
+						eqHD = Math.min(44,Math.max(0,Math.floor(totalAuthd - targetAuth)));
+						SeqHD = Math.min(44,Math.max(0,Math.floor(totalSummerAuthd - targetSummerAuth)));
+						
+						myType = myBaseType + (sleepRemain > 0 ? 'Sleep' : 'OT');
 						xCode = '9';
 						if(sleepRemain > 0)
 						{
 							eqHD = Math.max(0,Math.min(44, sleepRemain, eqHD));
 							SeqHD = Math.min(44, sleepRemain, SeqHD);
+							sleepRemain -= Math.max(eqHD, SeqHD);
 						}
 						// if under 44 units, and no additional lines remain check if there is any excess care that must be included, that will fit in this authorization
 						if((eqHD < 44) && (totalAuthd + eqHD >= Math.floor(targetAuth)))
@@ -2795,36 +2803,45 @@ function formatTimeUserFriendly(minutes) {
 								myExcess = (amntDue - (amntAuthd + (eqHD * myHDRate)));
 							}
 						}
-						if((seqHD < 44) && (totalSummerAuthd + seqHD >= Math.floor(targetSummerAuth)))
+						if((SeqHD < 44) && (totalSummerAuthd + SeqHD >= Math.floor(targetSummerAuth)))
 						{
-							if(((summerAmntAuthd + (seqHD * myHDRate)) < summerAmntDue) && ((summerAmntDue - (summerAmntAuthd + (seqHD * myHDRate))) < (44 * myHDRate))) 
+							if(((summerAmntAuthd + (SeqHD * myHDRate)) < summerAmntDue) && ((summerAmntDue - (summerAmntAuthd + (SeqHD * myHDRate))) < (44 * myHDRate))) 
 							// this is the last auth and the total amount authed is less than the total equivalent, and the excess can fit on this auth (total + excess is less than 44 * HDRate)
 							{
-								mySummerExcess = (summerAmntDue - (summerAmntAuthd + (seqHD * myHDRate)));
+								mySummerExcess = (summerAmntDue - (summerAmntAuthd + (SeqHD * myHDRate)));
 							}
 						}
-						// if eqHD ~= seqHD or myExcess != mySummerExcess then summerChg = true
-						if(edHD != seqHD || myExcess != mySummerExcess)
+						// if eqHD != SeqHD or myExcess != mySummerExcess then summerChg = true
+						if(eqHD != SeqHD || myExcess != mySummerExcess)
 						{
 							summerChg = true;
 						}
 						// update the totals
 						myRate = myHDRate * eqHD;
 						mySummerRate = myHDRate * SeqHD;
-						totalAuthd += ((myHDRate * eqHD) + myExcess);
-						totalSummerAuthd += ((myHDRate * SeqHD) + mySummerExcess);
+						totalAuthd += eqHD;
+						totalSummerAuthd += SeqHD;
+						amntAuthd += ((myHDRate * eqHD) + myExcess);
+						summerAmntAuthd += ((myHDRate * SeqHD) + mySummerExcess);
 						
 						// add the line(s)
-						if(eqHD > 0 || myExcess > 0)
+						if((eqHD + myExcess + mySummerExcess + SeqHD) > 0)
 						{
-							authLines.push({type: myType, xCode: xCode, authUnits: 1, amt: myRate, units: {fd: 0, hd: eqHD, pd: 0, hr: 0}, excess: myExcess, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
-						}
+							if(eqHD > 0 || myExcess > 0)
+							{
+								authLines.push({type: myType, xCode: xCode, authUnits: 1, amt: myRate, units: {fd: 0, hd: eqHD, pd: 0, hr: 0}, excess: myExcess, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
+							}
+							else
+							{
+								summerChg = true; // line is only included in summer care
+							}
+							summerLines.push({type: myType, xCode: xCode, authUnits: 1, amt: mySummerRate, units: {fd: 0, hd: SeqHD, pd: 0, hr: 0}, excess: mySummerExcess, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
+							}
 						else
 						{
-							summerChg = true; // line is only included in summer care
+							totalAuthd = targetAuth;
+							amntAuthd = amntDue;
 						}
-						summerLines.push({type: myType, xCode: xCode, authUnits: 1, amt: mySummerRate, units: {fd: 0, hd: seqHD, pd: 0, hr: 0}, excess: mySummerExcess, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
-						
 						// if excess care was added, this is the last line, ensure the while loop ends
 						if(myExcess > 0)
 						{
