@@ -2783,8 +2783,8 @@ function formatTimeUserFriendly(minutes) {
 						myExcess = 0;
 						mySummerExcess = 0;
 						
-						eqHD = Math.min(44,Math.max(0,Math.floor(totalAuthd - targetAuth)));
-						SeqHD = Math.min(44,Math.max(0,Math.floor(totalSummerAuthd - targetSummerAuth)));
+						eqHD = Math.min(44,Math.max(0,Math.floor(targetAuth - totalAuthd)));
+						SeqHD = Math.min(44,Math.max(0,Math.floor(targetSummerAuth - totalSummerAuthd)));
 						
 						myType = myBaseType + (sleepRemain > 0 ? 'Sleep' : 'OT');
 						xCode = '9';
