@@ -2498,13 +2498,13 @@ function formatTimeUserFriendly(minutes) {
 								if(myUnits > 0)
 								{
 									totalAuthd += myUnits;
-									authLines.push({type: myType, xCode: xCode, units: myUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: myUnits}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
+									authLines.push({type: myType, xCode: xCode, authUnits: myUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: myUnits}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
 								}
 								if((myUnits <= 0) || (mySummerUnits > myUnits)){
 									summerChg = true;
 								}
 								totalSummerAuthd += mySummerUnits;
-								summerLines.push({type: myType, xCode: xCode, units: mySummerUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: mySummerUnits}, excess:0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
+								summerLines.push({type: myType, xCode: xCode, authUnits: mySummerUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: mySummerUnits}, excess:0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
 							}
 							else // this is the first line authorized to the primary provider '0' coded line
 							{
