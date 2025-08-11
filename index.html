@@ -62,6 +62,17 @@
 			padding-left: 40px;
 			font-size: 12px;
 		}
+		ul {
+			margin-left: 5px;
+		}
+		ul ul{
+			margin-left: 10px;
+		}
+		li {
+			padding-left: 5px;
+			font-size: 12px;
+			margin-left: 5px;
+		}
         button {
             background: #007bff;
             color: white;
@@ -2136,7 +2147,7 @@ function formatTimeUserFriendly(minutes) {
                 if (!provider || !child || !providerSchedule) continue;
                 
                 const providerTypeMap = { 'C': 'Center', 'F': 'FFN', 'H': 'LFH' };
-                results.innerHTML += `<h5>Child ${child.name} (${getFormattedDate(child.birthdate)}) is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h5>`;
+                results.innerHTML += `<h4>Child ${child.name} (${getFormattedDate(child.birthdate)}) is using care with ${providerTypeMap[provider.type]} provider ${provider.name}.</h4>`;
                 
                 // Check for non-care activities
                 const childNonCareActivities = data.activities.filter(a => 
@@ -2253,13 +2264,15 @@ function formatTimeUserFriendly(minutes) {
 			schoolYearCareResult = careToMonthly(schoolYearCareResult);
 			careResult = careToMonthly(initCareResult);
 	
-                results.innerHTML += `<p>This child requires care an average of ${(careResult.totalTime / 60.0).toFixed(1)} hours per month with this provider.</p>`;
+                results.innerHTML += `<p>This child requires care an average of ${(schoolYearCareResult.totalTime / 60.0).toFixed(1)} hours per month with this provider.</p>`;
                 
                 // Check 110 hour rule for single provider
-                const care110 = careResult.totalTime >= 6540 && !multProvs;
+                const care110 = schoolYearCareResult.totalTime >= 6540 && !multProvs;
                 if (care110) {
                     results.innerHTML += '<p>Care for this child meets the 110 hour rule.</p>';
                 }
+				const summ110 = careResult.totalTime >= 6540 && ! multProvs; // Care during the summer months exceeds 110 hrs 
+				// for all 110 rules it is actually anything over 109 hours
                 
                 // Create calculation result object
                 const calculationResult = {
@@ -2280,67 +2293,73 @@ function formatTimeUserFriendly(minutes) {
                     schoolAge: schoolAge,
                     schoolOverlap: schoolOverlap,
                     care110: care110,
+					summ110: summ110,
                     SummerFullDays: Math.ceil(careResult.fullDays),
-                    SummerHalfDays: Math.ceil(careResult.halfDays),
-                    SummerPartialDays: Math.ceil(careResult.partialDays),
+                    SummerHalfDays: Math.ceil(careResult.halfDays) + Math.ceil(careResult.partialDays), // Summer can not have partial days
+                    SummerPartialDays: 0, // Summer can not have partial days
                     SummerSleepTime: careResult.sleepTime,
                     SummerTotalTime: careResult.totalTime,
-                    SummerNonStandardTime: careResult.nonStandardTime,
+                    SummerNonStandardTime: provider.type === 'F' ? 0 : careResult.nonStandardTime,
 					initSchoolFullDays: Math.ceil(initSchoolYearCareResult.fullDays),
-					initSchoolPartDays: Math.ceil(initSchoolYearCareResult.partialDays),
-					initSchoolHalfDays: Math.ceil(initSchoolYearCareResult.halfDays),
+					initSchoolPartDays: provider.type === 'C' ? 0 : Math.ceil(initSchoolYearCareResult.partialDays),
+					initSchoolHalfDays: Math.ceil((provider.type === 'C' ? initSchoolYearCareResult.partialDays : 0) + initSchoolYearCareResult.halfDays),
                     fullDays: Math.ceil(schoolYearCareResult.fullDays),
-                    halfDays: Math.ceil(schoolYearCareResult.halfDays),
-                    partialDays: Math.ceil(schoolYearCareResult.partialDays),
+                    halfDays: Math.ceil((provider.type === 'C' ? schoolYearCareResult.partialDays : 0) + schoolYearCareResult.halfDays),
+                    partialDays: provider.type === 'C' ? 0 : Math.ceil(schoolYearCareResult.partialDays),
                     sleepTime: schoolYearCareResult.sleepTime,
                     totalTime: schoolYearCareResult.totalTime,
-                    nonStandardTime: schoolYearCareResult.nonStandardTime,
+                    nonStandardTime: provider.type === 'F' ? 0 : schoolYearCareResult.nonStandardTime,
                     finalScheduleString: scheduleToCondensedString(finalSchedule),
                     childSchoolScheduleString: childSchoolActivities.length > 0 ? 
                         scheduleToCondensedString(data.schedules.find(s => s.id === childSchoolActivities[0].scheduleId)) : ''
                 };
+				// NOW SEND TO DETERMINEAUTHORIZATIONS
                 const careLines = determineAuthorizations(calculationResult);
-				results.innerHTML += `<h5> Authorize the following lines of care to this provider (${provider.id}):</h5><ul>`;
+				let myHTMLString = ''
+				
+				myHTMLString += `<h5> Authorize the following lines of care to this provider (${provider.id}):</h5><div><ul>`;
 				for (let c of careLines.authLines){
-					results.innerHTML += `<div class="careLine"><li>${displayLine(c, careStartDate)}</li></div>`
-					if(isCompoundUnits(c))
+					myHTMLString += `<li>${displayLine(c, careStartDate)}`;
+					if(isCompoundUnits(c) || provider.type != 'F')
 					{
-						results.innerHTML += `<p>Based on the following units:<ul>`;
-							if(c.units.fd > 0) {results.innerHTML += `<div class="careline"><li>${c.units.fd} Full Day Units.</li></div>`;}
-							if(c.units.pd > 0) {results.innerHTML += `<div class="careline"><li>${c.units.fd} Partial Day Units.</li></div>`;}
-							if(c.units.hd > 0) {results.innerHTML += `<div class="careline"><li>${c.units.fd} Half Day Units.</li></div>`;}
-						results.innterHTML += `</ul>`
+						myHTMLString += ` Based on the following: <ul>`;
+							if(Number(c.units.fd) > 0) {myHTMLString += `<li>${c.units.fd} Full Day Units at ${Number(c.rates.fd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
+							if(Number(c.units.pd) > 0) {myHTMLString += `<li>${c.units.pd} Partial Day Units at ${Number(c.rates.pd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
+							if(Number(c.units.hd) > 0) {myHTMLString += `<li>${c.units.hd} Half Day Units at ${Number(c.rates.hd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
+						myHTMLString += `</ul>`;
 					}
+					myHTMLString += `</li>`;
 				}
-				results.innerHTML += `</ul>`;
+				myHTMLString += `</ul></div>`;
 				if(schoolAge){
 					if (careLines.summerChg){
-						results.innerHTML += `<h5> For the summer months authorize the following lines of care:</h5><ul>`;
+						myHTMLString += `<h5> For the summer months authorize the following lines of care:</h5><div><ul>`;
 						for (let c of careLines.summerLines){
-							results.innerHTML += `<div class="careLine"><li>${displayLine(c, careStartDate)}</li></div>`
-							if(isCompoundUnits(c))
+							myHTMLString += `<li>${displayLine(c, careStartDate)}`;
+							if(isCompoundUnits(c) || provider.type != 'F')
 							{
-								results.innerHTML += `<p>Based on the following units:<ul>`;
-									if(c.units.fd > 0) {results.innerHTML += `<div class="careline"><li>${c.units.fd} Full Day Units.</li></div>`;}
-									if(c.units.pd > 0) {results.innerHTML += `<div class="careline"><li>${c.units.fd} Partial Day Units.</li></div>`;}
-									if(c.units.hd > 0) {results.innerHTML += `<div class="careline"><li>${c.units.fd} Half Day Units.</li></div>`;}
-								results.innterHTML += `</ul>`
+								myHTMLString += ` Based on the following: <ul>`;
+									if(Number(c.units.fd) > 0) {myHTMLString += `<li>${c.units.fd} Full Day Units at ${Number(c.rates.fd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
+									if(Number(c.units.pd) > 0) {myHTMLString += `<li>${c.units.pd} Partial Day Units at ${Number(c.rates.pd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
+									if(Number(c.units.hd) > 0) {myHTMLString += `<li>${c.units.hd} Half Day Units at ${Number(c.rates.hd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
+								myHTMLString += `</ul>`;
 							}
 						}
-						results.innerHTML += `</ul>`;
+						myHTMLString += `</ul></div>`;
 					}
 					else{
-						results.innerHTML += `<h5> No Changes are needed for the summer.</h5>`
+						myHTMLString += `<h5> No Changes are needed for the summer.</h5>`
 					}
 				}
+				results.innerHTML += myHTMLString;
 				// TODO: comment out the following line after everything above is completed.
-                results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
+                //results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
             }      
             results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
         }
 		
 		// convert to line for an authorization 
-		// {type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: [{fd: 0, hd: 0, pd: 0, hr: 0}], inc: false, msg:'Provider type not yet implemented.'}
+		// {type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: [{fd: 0, hd: 0, pd: 0, hr: 0}], excess : 0, inc: false, msg:'Provider type not yet implemented.'}
 		function displayLine(careLine, onDt)
 		{
 			if(!careLine.inc){
@@ -2349,7 +2368,12 @@ function formatTimeUserFriendly(minutes) {
 			let myLine = '';
 			let mySvc = getSvcCodeObj(careLine.type, onDt);
 			
-			myLine += 'Service Code [' + careLine.xCode + mySvc.svcCode + '] ' + mySvc.desc + ' ' + careLine.authUnits + ' units at a rate of ' + Number(careLine.amt).toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + ' per unit.';
+			myLine += 'Service Code [' + careLine.xCode + mySvc.svcCode + '] ' + mySvc.desc + ' ' + careLine.authUnits + ' units at a rate of ' 
+				+ Number(careLine.amt).toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + ' per unit.';
+			if(careLine.msg.length > 0)
+			{
+				myLine += ' [' + careLine.msg + '].';
+			}
 			
 			return myLine;
 		}
@@ -2443,87 +2467,385 @@ function formatTimeUserFriendly(minutes) {
 		// return an array of authoriation lines for this calculationResult
 		function determineAuthorizations(calculationResult)
 		{
-			const summerChg = false;
+			let summerChg = false;
 			const authLines = [];
 			const summerLines = [];
-			// First set up the metric for when sufficient care has been authorized.
-			if(calculationResult.providerType === 'F') // Calculate Care for FFN
-			{			
-				if(Math.max(calculationResult.totalTime, calculationResult.SummerTotalTime) > 0.0)
+			
+			if(Math.max(calculationResult.totalTime, calculationResult.SummerTotalTime) > 0.0)
+			{
+				if(calculationResult.providerType === 'F') // Calculate Care for FFN
+				{			
+						// First set up the metric for when sufficient care has been authorized.
+						let xCode = '0';
+						let myUnits = 0;
+						let mySummerUnits = 0;
+						let myRate = getRate('F',getAgeGroup('F', calculationResult.ageMonths, calculationResult.schoolAge, calculationResult.startDate),calculationResult.region, calculationResult.startDate, "Hour");
+						let totalAuthd = 0;
+						let targetAuth = Math.ceil(calculationResult.totalTime/60.0);
+						let totalSummerAuthd = 0;
+						let targetSummerAuth = Math.max(targetAuth, Math.ceil(calculationResult.SummerTotalTime/60.0)); // don't reduce care for  summer
+						let myType = 'FFN' + (calculationResult.locCare === 'P' ? 'PrrHome' : (calculationResult.subLoc === 'M' ? 'MutHome' : 'ClHome'));
+						
+						summerChg = ((calculationResults.multProvs) && (calculationResult.schoolAge) && ((Math.ceil(calculationResult.SummerTotalTime) > Math.ceil(calculationResult.totalTime))));
+						
+						while ((totalAuthd < targetAuth) && (totalSummerAuthd < targetSummerAuth))
+						{
+							xCode = (((calculationResult.multProvs && !calculationResult.isPrimary) || (Math.max(summerLines.length, authLines.length) > 1)) ? '9' : '0');
+							if(xCode === '9')
+							{
+								myUnits = Math.min(230,targetAuth-totalAuthd);
+								mySummerUnits = Math.min(230,targetSummerAuth-totalSummerAuthd);
+								if(myUnits > 0)
+								{
+									totalAuthd += myUnits;
+									authLines.push({type: myType, xCode: xCode, units: myUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: myUnits}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
+								}
+								if((myUnits <= 0) || (mySummerUnits > myUnits)){
+									summerChg = true;
+								}
+								totalSummerAuthd += mySummerUnits;
+								summerLines.push({type: myType, xCode: xCode, units: mySummerUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: mySummerUnits}, excess:0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
+							}
+							else // this is the first line authorized to the primary provider '0' coded line
+							{
+								myUnits = Math.min(230,targetAuth-totalAuthd);
+								mySummerUnits = Math.min(230,targetSummerAuth-totalSummerAuthd);
+								let myEqAuthd = myUnits;
+								
+								if((calculationResult.meets110) && !(calculationResult.multProvs)){
+									myUnits = 230;
+									mySummerUnits = 230;
+									myEqAuthd = 230;
+									if(calculationResult.schoolAge){
+										if(targetAuth <= 115){
+											myUnits = 115;
+											mySummerUnits = 230;
+											myEqAuthd = 230;
+										}
+									}
+								}
+								authLines.push({type: myType, xCode: '0', authUnits: myUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: myUnits}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
+								summerLines.push({type: myType, xCode: '0', authUnits: mySummerUnits, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: mySummerUnits}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: myRate}});
+								if(mySummerUnits != myEqAuthd){
+									summerChg = true;
+								}
+								totalAuthd += myEqAuthd;
+								totalSummerAuthd += mySummerUnits;
+							}
+						}
+				}
+				else if((calculationResult.providerType === 'C') || (calculationResult.providerType === 'H')) // Center and Licensed Family Home Monthly Unit Care
 				{
 					let xCode = '0';
 					let myUnits = 0;
+					let myRate = 0;
 					let mySummerUnits = 0;
-					let myRate = getRate('F',getAgeGroup('F', calculationResult.ageMonths, calculationResult.schoolAge, calculationResult.startDate),calculationResult.region, calculationResult.startDate, "Hour");
-					let totalAuthd = 0;
-					let targetAuth = Math.ceil(calculationResult.totalTime/60.0);
-					let totalSummerAuthd = 0;
-					let targetSummerAuth = Math.max(targetAuth, Math.ceil(calculationResult.SummerTotalTime/60.0)); // don't reduce care for  summer
-					let myType = 'FFN' + (calculationResult.locCare === 'P' ? 'PrrHome' : (calculationResult.subLoc === 'M' ? 'MutHome' : 'ClHome'));
-					let summerChg = ((calculationResults.multProvs) && (calculationResult.schoolAge) && ((Math.ceil(calculationResult.SummerTotalTime) > Math.ceil(calculationResult.totalTime))));
+					let mySummerRate = 0;
+					let myFDRate = getRate(calculationResult.providerType,getAgeGroup(calculationResult.providerType, calculationResult.ageMonths, calculationResult.schoolAge, calculationResult.startDate),calculationResult.region, calculationResult.startDate, "Full Day");
+					let myHDRate = getRate(calculationResult.providerType,getAgeGroup(calculationResult.providerType, calculationResult.ageMonths, calculationResult.schoolAge, calculationResult.startDate),calculationResult.region, calculationResult.startDate, "Half Day");
+					let myPDRate = parseFloat(Number(myFDRate*.75).toFixed(2));
+					let myBaseType = calculationResult.providerType === 'C' ? 'CC' : 'LFH';
+					let myType = myBaseType;
+					let totalAuthd = 0; // HDU equivalent
+					let totalSummerAuthd = 0; // HDU Equivalent
+					let targetAuth = ((calculationResult.fullDays * 2) + (calculationResult.partialDays * 1.5) + calculationResult.halfDays); // HDU Equivalent
+					let targetSummerAuth = Math.max(targetAuth, ((calculationResult.SummerFullDays * 2) + (calculationResult.SummerPartialDays * 1.5) +calculationResult.SummerHalfDays)); // HDU Equivalent
+					let sleepRemain = Math.ceil((Math.max(calculationResult.sleepTime,calculationResult.SummerSleepTime)/300.0)); // max HDU attributable to sleep time
+					let amntDue = ((myFDRate * calculationResult.fullDays) + (myHDRate * calculationResult.halfDays) + (myPDRate * calculationResult.partialDays)); // Minimum amount to be authorized in $$'s
+					let summerAmntDue = ((myFDRate * calculationResult.SummerFullDays) + (myHDRate * calculationResult.SummerHalfDays) + (myPDRate * calculationResult.SummerPartialDays));
+					let amntAuthd = 0; // amnt authorized in $$'s
+					let summerAmntAuthd = 0;
+					let myExcess = 0;
+					let mySummerExcess = 0;
+					// equivalent care authorized in each round
+					let eqFD = 0; 
+					let eqPD = 0;
+					let eqHD = 0;
+					let SeqFD = 0;
+					let SeqPD = 0;
+					let SeqHD = 0;
+					let myMsg = '';
+
 					
-					while ((totalAuthd < targetAuth) && (totalSummerAuthd < targetSummerAuth))
+					// first do the base unit, then the rest (if any) are 9 coded overtime types only (Sleep or OT) based only on remaining HDUs and any difference in total equivalent amount
+					myType = myBaseType;
+					xCode = (((calculationResult.multProvs && !calculationResult.isPrimary) || (Math.max(summerLines.length, authLines.length) > 1)) ? '9' : '0');
+					if(xCode === '9') // the base type can only be PT, SchoolPT, or SchoolPTPartial
 					{
-						xCode = (((calculationResult.multProvs && !calculationResult.isPrimary) || (Math.max(summerLines.length, authLines.length) > 1)) ? '9' : '0');
-						if(xCode === '9')
+						if(calculationResult.schoolAge && calculationResult.schoolOverlap)
 						{
-							myUnits = Math.min(230,targetAuth-totalAuthd);
-							mySummerUnits = Math.min(230,targetSummerAuth-totalSummerAuthd);
-							if(myUnits > 0)
+							myType += 'SchoolPT';
+							if(calculationResult.initSchoolPartDays > 0)
 							{
-								totalAuthd += myUnits;
-								authLines.push({type: myType, xCode: xCode, units: myUnits, amt: myRate, units: [{fd: 0, hd: 0, pd: 0, hr: myUnits}], inc: true, msg:''});
+								myType += 'Partial';
 							}
-							if((myUnits <= 0) || (mySummerUnits > myUnits)){
+						}
+						else
+						{
+							myType += 'PT';
+						}
+						if(targetAuth <= 44) // everything can fit in one unit
+						{
+							eqFD = calculationResult.fullDays;
+							eqHD = calculationResult.halfDays;
+							eqPD = calculationResult.partialDays;
+							if(targetSummerAuth <= 44)
+							{
+								SeqFD = calculationResult.SummerFullDays;
+								SeqHD = calculationResult.SummerHalfDays;
+								SeqPD = calculationResult.SummerPartialDays;
+								if ((targetSummerAuth != targetAuth) || (summerAmntDue != amntDue))
+								{
+									summerChg = true;
+								}
+							}
+							else // maximum of 44 HDU can fit in this unit, authorize equivalent to 44 HDU/22 FDU
+							{
+								SeqHD = 44;
 								summerChg = true;
 							}
-							totalSummerAuthd += mySummerUnits;
-							summerLines.push({type: myType, xCode: xCode, units: mySummerUnits, amt: myRate, units: [{fd: 0, hd: 0, pd: 0, hr: mySummerUnits}], inc: true, msg:''});
 						}
-						else // this is the first line authorized to the primary provider '0' coded line
+						else // max of 44 HDU can fit in this unit, authorize equivalent to 44 HDU/22 FDU
 						{
-							myUnits = Math.min(230,targetAuth-totalAuthd);
-							mySummerUnits = Math.min(230,targetSummerAuth-totalSummerAuthd);
-							let myEqAuthd = myUnits;
-							
-							if((calculationResult.meets110) && !(calculationResult.multProvs)){
-								myUnits = 230;
-								mySummerUnits = 230;
-								myEqAuthd = 230;
-								if(calculationResult.schoolAge){
-									if(targetAuth <= 115){
-										myUnits = 115;
-										mySummerUnits = 230;
-										myEqAuthd = 230;
+							eqHD = 44;
+							SeqHD = 44;
+						}
+					}
+					// BASE TYPES: FT, PT, SchoolFT, SchoolPT, SchoolFTPartial, SchoolPTPartial
+					else // Might be any base type, all 110 rules apply. TODO!!!!! FINISH THIS
+					{
+						if((targetAuth > 44) || ((calculationResult.care110) && (calculationResult.initSchoolFullDays > 0))) // can only be FT or SchoolPT Equivalent to full time 22 FDU
+						{
+							myType += calculationResult.schoolOverlap ? 'SchoolPT' : 'FT';
+							eqFD = 22;
+							SeqFD = 22;
+							if(calculationResult.targetAuth < 44)
+							{
+								myMsg = 'Equivalent to full time care.'
+							}
+						}
+						else if(calculationResult.meets110) // family meets 110 rule.
+						{
+							if(calculationResult.schoolAge && calculationResult.schoolOverlap) // school aged child
+							{
+								if(calculationResult.summ110) // meets 110 hours of care in summer
+								{
+									// care is either SchoolFT or SchoolFTPartial if less than preset values, otherwise SchoolPT or SchoolPTPartial
+									if(calculationResult.fullDays <= 5 && calculationResult.partialDays <= 17 && calculationResult.halfDays === 0)
+									{
+										myType += 'SchoolFTPartial';
+										eqFD = 5;
+										eqHD = 0;
+										eqPD = 17;
+										SeqFD = 22;
+										SeqHD = 0;
+										SeqPD = 0;
+									}
+									else if(calculationResult.fullDays <= 5 && calculationResult.partialDays === 0 && calculationResult.halfDays <= 17)
+									{
+										myType += 'SchoolFT';
+										eqFD = 5;
+										eqHD = 17;
+										eqPD = 0;
+										SeqFD = 22;
+										SeqHD = 0;
+										SeqPD = 0;
+									}
+									else
+									{
+										myType += 'SchoolPT' + calculationResult.partialDays > 0 ? 'Partial' : '';
+										eqFD = calculationResult.fullDays;
+										eqPD = calculationResult.partialDays;
+										eqHD = calculationResult.halfDays;
+										if(targetSummerAuth >= 44)
+										{
+											SeqFD = 0;
+											SeqPD = 0;
+											SeqHD = 44;
+										}
+										else
+										{
+											SeqFD = calculationResult.SummerFullDays;
+											SeqPD = calculationResult.SummerPartialDays;
+											SeqHD = calculationResult.SummerHalfDays;
+										}
+										if((((eqFD*2)+(eqPD*1.5)+(eqHD)) != ((SeqFD*2)+(SeqPD*1.5)+(SeqHD))) || (((eqFD * myFDRate)+(eqPD*myPDRate)+(eqHD*myHDRate)) != ((SeqFD * myFDRate)+(SeqPD*myPDRate)+(SeqHD*myHDRate))))
+										{
+											summerChg = true;
+										}
+									}
+								}
+								else // school aged child without 110hr summer care, only eligible for SchoolPT or SchoolPTPartial
+								{
+									myType += 'SchoolPT' + calculationResult.partialDays > 0 ? 'Partial' : '';
+									eqFD = calculationResult.fullDays;
+									eqPD = calculationResult.partialDays;
+									eqHD = calculationResult.halfDays;
+									if(targetSummerAuth >= 44)
+									{
+										SeqFD = 0;
+										SeqPD = 0;
+										SeqHD = 44;
+									}
+									else
+									{
+										SeqFD = calculationResult.SummerFullDays;
+										SeqPD = calculationResult.SummerPartialDays;
+										SeqHD = calculationResult.SummerHalfDays;
+									}
+									if((((eqFD*2)+(eqPD*1.5)+(eqHD)) != ((SeqFD*2)+(SeqPD*1.5)+(SeqHD))) || (((eqFD * myFDRate)+(eqPD*myPDRate)+(eqHD*myHDRate)) != ((SeqFD * myFDRate)+(SeqPD*myPDRate)+(SeqHD*myHDRate))))
+									{
+										summerChg = true;
 									}
 								}
 							}
-							authLines.push({type: myType, xCode: '0', authUnits: myUnits, amt: myRate, units: [{fd: 0, hd: 0, pd: 0, hr: myUnits}], inc: true, msg:''});
-							summerLines.push({type: myType, xCode: '0', authUnits: mySummerUnits, amt: myRate, units: [{fd: 0, hd: 0, pd: 0, hr: mySummerUnits}], inc: true, msg:''});
-							if(mySummerUnits != myEqAuthd){
+							else if (calculationResult.care110) // not considered a school-aged child, family meets 110 and care is 110 FT care
+							{
+								myType += 'FT';
+								eqFD = 22;
+								SeqFD = 22;
+							}
+							else // care is PT and is based on the care needed
+							{
+								myType += 'PT';
+								eqFD = calculationResult.fullDays;
+								eqPD = calculationResult.partialDays;
+								eqHD = calculationResult.halfDays;
+								if(targetSummerAuth >= 44)
+								{
+									SeqFD = 0;
+									SeqPD = 0;
+									SeqHD = 44;
+								}
+								else
+								{
+									SeqFD = calculationResult.SummerFullDays;
+									SeqPD = calculationResult.SummerPartialDays;
+									SeqHD = calculationResult.SummerHalfDays;
+								}
+								if((((eqFD*2)+(eqPD*1.5)+(eqHD)) != ((SeqFD*2)+(SeqPD*1.5)+(SeqHD))) || (((eqFD * myFDRate)+(eqPD*myPDRate)+(eqHD*myHDRate)) != ((SeqFD * myFDRate)+(SeqPD*myPDRate)+(SeqHD*myHDRate))))
+								{
+									summerChg = true;
+								}
+							}
+						}
+						else // care is based only on what the child needs, must be either PT, SchoolPT, or SchoolPTPartial unit
+						{
+							if(calculationResult.schoolAge && calculationResult.schoolOverlap)
+							{
+								myType+= 'SchoolPT' + calculationResult.partialDays > 0 ? 'Partial' : '';
+							}
+							else
+							{
+								myType += 'PT';
+							}
+							eqFD = calculationResult.fullDays;
+							eqPD = calculationResult.partialDays;
+							eqHD = calculationResult.halfDays;
+							if(targetSummerAuth >= 44)
+							{
+								SeqFD = 0;
+								SeqPD = 0;
+								SeqHD = 44;
+							}
+							else
+							{
+								SeqFD = calculationResult.SummerFullDays;
+								SeqPD = calculationResult.SummerPartialDays;
+								SeqHD = calculationResult.SummerHalfDays;
+							}
+							if((((eqFD*2)+(eqPD*1.5)+(eqHD)) != ((SeqFD*2)+(SeqPD*1.5)+(SeqHD))) || (((eqFD * myFDRate)+(eqPD*myPDRate)+(eqHD*myHDRate)) != ((SeqFD * myFDRate)+(SeqPD*myPDRate)+(SeqHD*myHDRate))))
+							{
 								summerChg = true;
 							}
-							totalAuthd += myEqAuthd;
-							totalSummerAuthd += mySummerUnits;
+						}
+					}
+					
+					// Add the base unit line
+					myRate = ((myFDRate * eqFD) + (myHDRate * eqHD) + (myPDRate * eqPD));
+					mySummerRate = ((myFDRate * SeqFD) + (myHDRate * SeqHD) + (myPDRate * SeqPD));
+					authLines.push({type: myType, xCode: xCode, authUnits: 1, amt: myRate, units: {fd: eqFD, hd: eqHD, pd: eqPD, hr: 0}, excess: 0, inc: true, msg: myMsg, rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
+					summerLines.push({type: myType, xCode: xCode, authUnits: 1, amt: mySummerRate, units: {fd: SeqFD, hd: SeqHD, pd: SeqPD, hr: 0}, excess: 0, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
+
+					totalAuthd += ((eqFD * 2) + (eqPD*1.5) + eqHD);
+					totalSummerAuthd += ((SeqFD * 2) + (SeqPD*1.5) + SeqHD);
+					amntAuthd += myRate;
+					summerAmntAuthd += mySummerRate;
+					// first line added
+					
+					// set up additional OT lines if any
+					while((totalAuthd < targetAuth) && (totalSummerAuthd < targetSummerAuth) && (amntAuthd < amntDue) && (summerAmntAuthd < summerAmntDue))
+					{
+						eqHD = Math.min(44,Math.max(0,Math.Floor(totalAuthd - targetAuth)));
+						SeqHD = Math.min(44,Math.max(0,Math.Floor(totalSummerAuthd - targetSummerAuth)));
+						
+						myType = myBaseType + sleepRemain > 0 ? 'Sleep' : 'OT';
+						xCode = '9';
+						if(sleepRemain > 0)
+						{
+							eqHD = Math.max(0,Math.min(44, sleepRemain, eqHD));
+							SeqHD = Math.min(44, sleepRemain, SeqHD);
+						}
+						// if under 44 units, and no additional lines remain check if there is any excess care that must be included, that will fit in this authorization
+						if((eqHD < 44) && (totalAuthd + eqHD >= Math.floor(targetAuth)))
+						{
+							if(((amntAuthd + (eqHD * myHDRate)) < amntDue) && ((amntDue - (amntAuthd + (eqHD * myHDRate))) < (44 * myHDRate))) 
+							// this is the last auth and the total amount authed is less than the total equivalent, and the excess can fit on this auth (total + excess is less than 44 * HDRate)
+							{
+								myExcess = (amntDue - (amntAuthd + (eqHD * myHDRate)));
+							}
+						}
+						if((seqHD < 44) && (totalSummerAuthd + seqHD >= Math.floor(targetSummerAuth)))
+						{
+							if(((summerAmntAuthd + (seqHD * myHDRate)) < summerAmntDue) && ((summerAmntDue - (summerAmntAuthd + (seqHD * myHDRate))) < (44 * myHDRate))) 
+							// this is the last auth and the total amount authed is less than the total equivalent, and the excess can fit on this auth (total + excess is less than 44 * HDRate)
+							{
+								mySummerExcess = (summerAmntDue - (summerAmntAuthd + (seqHD * myHDRate)));
+							}
+						}
+						// if eqHD ~= seqHD or myExcess != mySummerExcess then summerChg = true
+						if(edHD != seqHD || myExcess != mySummerExcess)
+						{
+							summerChg = true;
+						}
+						// update the totals
+						myRate = myHDRate * eqHD;
+						mySummerRate = myHDRate * SeqHD;
+						totalAuthd += ((myHDRate * eqHD) + myExcess);
+						totalSummerAuthd += ((myHDRate * SeqHD) + mySummerExcess);
+						
+						// add the line(s)
+						if(eqHD > 0 || myExcess > 0)
+						{
+							authLines.push({type: myType, xCode: xCode, authUnits: 1, amt: myRate, units: {fd: 0, hd: eqHD, pd: 0, hr: 0}, excess: myExcess, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
+						}
+						else
+						{
+							summerChg = true; // line is only included in summer care
+						}
+						summerLines.push({type: myType, xCode: xCode, authUnits: 1, amt: mySummerRate, units: {fd: 0, hd: seqHD, pd: 0, hr: 0}, excess: mySummerExcess, inc: true, msg:'', rates:{fd: myFDRate, hd: myHDRate, pd: myPDRate, hr: 0}});
+						
+						// if excess care was added, this is the last line, ensure the while loop ends
+						if(myExcess > 0)
+						{
+							totalAuthd = targetAuth;
+							amntAuthd = amntDue;
+						}
+						if(mySummerExcess > 0)
+						{
+							totalSummerAuthd = targetSummerAuth;
+							summerAmntAuthd = summerAmntDue;
 						}
 					}
 				}
+				else{
+					authLines.push({type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: {fd: 0, hd: 0, pd: 0, hr: 0}, excess: 0, inc: false, msg:'Provider type not yet implemented.', rates:{fd: 0, hd: 0, pd: 0, hr: 0}});
+				}
 			}
-			else if(2===1) // TODO: Do Center Care!
-			{
-			}
-			else if(3===1) // TODO: Do LFH Care!
-			{
-			}
-			else{
-				authLines.push({type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: [{fd: 0, hd: 0, pd: 0, hr: 0}], inc: false, msg:'Provider type not yet implemented.'});
-			}
-			
 			if(authLines.length === 0)
 			{
-				authLines.push({type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: [{fd: 0, hd: 0, pd: 0, hr: 0}], inc: false, msg:'No care needed.'});
+				authLines.push({type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: {fd: 0, hd: 0, pd: 0, hr: 0}, excess: 0, inc: false, msg:'No care needed.', rates:{fd: 0, hd: 0, pd: 0, hr: 0}});
 			}
-			
 			return {authLines: authLines, summerLines: summerLines, summerChg: summerChg};
 		}
 
