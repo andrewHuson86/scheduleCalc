@@ -2250,13 +2250,27 @@ function formatTimeUserFriendly(minutes) {
 		}
 		else
 		{
-			results.innerHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged, but care with this provider is unaffected.</p>`;	
+			let addHTML = '';
+			addHTML += `<p>This child is ${preschoolAge ? 'pre':''}school aged,`;
+			if(schoolOverlap)
+			{
+				addHTML += `and care with this provider is affected.</p>`;	
+			}
+			else
+			{
+				addHTML += `but care with this provider is unaffected.</p>`;	
+			}
+			results.innerHTML += addHTML;
 		}
 		
 	} 
 		if(schoolYearCareResult === null)
 		{
 			schoolYearCareResult = JSON.parse(JSON.stringify(initCareResult));
+			initSchoolYearCareResult =  JSON.parse(JSON.stringify(schoolYearCareResult));
+		}
+		if(initSchoolYearCareResult === null)
+		{
 			initSchoolYearCareResult =  JSON.parse(JSON.stringify(schoolYearCareResult));
 		}
 	
