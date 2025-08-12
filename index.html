@@ -2500,7 +2500,7 @@ function formatTimeUserFriendly(minutes) {
 						let targetSummerAuth = Math.max(targetAuth, Math.ceil(calculationResult.SummerTotalTime/60.0)); // don't reduce care for  summer
 						let myType = 'FFN' + (calculationResult.locCare === 'P' ? 'PrrHome' : (calculationResult.subLoc === 'M' ? 'MutHome' : 'ClHome'));
 						
-						summerChg = ((calculationResults.multProvs) && (calculationResult.schoolAge) && ((Math.ceil(calculationResult.SummerTotalTime) > Math.ceil(calculationResult.totalTime))));
+						summerChg = ((calculationResult.multProvs) && (calculationResult.schoolAge) && ((Math.ceil(calculationResult.SummerTotalTime) > Math.ceil(calculationResult.totalTime))));
 						
 						while ((totalAuthd < targetAuth) && (totalSummerAuthd < targetSummerAuth))
 						{
@@ -3374,4 +3374,5 @@ function calculateCompleteMonths(startDate, endDate)
         window.onload = init;
     </script>
 </body>
+
 </html>
