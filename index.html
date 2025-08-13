@@ -168,6 +168,7 @@
             <div class="nav-tab" onclick="showTab('provider-links')">Provider Links</div>
             <div class="nav-tab" onclick="showTab('schedules')">Schedules</div>
             <div class="nav-tab" onclick="showTab('calculation')">Calculate Care</div>
+			<div class="nav-tab" onclick="showTab('savedResults')">Saved Results</div>
         </div>
 
         <!-- People Tab -->
@@ -365,6 +366,22 @@
                 </div>
             </div>
         </div>
+		<!-- Saved Results Care Tab -->
+        <div id="savedResults" class="tab-content">
+            <div class="section">
+                <h3>Saved Care results</h3>
+                <div id="savedResultsForm">
+                    <p>Please select an active application first.</p>
+                </div>
+                <div class="section">
+                    <h3>Care Results</h3>
+                    <div id="selectedCareResult">
+                        <p>No Result yet selected.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+		
     </div>
 
     <script>
@@ -390,8 +407,12 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             activities: JSON.parse(localStorage.getItem('activities') || '[]'),
             providerLinks: JSON.parse(localStorage.getItem('providerLinks') || '[]'),
             schedules: JSON.parse(localStorage.getItem('schedules') || '[]'),
+			savedResults: JSON.parse(localStorage.getItem('savedResults') || '[]'),
+			resultLines: JSON.parse(localStorage.getItem('resultLines') || '[]'),
+			shortSchedules: JSON.parse(localStorage.getItem('shortSchedules') || '[]'),
             activeApplicationId: localStorage.getItem('activeApplicationId') || null
         };
+		
 
         // ID counters
         let nextPersonId = Math.max(10000, ...(data.people.map(p => p.id) || [9999])) + 1;
@@ -399,6 +420,16 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
         let nextApplicationId = Math.max(2003000000, ...(data.applications.map(a => a.id) || [2002999999])) + 1;
         let nextActivityId = Math.max(1, ...(data.activities.map(a => a.id) || [0])) + 1;
         let nextScheduleId = Math.max(1, ...(data.schedules.map(s => s.id) || [0])) + 1;
+		let nextResultId = Math.max(70000, ...(data.savedResults.map(r => r.id) || [0])) + 1;
+		let tempResult = { id: nextResultId++,
+							appid: 0,
+							stateDate: new Date().toLocaleDateString('en-CA'),
+							isPrimary: true,
+							saveDate: new Date().toLocaleDateString('en-CA')
+						};
+		let tempResultLines = [];
+		let tempShortSchedules = [];
+		let activeResultId = null;
 
         // Utility functions
         function saveData() {
@@ -428,8 +459,111 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
                 case 'provider-links': refreshProviderLinkForm(); refreshProviderLinksList(); break;
                 case 'schedules': refreshScheduleSelector(); break;
                 case 'calculation': refreshCalculationForm(); break;
+				case 'savedResults': refreshSavedResults(); break;
             }
         }
+
+		function refreshSavedResults()
+		{
+			const form = document.getElementById('savedResultsForm');
+			
+            if (!data.activeApplicationId) {
+                form.innerHTML = '<p>Please select an active application first.</p>';
+                return;
+            }
+			const currResult = data.savedResults.find(r => r.appid === Number(data.activeApplicationId) && r.isPrimary === true);
+			if (!currResult){
+				form.innerHTML = '<p>There are no saved results for the selected applcation.</p>';
+				return;
+			}
+			form.innerHTML = '';
+			activeResultId = currResult.id;
+			let addHTML = `<p>Active Application: ${data.activeApplicationId}</p>`;
+			
+			addHTML = addHTML + `<label for="results">Choose a care Result:</label><select id="careResult" onchange="updateResultSection()"><option value="${currResult.id}">${currResult.id} - Current Result - Saved: ${currResult.saveDate}</option>`;
+			data.savedResults.forEach(l => {
+				if(l.appid === Number(currResult.appid) && l.isPrimary === false && l.id !== currResult.id)
+				{
+					addHTML = addHTML + `<option value="${l.id}">${l.id} - Previous Result - Saved: ${l.saveDate}</option>`;
+				}
+				});
+			addHTML += `</select>`;
+			form.innerHTML += addHTML;
+			updateResultSection();
+		}
+		
+		// TODO: finish this! Need to include all the data from shortSchedules along with actual formatted data for each resultLine
+		function updateResultSection()
+		{
+			const result = document.getElementById('selectedCareResult');
+			const resultID = document.getElementById('careResult').value;
+			activeResultId = resultID;
+            result.innerHTML = '';
+			
+			if(!activeResultId){
+				result.innerHTML = '<p>No Result yet selected.</p>';
+				return;
+			}
+			const myResult = data.savedResults.find(r => r.id === Number(activeResultId));
+			
+			// populate the result section with the authorization information from the selected saved result.
+			let newHTML = `<p>${myResult.isPrimary ? 'Current' : 'Previous'} care results for application ${data.activeApplicationId} calculated on ${myResult.saveDate} for care starting ${myResult.startDate} based on the following information:</p>`;
+			// Display case data captured at the time of the result from shortSchedules.
+			// Activiy Schedules first
+			data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'A').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
+			// Then Provider-Child Link Schedules
+			data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
+			newHTML += '<p>Resulting Care Results:</p>';
+			
+			// Then display the care results one at a time, should be formatted similarly to the initial results display
+			// first display normal lines
+				data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === false).sort((a, b) => a.line - b.line).forEach(r => { 
+							newHTML += `<p>Authorize a ${r.authType} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 monthly unit '} at ${r.rate}
+								per unit totaling ${r.ttl}, for child ${r.clID} to provider #${r.prrID} based on region ${r.region} rates.`;
+								// add summary of units indented
+								if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+								{
+									newHTML += ' Based on the following:<br><ul><li>';
+									if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
+									if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
+									if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
+									if(r.units.excess > 0) {newHTML += ` ${r.units.excess} in excess care. `;}
+									newHTML += '</li></ul></p>';
+								}
+								else
+								{
+									newHTML += '</p>';
+								}
+								});
+							
+			// next display summer lines
+			if(data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === true).length > 0)
+			{
+				newHTML += '<p>Care for Summer:</p>';
+				data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === true).sort((a, b) => a.line - b.line).forEach(r => { 
+							newHTML += `<p>Authorize a ${r.authType} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 monthly unit '} at ${r.rate}
+								per unit totaling ${r.ttl}, for child ${r.clID} to provider #${r.prrID} based on region ${r.region} rates.</p>`;
+								// add summary of units indented
+								if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+								{
+									newHTML += ' Based on the following:<br><ul><li>';
+									if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
+									if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
+									if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
+									if(r.units.excess > 0) {newHTML += ` ${r.units.excess} in excess care. `;}
+									newHTML += '</li></ul></p>';
+								}
+								else
+								{
+									newHTML += '</p>';
+								}
+								});				
+			}
+			else{
+				newHTML += '<p>No Changes Required for the household for Summer</p>';
+			}
+			result.innerHTML = newHTML;
+		}
 
         function formatTime(minutes) {
             // Handle special case where 1440 should display as 12:00 AM (end of day)
@@ -640,6 +774,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
                 refreshHouseholdForm();
                 refreshActivityForm();
                 refreshProviderLinkForm();
+				refreshSavedResults();
             }
         }
 
@@ -650,6 +785,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             refreshHouseholdForm();
             refreshActivityForm();
             refreshProviderLinkForm();
+			refreshSavedResults();
         }
 
         function refreshApplicationsList() {
@@ -768,6 +904,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
                 refreshHouseholdList();
                 refreshActivityForm();
                 refreshProviderLinkForm();
+				refreshSavedResults();
             }
         }
 
@@ -1772,6 +1909,24 @@ function formatTimeUserFriendly(minutes) {
                         }
                         
                         results.totalTime += dayTotalMinutes;
+						if(daySleepMinutes > 0)
+						{
+							if(daySleepMinutes < 300)
+							{
+								daySleepMinutes = 300;
+							}
+							else if(daySleepMinutes < 600)
+							{
+								daySleepminutes = 600;
+							}
+							else if(daySleepminutes < 900)
+							{
+								daySleepMinutes = 900;
+							}
+							else{
+								daySleepMinutes = 960;
+							}
+						}
                         results.sleepTime += daySleepMinutes;
                         results.nonStandardTime += dayNonStandardMinutes;
                     }
@@ -2139,6 +2294,14 @@ function formatTimeUserFriendly(minutes) {
             // Process each child-provider pair
             const providerLinks = data.providerLinks.filter(l => l.applicationId == data.activeApplicationId);
             
+			tempResultLines.length = 0; // build new temp results array and allow the user to save the data
+				let myL = 1;
+				// set up the tempResult
+				tempResult.id = nextResultId++;
+				tempResult.appid = Number(data.activeApplicationId);
+				tempResult.startDate = careStartDate;
+				tempResult.saveDate = new Date().toLocaleDateString('en-CA');
+			
             for (let link of providerLinks) {
                 const provider = data.providers.find(p => p.id === link.providerId);
                 const child = data.people.find(p => p.id === link.personId);
@@ -2333,6 +2496,11 @@ function formatTimeUserFriendly(minutes) {
 				
 				myHTMLString += `<h5> Authorize the following lines of care to this provider (${provider.id}):</h5><div><ul>`;
 				for (let c of careLines.authLines){
+					if(c.inc)
+					{
+						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, 
+						region: calculationResult.region, units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: false, authType: c.type});
+					}
 					myHTMLString += `<li>${displayLine(c, careStartDate)}`;
 					if(isCompoundUnits(c) || provider.type != 'F')
 					{
@@ -2349,6 +2517,11 @@ function formatTimeUserFriendly(minutes) {
 					if (careLines.summerChg){
 						myHTMLString += `<h5> For the summer months authorize the following lines of care:</h5><div><ul>`;
 						for (let c of careLines.summerLines){
+							if(c.inc)
+							{
+								tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, 
+								region: calculationResult.region, units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: true, authType: c.type});
+							}
 							myHTMLString += `<li>${displayLine(c, careStartDate)}`;
 							if(isCompoundUnits(c) || provider.type != 'F')
 							{
@@ -2366,11 +2539,58 @@ function formatTimeUserFriendly(minutes) {
 					}
 				}
 				results.innerHTML += myHTMLString;
-				// TODO: comment out the following line after everything above is completed.
+				// TODO: comment out following line, eventually add button to enable/disable verbose reporting
                 //results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
             }      
+			
             results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
+			if(tempResultLines.length > 0) 
+			{
+				results.innerHTML += `<p><div id = "saveResultsButton"><button onclick="saveTempResults()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Save Care Results</button><div></p>`;
+			}
         }
+		
+		// add the tempResults to the savedResults, first update any existing results for this application to primary = false
+		function saveTempResults()
+		{
+			// set all other saved results 
+			data.savedResults.forEach(res => {
+                if (res.appid === Number(tempResult.appid) && res.isPrimary === true) {
+                    res.isPrimary = false;
+                }
+            });
+			data.savedResults.push(JSON.parse(JSON.stringify(tempResult)));
+			
+			// save all current household/schedule information in shortSchedules attached to this result
+			data.activities.filter(a => a.applicationId === Number(data.activeApplicationId)).forEach(e => {
+				data.shortSchedules.push({did: tempResult.id,
+											type: 'A',
+											exp: ('* ' + e.type + ' schedule for ' + e.personId + '- ' + e.name),
+											sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
+										});
+			});
+			data.providerLinks.filter(p => p.applicationId === Number(data.activeApplicationId)).forEach(r => {
+				data.shortSchedules.push({did: tempResult.id,
+											type: 'P',
+											exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${r.providerId} for child ${r.personId}`,
+											sch: scheduleToCondensedString(data.schedules.find(s => s.id === r.scheduleId))
+										});
+			});
+			
+			// add tempLines to saved result Lines
+			tempResultLines.forEach(l => {data.resultLines.push(l)});
+			
+			// reset tempResult and tempLines
+			tempResult.id = nextResultId++;
+			tempResult.saveDate = new Date().toLocaleDateString('en-CA');
+			tempResultLines.length = 0;
+			
+			// hide the save button
+			const saveButton = document.getElementById('saveResultsButton');
+			saveButton.style.visibility = 'hidden';
+			saveButton.style.display = 'none';
+			saveData();
+		}
 		
 		// convert to line for an authorization 
 		// {type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: [{fd: 0, hd: 0, pd: 0, hr: 0}], excess : 0, inc: false, msg:'Provider type not yet implemented.'}
@@ -2626,7 +2846,7 @@ function formatTimeUserFriendly(minutes) {
 						}
 					}
 					// BASE TYPES: FT, PT, SchoolFT, SchoolPT, SchoolFTPartial, SchoolPTPartial
-					else // Might be any base type, all 110 rules apply. TODO!!!!! FINISH THIS
+					else // Might be any base type, all 110 rules apply.
 					{
 						if((targetAuth > 44) || ((calculationResult.care110) && (calculationResult.initSchoolFullDays > 0))) // can only be FT or SchoolPT Equivalent to full time 22 FDU
 						{
@@ -3368,11 +3588,11 @@ function calculateCompleteMonths(startDate, endDate)
             refreshProviderLinksList();
             refreshScheduleSelector();
             refreshCalculationForm();
+			refreshSavedResults();
         }
 
         // Run initialization when page loads
         window.onload = init;
     </script>
 </body>
-
 </html>
