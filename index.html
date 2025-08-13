@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule Management System</title>
+    <title>CCSP Schedule Management System</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,7 +43,8 @@
             display: block;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+			margin-top: 5px;
         }
         label {
             display: block;
@@ -153,12 +154,48 @@
             background-color: #f0f0f0;
             color: #999;
         }
+		.checkbox-group {
+		  display: flex; 
+		  justify-content: space-around; 
+		  align-items: flex-start;
+		  padding: 2px 4px;
+		  margin-top: 5px;
+		  width: 100%;
+		}
+		.checkbox-item {
+		  display: flex; 
+		  flex-direction: column; 
+		  align-items: center;
+		  padding: 2px 4px;
+		  margin-top: 2px;
+		  text-align: center; 
+		}
+		.period-group {
+		  display: flex; 
+		  justify-content: space-around;
+		  align-items: flex-start; 
+		  padding: 2px 4px;
+		  margin-top: 5px;
+		  width: 50%; 
+		}
+		.period-item {
+		  display: flex;
+		  align-items: center;
+		  text-align: center; 
+		  padding: 2px 4px;
+		  margin-top: 2px;
+		}
+		.checkbox-item label {
+			font-weight: bold;
+			font-size: 20px;
+		  margin-bottom: 5px; /* Adds space between the label and the checkbox */
+		}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Schedule Management System</h1>
-        
+        <h1>CCSP Schedule Management System</h1>
+        <!-- TODO: add option to enable verbose reporting in console -->
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="showTab('people')">People</div>
             <div class="nav-tab" onclick="showTab('providers')">Providers</div>
@@ -317,15 +354,15 @@
                     <div class="form-group">
                         <h4>Add Period</h4>
                         <label>Week:</label>
-                        <select id="periodWeek">
+                        <select id="periodWeek" onchange="modifyBoxes()">
                             <option value="1">Week 1</option>
                             <option value="2">Week 2</option>
                             <option value="3">Week 3</option>
                             <option value="4">Week 4</option>
                         </select>
-                        
-                        <label>Day:</label>
-                        <select id="periodDay">
+                        <!-- Instead of selecting a day from a dropdown, have checkbox for each day Sun->Sat, user can select multiple weekdays for the week to add the period to -->
+                        <label>Day(s):</label>
+                        <!--<select id="periodDay">
                             <option value="Sun">Sunday</option>
                             <option value="Mon">Monday</option>
                             <option value="Tue">Tuesday</option>
@@ -333,15 +370,23 @@
                             <option value="Thu">Thursday</option>
                             <option value="Fri">Friday</option>
                             <option value="Sat">Saturday</option>
-                        </select>
-                        
-                        <label>Start Time:</label>
-                        <input type="text" id="periodStartTime" class="time-input" placeholder="9:00 AM">
-                        
-                        <label>End Time:</label>
-                        <input type="text" id="periodEndTime" class="time-input" placeholder="5:00 PM">
-                        
-                        <button onclick="addPeriod()">Add Period</button>
+                        </select> -->
+						<div class="checkbox-group">
+						 <div class="checkbox-item"><label for="SunBox">Sun</label> <input type="checkbox" id="SunBox" onchange="checkDayBoxes(1)" name="SundayBox" value="false"></div>
+						 <div class="checkbox-item"><label for="MonBox">Mon</label><input type="checkbox" id="MonBox" onchange="checkDayBoxes(2)" name="MondayBox" value="false"></div>
+						 <div class="checkbox-item"><label for="TueBox">Tue</label><input type="checkbox" id="TueBox" onchange="checkDayBoxes(3)" name="TuesdayBox" value="false"></div>
+						 <div class="checkbox-item"><label for="WedBox">Wed</label><input type="checkbox" id="WedBox" onchange="checkDayBoxes(4)" name="WednesdayBox" value="false"></div>
+						 <div class="checkbox-item"><label for="ThuBox">Thu</label><input type="checkbox" id="ThuBox" onchange="checkDayBoxes(5)" name="ThursdayBox" value="false"></div>
+						 <div class="checkbox-item"><label for="FriBox">Fri</label><input type="checkbox" id="FriBox" onchange="checkDayBoxes(6)" name="FridayBox" value="false"></div>
+						 <div class="checkbox-item"><label for="SatBox">Sat</label><input type="checkbox" id="SatBox" onchange="checkDayBoxes(7)" name="SaturdayBox" value="false"></div>
+						</div>
+                        <div class="period-group">
+                        <div class="period-item"><label>Start Time:</label>
+                        <input type="text" id="periodStartTime" class="time-input" placeholder="9:00 AM"></div>
+                        <div class="period-item"><label>End Time:</label>
+                        <input type="text" id="periodEndTime" class="time-input" placeholder="5:00 PM"></div>
+                        <div class="period-item"><button onclick="addPeriods()">Add Period</button></div>
+						</div>
                         <div id="periodError" class="error"></div>
                     </div>
                     
@@ -492,7 +537,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 			updateResultSection();
 		}
 		
-		// TODO: finish this! Need to include all the data from shortSchedules along with actual formatted data for each resultLine
+		// Should include all the data from shortSchedules along with actual formatted data for each resultLine
 		function updateResultSection()
 		{
 			const result = document.getElementById('selectedCareResult');
@@ -1924,7 +1969,7 @@ function formatTimeUserFriendly(minutes) {
 								daySleepMinutes = 900;
 							}
 							else{
-								daySleepMinutes = 960;
+								daySleepMinutes = 1200;
 							}
 						}
                         results.sleepTime += daySleepMinutes;
@@ -2539,7 +2584,6 @@ function formatTimeUserFriendly(minutes) {
 					}
 				}
 				results.innerHTML += myHTMLString;
-				// TODO: comment out following line, eventually add button to enable/disable verbose reporting
                 //results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
             }      
 			
@@ -3177,8 +3221,11 @@ function formatTimeUserFriendly(minutes) {
             }
         }
 
-        function updateDayOptions(scheduleType) {
-            const daySelect = document.getElementById('periodDay');
+		//Updated: this function now toggles the checkboxes instead of the options in the dropdown, based on type the checkBoxes are enabled/disabled
+        function updateDayOptions(scheduleType) 
+		{
+            /*
+			const daySelect = document.getElementById('periodDay');
             daySelect.innerHTML = '';
             
             if (scheduleType === 'S' || scheduleType === 'P') { // School or Preschool
@@ -3192,8 +3239,107 @@ function formatTimeUserFriendly(minutes) {
                     daySelect.innerHTML += `<option value="${dayCode}">${day}</option>`;
                 });
             }
+			*/
+			if(scheduleType === 'S' || scheduleType === 'P')
+			{
+				document.getElementById('SunBox').value = false;
+				document.getElementById('SunBox').enabled = false;
+				document.getElementById('SatBox').value = false;
+				document.getElementById('SatBox').enabled = false;
+			}
+			else
+			{
+				document.getElementById('SunBox').value = false;
+				document.getElementById('SunBox').enabled = true;
+				document.getElementById('SatBox').value = false;
+				document.getElementById('SatBox').enabled = true;
+			}
         }
+		
+		/* removeWeek should use the specified week in the dropdown on the schedule screen to remove that week from the selectedSchedule
+		 If the specified week doesn't exist in the schedule, do nothing.
+		 If it is week 1 and there is only one week in the schedule, clear the schedule instead.
+		 If it is not the last week in the schedule, shift the other weeks down and remove the last week. */
+		function removeWeek()
+		{
+			const selector = document.getElementById('scheduleSelector');
+            if (!selector.value) return;
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+			const week = parseInt(document.getElementById('periodWeek').value);
+			const existingWeeks = Math.max(1, ...Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b));
+			
+			if(week > existingWeeks)
+			{
+				return;
+			}
+			if(week === existingWeeks && week === 1) // just clear this week instead
+			{
+				clearSchedule();
+			}
+			else
+			{
+				const newObject = {};
+				for (const key of Object.keys(schedule.weeks)) 
+				{
+					if (key < week) 
+					{
+						newObject[key] = JSON.parse(JSON.stringify(schedule.weeks[key]));
+					}
+					else if (key > week) 
+					{
+						newObject[String(key - 1)] = JSON.parse(JSON.stringify(schedule.weeks[key]));
+					} 
+				}
+				schedule.weeks = newObject;
+			}
+			
+			saveData();
+            displaySchedule(schedule);
+		}
 
+		function checkDayBoxes(boxNum)
+		{
+			if(!boxNum)
+			{
+				return;
+			}
+			const myDay = document.getElementById(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][boxNum-1] + 'Box');
+			let myCnt = 0;
+			['SunBox', 'MonBox', 'TueBox', 'WedBox', 'ThuBox', 'FriBox', 'SatBox'].forEach(d => {
+				if(document.getElementById(`${d.toString()}`).checked === true)
+				{
+					myCnt++;
+				}
+			});
+			if(myCnt <= 0)
+			{
+				myDay.checked = true;
+				// alert('At least one weekday must be specified');
+			}
+		}
+		
+		function modifyBoxes()
+		{
+			['SunBox', 'MonBox', 'TueBox', 'WedBox', 'ThuBox', 'FriBox', 'SatBox'].forEach(d => {
+				document.getElementById(`${d.toString()}`).checked = false;});
+		}
+		
+		function getCheckBoxRes()
+		{
+			let myCnt = 0;
+			['SunBox', 'MonBox', 'TueBox', 'WedBox', 'ThuBox', 'FriBox', 'SatBox'].forEach(d => {
+				if(document.getElementById(`${d.toString()}`).checked === true)
+				{
+					myCnt++;
+				}
+			});
+			return myCnt;
+		}
+		
+		 
         function updateDefaultButtons(selectorValue, scheduleType) {
             const editor = document.getElementById('scheduleEditor');
             
@@ -3211,6 +3357,15 @@ function formatTimeUserFriendly(minutes) {
             addWeekBtn.className = 'default-schedule-btn';
             addWeekBtn.onclick = () => addNewWeek();
             buttonContainer.appendChild(addWeekBtn);
+			
+			// Remove Selected Week button
+            const remWeekBtn = document.createElement('button');
+            remWeekBtn.textContent = 'Remove Week';
+            //remWeekBtn.className = 'default-schedule-btn';
+            remWeekBtn.className = 'danger';
+			remWeekBtn.onclick = () => removeWeek();
+            buttonContainer.appendChild(remWeekBtn);
+		
             
             // M-F 8a-5p button
             const btn1 = document.createElement('button');
@@ -3268,7 +3423,12 @@ function formatTimeUserFriendly(minutes) {
             alert(`Week ${nextWeek} added to schedule`);
         }
 
-        function loadDefaultSchedule(type) {
+		/* TODO: 
+			Modify this, instead of replacing the whole schedule with a one week sechedule of the
+			requested type, it should load the requested default schedule type into the week selected by the user on the schedule 
+			screen without modifying any other weeks in the existing schedule, but adding the week if it does not exist yet. */
+        function loadDefaultSchedule(type) 
+		{
             const selector = document.getElementById('scheduleSelector');
             if (!selector.value) return;
             
@@ -3398,8 +3558,41 @@ function formatTimeUserFriendly(minutes) {
                 displaySchedule(schedule);
             }
         }
-
-        function addPeriod() {
+		
+		// Should add period to the selected week of the selected schedule for each day checkbox selected
+		function addPeriods()
+		{
+			if(getCheckBoxRes() === 0)
+			{
+				alert('At least one weekday must be specified!');
+				return;
+			}
+			const selector = document.getElementById('scheduleSelector');
+            if (!selector.value) return;
+            
+            const scheduleId = parseInt(selector.value.split('-')[1]);
+            const schedule = data.schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+			
+			['SunBox', 'MonBox', 'TueBox', 'WedBox', 'ThuBox', 'FriBox', 'SatBox'].forEach(d => {
+				if(document.getElementById(`${d.toString()}`).checked === true)
+				{
+					addPeriod(d.toString().substring(0,3));
+				}
+			});
+			
+			 // Clear form
+            document.getElementById('periodStartTime').value = '';
+            document.getElementById('periodEndTime').value = '';
+            modifyBoxes();
+			
+            saveData();
+            displaySchedule(schedule);
+		}
+		
+		// updated for the new day checkboxes
+        function addPeriod(day) 
+		{
             const selector = document.getElementById('scheduleSelector');
             if (!selector.value) return;
             
@@ -3408,7 +3601,7 @@ function formatTimeUserFriendly(minutes) {
             if (!schedule) return;
             
             const week = parseInt(document.getElementById('periodWeek').value);
-            const day = document.getElementById('periodDay').value;
+            //const day = document.getElementById('periodDay').value;
             const startTimeStr = document.getElementById('periodStartTime').value.trim();
             const endTimeStr = document.getElementById('periodEndTime').value.trim();
             
@@ -3466,13 +3659,6 @@ function formatTimeUserFriendly(minutes) {
                     return; // Error already set
                 }
             }
-            
-            // Clear form
-            document.getElementById('periodStartTime').value = '';
-            document.getElementById('periodEndTime').value = '';
-            
-            saveData();
-            displaySchedule(schedule);
         }
 
         function ensureWeeksExist(schedule, targetWeek) {
