@@ -45,10 +45,19 @@
         .form-group {
             margin-bottom: 10px;
 			margin-top: 5px;
+			padding: 2px;
         }
+		.sch-form-group{
+			margin-bottom: 10px;
+			margin-top: 5px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			padding: 2px;
+		}
         label {
             display: block;
             margin-bottom: 5px;
+			,argin-top: 5px;
             font-weight: bold;
         }
         input, select, textarea {
@@ -82,6 +91,8 @@
             border-radius: 4px;
             cursor: pointer;
             margin-right: 10px;
+			margin-bottom: 5px;
+			margin-top: 5px;
         }
         button:hover {
             background: #0056b3;
@@ -89,6 +100,12 @@
         button.danger {
             background: #dc3545;
         }
+		#remWeekButton {
+			background: #dc3545;
+		}
+		#addWeekButton {
+			background: #04AA6D;
+		}
         button.danger:hover {
             background: #c82333;
         }
@@ -176,7 +193,8 @@
 		  align-items: flex-start; 
 		  padding: 2px 4px;
 		  margin-top: 5px;
-		  width: 50%; 
+		  width: 60%; 
+		  font-size: 14px;
 		}
 		.period-item {
 		  display: flex;
@@ -184,11 +202,27 @@
 		  text-align: center; 
 		  padding: 2px 4px;
 		  margin-top: 2px;
+		  font-size: 14px;
 		}
 		.checkbox-item label {
 			font-weight: bold;
 			font-size: 20px;
 		  margin-bottom: 5px; /* Adds space between the label and the checkbox */
+		}
+		.minuteInput {
+		font-family: monospace;
+		font-size: 14px;
+		 width: 4em;
+		}
+		.hourSelection {
+		font-family: monospace;
+		font-size: 14px;
+		 width: 4em;
+		}
+		.APMSelector {
+		font-family: monospace;
+		font-size: 14px;
+		 width: 4em;
 		}
     </style>
 </head>
@@ -348,43 +382,83 @@
                     </select>
                 </div>
                 
-                <div id="scheduleEditor" style="display: none;">
+                <div id="scheduleEditor">
+				<h3>Schedule Editor</h3>
                     <button onclick="clearSchedule()" class="danger">Clear Schedule</button>
                     
-                    <div class="form-group">
-                        <h4>Add Period</h4>
-                        <label>Week:</label>
+                    <div class="sch-form-group">
+                        <!-- Instead of selecting a day from a dropdown, have checkbox for each day Sun->Sat, user can select multiple weekdays for the week to add the period to -->
+                        <label for="dayCheckboxes">Day(s):</label>
+						<!-- Days -->
+						<div class="checkbox-group" id="dayCheckboxes">
+						 <div class="checkbox-item"><label for="SunBox">Sun</label> <input type="checkbox" id="SunBox" onchange="checkDayBoxes(1)" name="SundayBox"></div>
+						 <div class="checkbox-item"><label for="MonBox">Mon</label><input type="checkbox" id="MonBox" onchange="checkDayBoxes(2)" name="MondayBox"></div>
+						 <div class="checkbox-item"><label for="TueBox">Tue</label><input type="checkbox" id="TueBox" onchange="checkDayBoxes(3)" name="TuesdayBox"></div>
+						 <div class="checkbox-item"><label for="WedBox">Wed</label><input type="checkbox" id="WedBox" onchange="checkDayBoxes(4)" name="WednesdayBox"></div>
+						 <div class="checkbox-item"><label for="ThuBox">Thu</label><input type="checkbox" id="ThuBox" onchange="checkDayBoxes(5)" name="ThursdayBox"></div>
+						 <div class="checkbox-item"><label for="FriBox">Fri</label><input type="checkbox" id="FriBox" onchange="checkDayBoxes(6)" name="FridayBox"></div>
+						 <div class="checkbox-item"><label for="SatBox">Sat</label><input type="checkbox" id="SatBox" onchange="checkDayBoxes(7)" name="SaturdayBox"></div>
+						</div>
+						<!-- Week -->
+						<label for="periodWeek">Week:</label>
                         <select id="periodWeek" onchange="modifyBoxes()">
                             <option value="1">Week 1</option>
                             <option value="2">Week 2</option>
                             <option value="3">Week 3</option>
                             <option value="4">Week 4</option>
                         </select>
-                        <!-- Instead of selecting a day from a dropdown, have checkbox for each day Sun->Sat, user can select multiple weekdays for the week to add the period to -->
-                        <label>Day(s):</label>
-                        <!--<select id="periodDay">
-                            <option value="Sun">Sunday</option>
-                            <option value="Mon">Monday</option>
-                            <option value="Tue">Tuesday</option>
-                            <option value="Wed">Wednesday</option>
-                            <option value="Thu">Thursday</option>
-                            <option value="Fri">Friday</option>
-                            <option value="Sat">Saturday</option>
-                        </select> -->
-						<div class="checkbox-group">
-						 <div class="checkbox-item"><label for="SunBox">Sun</label> <input type="checkbox" id="SunBox" onchange="checkDayBoxes(1)" name="SundayBox" value="false"></div>
-						 <div class="checkbox-item"><label for="MonBox">Mon</label><input type="checkbox" id="MonBox" onchange="checkDayBoxes(2)" name="MondayBox" value="false"></div>
-						 <div class="checkbox-item"><label for="TueBox">Tue</label><input type="checkbox" id="TueBox" onchange="checkDayBoxes(3)" name="TuesdayBox" value="false"></div>
-						 <div class="checkbox-item"><label for="WedBox">Wed</label><input type="checkbox" id="WedBox" onchange="checkDayBoxes(4)" name="WednesdayBox" value="false"></div>
-						 <div class="checkbox-item"><label for="ThuBox">Thu</label><input type="checkbox" id="ThuBox" onchange="checkDayBoxes(5)" name="ThursdayBox" value="false"></div>
-						 <div class="checkbox-item"><label for="FriBox">Fri</label><input type="checkbox" id="FriBox" onchange="checkDayBoxes(6)" name="FridayBox" value="false"></div>
-						 <div class="checkbox-item"><label for="SatBox">Sat</label><input type="checkbox" id="SatBox" onchange="checkDayBoxes(7)" name="SaturdayBox" value="false"></div>
-						</div>
-                        <div class="period-group">
-                        <div class="period-item"><label>Start Time:</label>
-                        <input type="text" id="periodStartTime" class="time-input" placeholder="9:00 AM"></div>
-                        <div class="period-item"><label>End Time:</label>
-                        <input type="text" id="periodEndTime" class="time-input" placeholder="5:00 PM"></div>
+						<div id="scheduleEditorButtons"></div>
+						<!-- Period -->
+						<label for="myPeriodGroup">Period:</label>
+                        <div class="period-group" id="myPeriodGroup">
+						 <div class="period-item">
+							<label>Start Time:</label> 
+							<select id="startHr" class="hourSelection">
+								<option value = "1">1</option>
+								<option value = "2">2</option>
+								<option value = "3">3</option>
+								<option value = "4">4</option>
+								<option value = "5">5</option>
+								<option value = "6">6</option>
+								<option value = "7">7</option>
+								<option value = "8" selected>8</option>
+								<option value = "9">9</option>
+								<option value = "10">10</option>
+								<option value = "11">11</option>
+								<option value = "12">12</option>
+							</select>
+							<label>:</label>
+							  <input type="text" maxlength="2" pattern="[0-9][0-9]" id="startMins" name="startMinutes" class="minuteInput" value ="00">
+							  <select id="startAPM" class="APMSelector">
+							  <option value="AM" selected>AM</option>
+							   <option value="PM">PM</option>
+							  </select>
+							  </div>
+							  
+							 <div class="period-item">
+							<label>End Time:</label> 
+							<select id="endHr" class="hourSelection">
+							<option value = "1">1</option>
+							<option value = "2">2</option>
+							<option value = "3">3</option>
+							<option value = "4">4</option>
+							<option value = "5" selected>5</option>
+							<option value = "6">6</option>
+							<option value = "7">7</option>
+							<option value = "8">8</option>
+							<option value = "9">9</option>
+							<option value = "10">10</option>
+							<option value = "11">11</option>
+							<option value = "12">12</option>
+							</select>
+							<label>:</label>
+							  <input type="text" maxlength="2" pattern="[0-9][0-9]" id="endMins" name="startMinutes" class="minuteInput" value ="00">
+							  <select id="endAPM" class="APMSelector">
+							  <option value="AM">AM</option>
+							   <option value="PM" selected>PM</option>
+							  </select>
+							  </div>
+						
                         <div class="period-item"><button onclick="addPeriods()">Add Period</button></div>
 						</div>
                         <div id="periodError" class="error"></div>
@@ -475,6 +549,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 		let tempResultLines = [];
 		let tempShortSchedules = [];
 		let activeResultId = null;
+		let verboseReporting = false;
 
         // Utility functions
         function saveData() {
@@ -2584,7 +2659,10 @@ function formatTimeUserFriendly(minutes) {
 					}
 				}
 				results.innerHTML += myHTMLString;
-                //results.innerHTML += `<p><strong>Final Result Object:</strong></p><pre>${JSON.stringify(calculationResult, null, 2)}</pre>`;
+                if(verboseReporting)
+			    {
+					console.log(JSON.stringify(calculationResult, null, 2));
+				}
             }      
 			
             results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
@@ -3199,6 +3277,7 @@ function formatTimeUserFriendly(minutes) {
                 option.textContent = `Provider Link: ${provider ? provider.name : 'Unknown'} - ${person ? person.name : 'Unknown'}`;
                 selector.appendChild(option);
             });
+			loadSchedule();
         }
 
         function loadSchedule() {
@@ -3216,43 +3295,29 @@ function formatTimeUserFriendly(minutes) {
             if (schedule) {
                 editor.style.display = 'block';
                 updateDayOptions(schedule.type);
-                updateDefaultButtons(selector.value, schedule.type);
+                updateDefaultButtons(schedule);
                 displaySchedule(schedule);
             }
         }
 
-		//Updated: this function now toggles the checkboxes instead of the options in the dropdown, based on type the checkBoxes are enabled/disabled
+		//Tthis function toggles the checkboxes for which days are enabled for a schedule type, based on type the checkBoxes are enabled/disabled
         function updateDayOptions(scheduleType) 
 		{
-            /*
-			const daySelect = document.getElementById('periodDay');
-            daySelect.innerHTML = '';
-            
-            if (scheduleType === 'S' || scheduleType === 'P') { // School or Preschool
-                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].forEach((day, index) => {
-                    const dayCode = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'][index];
-                    daySelect.innerHTML += `<option value="${dayCode}">${day}</option>`;
-                });
-            } else {
-                ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach((day, index) => {
-                    const dayCode = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index];
-                    daySelect.innerHTML += `<option value="${dayCode}">${day}</option>`;
-                });
-            }
-			*/
+			document.getElementById('periodError').innerHTML = ''; // clear any existing periodError messages
+			
 			if(scheduleType === 'S' || scheduleType === 'P')
 			{
-				document.getElementById('SunBox').value = false;
-				document.getElementById('SunBox').enabled = false;
-				document.getElementById('SatBox').value = false;
-				document.getElementById('SatBox').enabled = false;
+				document.getElementById('SunBox').checked = false;
+				document.getElementById('SunBox').disabled = true;
+				document.getElementById('SatBox').checked = false;
+				document.getElementById('SatBox').disabled = true;
 			}
 			else
 			{
-				document.getElementById('SunBox').value = false;
-				document.getElementById('SunBox').enabled = true;
-				document.getElementById('SatBox').value = false;
-				document.getElementById('SatBox').enabled = true;
+				document.getElementById('SunBox').checked = false;
+				document.getElementById('SunBox').disabled = false;
+				document.getElementById('SatBox').checked = false;
+				document.getElementById('SatBox').disabled = false;
 			}
         }
 		
@@ -3270,6 +3335,7 @@ function formatTimeUserFriendly(minutes) {
             if (!schedule) return;
 			const week = parseInt(document.getElementById('periodWeek').value);
 			const existingWeeks = Math.max(1, ...Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b));
+			document.getElementById('periodError').innerHTML = ''; // clear any existing period error messages
 			
 			if(week > existingWeeks)
 			{
@@ -3277,7 +3343,7 @@ function formatTimeUserFriendly(minutes) {
 			}
 			if(week === existingWeeks && week === 1) // just clear this week instead
 			{
-				clearSchedule();
+				schedule.weeks = {1: {Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []}};
 			}
 			else
 			{
@@ -3306,6 +3372,7 @@ function formatTimeUserFriendly(minutes) {
 			{
 				return;
 			}
+			document.getElementById('periodError').innerHTML = ''; // remove any current period error messages
 			const myDay = document.getElementById(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][boxNum-1] + 'Box');
 			let myCnt = 0;
 			['SunBox', 'MonBox', 'TueBox', 'WedBox', 'ThuBox', 'FriBox', 'SatBox'].forEach(d => {
@@ -3340,8 +3407,13 @@ function formatTimeUserFriendly(minutes) {
 		}
 		
 		 
-        function updateDefaultButtons(selectorValue, scheduleType) {
-            const editor = document.getElementById('scheduleEditor');
+        function updateDefaultButtons(schedule)
+		{
+			if(!schedule)
+			{
+				return;
+			}
+            const editor = document.getElementById('scheduleEditorButtons');
             
             // Remove existing default buttons
             const existingButtons = editor.querySelectorAll('.default-schedule-btn');
@@ -3354,6 +3426,7 @@ function formatTimeUserFriendly(minutes) {
             // Add Week button
             const addWeekBtn = document.createElement('button');
             addWeekBtn.textContent = 'Add New Week';
+			addWeekBtn.id = "addWeekButton";
             addWeekBtn.className = 'default-schedule-btn';
             addWeekBtn.onclick = () => addNewWeek();
             buttonContainer.appendChild(addWeekBtn);
@@ -3361,8 +3434,8 @@ function formatTimeUserFriendly(minutes) {
 			// Remove Selected Week button
             const remWeekBtn = document.createElement('button');
             remWeekBtn.textContent = 'Remove Week';
-            //remWeekBtn.className = 'default-schedule-btn';
-            remWeekBtn.className = 'danger';
+			remWeekBtn.id = 'remWeekButton';
+            remWeekBtn.className = 'default-schedule-btn';
 			remWeekBtn.onclick = () => removeWeek();
             buttonContainer.appendChild(remWeekBtn);
 		
@@ -3373,27 +3446,65 @@ function formatTimeUserFriendly(minutes) {
             btn1.className = 'default-schedule-btn';
             btn1.onclick = () => loadDefaultSchedule('8a-5p');
             buttonContainer.appendChild(btn1);
-            
-            // M-F 8:30a-3:30p button
+			
+			// M-F 7:30a-5:30p button
             const btn2 = document.createElement('button');
-            btn2.textContent = 'M-F 8:30a-3:30p';
+            btn2.textContent = 'M-F 7:30a-5:30p';
             btn2.className = 'default-schedule-btn';
-            btn2.onclick = () => loadDefaultSchedule('830a-330p');
+            btn2.onclick = () => loadDefaultSchedule('730a-530p');
             buttonContainer.appendChild(btn2);
             
-            // 24/7 button (only for provider-child links)
-            if (selectorValue.startsWith('link-')) {
-                const btn3 = document.createElement('button');
-                btn3.textContent = '24/7';
-                btn3.className = 'default-schedule-btn';
-                btn3.onclick = () => loadDefaultSchedule('24-7');
-                buttonContainer.appendChild(btn3);
+            // M-F 8:30a-3:30p button (only shows for school type schedules or provider-child link schedules
+			if (schedule.type === 'R' || schedule.type === 'N'|| schedule.type === 'S'|| schedule.type === 'P') {
+            const btn3 = document.createElement('button');
+            btn3.textContent = 'M-F 8:30a-3:30p';
+            btn3.className = 'default-schedule-btn';
+            btn3.onclick = () => loadDefaultSchedule('830a-330p');
+            buttonContainer.appendChild(btn3);
+			}
+			
+			 // M-F 8a-3p button (only shows for school type schedules or provider-child link schedules
+			if (schedule.type === 'R' || schedule.type === 'N'|| schedule.type === 'S'|| schedule.type === 'P') {
+            const btn4 = document.createElement('button');
+            btn4.textContent = 'M-F 8a-3p';
+            btn4.className = 'default-schedule-btn';
+            btn4.onclick = () => loadDefaultSchedule('8a-3p');
+            buttonContainer.appendChild(btn4);
+			}
+            
+            // 24/7 button (only for provider-child link schedules or child nocare schedules)
+            if (schedule.type === 'R' || schedule.type === 'N') {
+                const btn5 = document.createElement('button');
+                btn5.textContent = '24/7';
+                btn5.className = 'default-schedule-btn';
+                btn5.onclick = () => loadDefaultSchedule('24-7');
+                buttonContainer.appendChild(btn5);
             }
             
-            // Insert after the clear button
-            const clearButton = editor.querySelector('button.danger');
-            clearButton.parentNode.insertBefore(buttonContainer, clearButton.nextSibling);
+            // Insert into the button section
+			editor.appendChild(buttonContainer);
         }
+
+		function addNewWeektoSch(schedule)
+		{
+			const existingWeeks = Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b);
+            const nextWeek = Math.max(...existingWeeks) + 1;
+            
+			if(isNaN(nextWeek))
+			{
+				return;
+			}
+			
+            if (nextWeek > 4) {
+                alert('Maximum of 4 weeks allowed in a schedule');
+                return;
+            }
+            
+            // Add the new week
+            schedule.weeks[nextWeek] = {
+                Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+            };
+		}
 
         function addNewWeek() {
             const selector = document.getElementById('scheduleSelector');
@@ -3423,50 +3534,74 @@ function formatTimeUserFriendly(minutes) {
             alert(`Week ${nextWeek} added to schedule`);
         }
 
-		/* TODO: 
-			Modify this, instead of replacing the whole schedule with a one week sechedule of the
-			requested type, it should load the requested default schedule type into the week selected by the user on the schedule 
-			screen without modifying any other weeks in the existing schedule, but adding the week if it does not exist yet. */
+		/* This function should load the requested default schedule type into the week selected by the user on the schedule 
+			screen without modifying any other weeks in the existing schedule, but adding the week(s) up to the seclected week if it does not exist yet. */
         function loadDefaultSchedule(type) 
 		{
             const selector = document.getElementById('scheduleSelector');
             if (!selector.value) return;
             
-            if (!confirm('This will replace the current schedule. Continue?')) return;
-            
             const scheduleId = parseInt(selector.value.split('-')[1]);
             const schedule = data.schedules.find(s => s.id === scheduleId);
             if (!schedule) return;
+			
+			const week = parseInt(document.getElementById('periodWeek').value);
+			const existingWeeks = Math.max(1, ...Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b));
             
-            // Clear existing schedule
-            schedule.weeks = {
-                1: {
-                    Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
-                }
-            };
+			//if the specified week is less than the maximum week, add blank weeks to the maximum
+			if(week > existingWeeks)
+			{
+				for(let i = existingWeeks; i < week; i++)
+				{
+					addNewWeektoSch(schedule);
+				}
+			}
+			
+            // Clear existing schedule for the selected week
+            schedule.weeks[week] = { Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [] };
+			
+			// populate the selected week with the requested schedule, should probably use a switch here
             
             if (type === '8a-5p') {
                 // M-F 8:00 AM - 5:00 PM (480-1020)
                 ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].forEach(day => {
-                    schedule.weeks[1][day].push({ 
+                    schedule.weeks[week][day].push({ 
                         start: 480, 
                         end: 1020, 
+                        type: schedule.type 
+                    });
+                });
+            } else if (type === '730a-530p') {
+                // M-F 7:30 AM - 5:30 PM (450-1050)
+                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].forEach(day => {
+                    schedule.weeks[week][day].push({ 
+                        start: 450, 
+                        end: 1050, 
                         type: schedule.type 
                     });
                 });
             } else if (type === '830a-330p') {
                 // M-F 8:30 AM - 3:30 PM (510-930)
                 ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].forEach(day => {
-                    schedule.weeks[1][day].push({ 
+                    schedule.weeks[week][day].push({ 
                         start: 510, 
                         end: 930, 
+                        type: schedule.type 
+                    });
+                });
+            } else if (type === '8a-3p') {
+                // M-F 8 AM - 3 PM (480-900)
+                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].forEach(day => {
+                    schedule.weeks[week][day].push({ 
+                        start: 480, 
+                        end: 900, 
                         type: schedule.type 
                     });
                 });
             } else if (type === '24-7') {
                 // 24/7 12:00 AM - 12:00 AM (0-1440)
                 ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
-                    schedule.weeks[1][day].push({ 
+                    schedule.weeks[week][day].push({ 
                         start: 0, 
                         end: 1440, 
                         type: schedule.type 
@@ -3547,6 +3682,7 @@ function formatTimeUserFriendly(minutes) {
             
             const scheduleId = parseInt(selector.value.split('-')[1]);
             const schedule = data.schedules.find(s => s.id === scheduleId);
+			document.getElementById('periodError').innerHTML = '';
             
             if (schedule) {
                 schedule.weeks = {
@@ -3558,6 +3694,18 @@ function formatTimeUserFriendly(minutes) {
                 displaySchedule(schedule);
             }
         }
+		
+		function getTimeString(which)
+		{
+			const regex = /[^0-9]/g;
+			const hr = document.getElementById(which+'Hr').value;
+			const minEle = document.getElementById(which+'Mins');
+			minEle.value = minEle.value.replace(regex, '0');
+			const mins = minEle.value;
+			const apm = document.getElementById(which+'APM').value;
+			
+			return hr + ':' + ('00' + mins).slice(-2) + ' ' +apm;
+		}
 		
 		// Should add period to the selected week of the selected schedule for each day checkbox selected
 		function addPeriods()
@@ -3574,6 +3722,29 @@ function formatTimeUserFriendly(minutes) {
             const schedule = data.schedules.find(s => s.id === scheduleId);
             if (!schedule) return;
 			
+			const startTimeStr = getTimeString('start'); //document.getElementById('periodStartTime').value.trim();
+            const endTimeStr = getTimeString('end'); //document.getElementById('periodEndTime').value.trim();
+            
+            document.getElementById('periodError').innerHTML = '';
+            
+            let startTime = parseTime(startTimeStr);
+            let endTime = parseTime(endTimeStr);
+			let haveIssue = false;
+            
+            if (startTime === null) {
+                document.getElementById('periodError').innerHTML += '<p>Invalid start time format. Use H:mm AM/PM</p>';
+                haveIssue = true;
+            }
+            
+            if (endTime === null) {
+                document.getElementById('periodError').innerHTML += '<p>Invalid end time format. Use H:mm AM/PM</p>';
+                haveIssue = true;
+            }
+			if(haveIssue)
+			{
+				return;
+			}
+		
 			['SunBox', 'MonBox', 'TueBox', 'WedBox', 'ThuBox', 'FriBox', 'SatBox'].forEach(d => {
 				if(document.getElementById(`${d.toString()}`).checked === true)
 				{
@@ -3582,8 +3753,8 @@ function formatTimeUserFriendly(minutes) {
 			});
 			
 			 // Clear form
-            document.getElementById('periodStartTime').value = '';
-            document.getElementById('periodEndTime').value = '';
+            //document.getElementById('periodStartTime').value = '';
+            //document.getElementById('periodEndTime').value = '';
             modifyBoxes();
 			
             saveData();
@@ -3602,23 +3773,28 @@ function formatTimeUserFriendly(minutes) {
             
             const week = parseInt(document.getElementById('periodWeek').value);
             //const day = document.getElementById('periodDay').value;
-            const startTimeStr = document.getElementById('periodStartTime').value.trim();
-            const endTimeStr = document.getElementById('periodEndTime').value.trim();
+            const startTimeStr = getTimeString('start'); //document.getElementById('periodStartTime').value.trim();
+            const endTimeStr = getTimeString('end'); //document.getElementById('periodEndTime').value.trim();
             
-            document.getElementById('periodError').textContent = '';
+            document.getElementById('periodError').innerHTML = '';
             
             let startTime = parseTime(startTimeStr);
             let endTime = parseTime(endTimeStr);
+            let haveIssue = false;
             
             if (startTime === null) {
-                document.getElementById('periodError').textContent = 'Invalid start time format. Use H:mm AM/PM';
-                return;
+                document.getElementById('periodError').innerHTML += '<p>Invalid start time format. Use H:mm AM/PM</p>';
+                haveIssue = true;
             }
             
             if (endTime === null) {
-                document.getElementById('periodError').textContent = 'Invalid end time format. Use H:mm AM/PM';
-                return;
+                document.getElementById('periodError').innerHTML += '<p>Invalid end time format. Use H:mm AM/PM</p>';
+                haveIssue = true;
             }
+			if(haveIssue)
+			{
+				return;
+			}
             
             // Special handling for 12:00 AM as end time - treat as end of day (1440)
             if (endTimeStr.match(/^12:00\s*AM$/i)) {
@@ -3686,7 +3862,7 @@ function formatTimeUserFriendly(minutes) {
             const existingPeriods = schedule.weeks[week][day];
             for (let period of existingPeriods) {
                 if (!(endTime <= period.start || startTime >= period.end)) {
-                    document.getElementById('periodError').textContent = 'Period overlaps with existing period';
+                    document.getElementById('periodError').innerHTML += `<p>Period overlaps with existing period in ${day} of week ${week}.</p>`;
                     return false;
                 }
             }
@@ -3702,7 +3878,8 @@ function formatTimeUserFriendly(minutes) {
 
         function removePeriod(scheduleId, week, day, startTime, endTime) {
             if (!confirm('Remove this period?')) return;
-            
+            document.getElementById('periodError').innerHTML = '';
+			
             const schedule = data.schedules.find(s => s.id === scheduleId);
             if (!schedule || !schedule.weeks[week]) return;
             
