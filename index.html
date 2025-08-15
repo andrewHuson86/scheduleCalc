@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- I hope you like spaghetti! -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -224,12 +225,31 @@
 		font-size: 14px;
 		 width: 4em;
 		}
+		.reporting_checkbox {
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			height: 20px;
+			margin-top: 2px;
+			margin-bottom: 2px;
+			align-items: center;
+		}
+		.reporting_checkbox label {
+			font-size: 10px;
+			font-weight: bold;
+			margin-left: 5px;
+		}
+		.careResultLine{
+			width: 100%;
+			padding-left: 40px;
+			font-size: 12px;
+		}
     </style>
 </head>
 <body>
     <div class="container">
         <h1>CCSP Schedule Management System</h1>
-        <!-- TODO: add option to enable verbose reporting in console -->
+		<div class="reporting_checkbox"><div><input type="checkbox" id="repCheckbox" onchange="toggleVerboseReporting()" checked="false"></div><div><label for="repCheckbox">Verbose Reporting</label></div></div>
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="showTab('people')">People</div>
             <div class="nav-tab" onclick="showTab('providers')">Providers</div>
@@ -507,11 +527,11 @@
         // Data structures and storage
 
 // RATES TABLE
-const RATES_TABLE = Object.freeze([ { prrType: "C", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 62.05}, { prrType: "C", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 53.18}, { prrType: "C", ageGroup: "School-age", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 53.36}, { prrType: "C", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56.14}, { prrType: "C", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 31.03}, { prrType: "C", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 26.59}, { prrType: "C", ageGroup: "School-age", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 26.68}, { prrType: "C", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28.07}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 40}, { prrType: "H", ageGroup: "School-Age", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 36.59}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 47.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 20}, { prrType: "H", ageGroup: "School-Age", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 18.3}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 23.55}, { prrType: "F", ageGroup: "All", region: "1", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 59.09}, { prrType: "C", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 44.77}, { prrType: "C", ageGroup: "School-age", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 32.73}, { prrType: "C", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 49.09}, { prrType: "C", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 29.55}, { prrType: "C", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 22.39}, { prrType: "C", ageGroup: "School-age", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 16.37}, { prrType: "C", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 24.55}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 66}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 66}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "School-Age", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 40}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 33}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 33}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "H", ageGroup: "School-Age", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 20}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "F", ageGroup: "All", region: "2", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 72.5}, { prrType: "C", ageGroup: "School-age", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 65.45}, { prrType: "C", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 80.36}, { prrType: "C", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 36.25}, { prrType: "C", ageGroup: "School-age", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 32.73}, { prrType: "C", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 40.18}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 65}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 65}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 54.18}, { prrType: "H", ageGroup: "School-Age", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 32.5}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 32.5}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 27.09}, { prrType: "H", ageGroup: "School-Age", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "F", ageGroup: "All", region: "3", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 113.64}, { prrType: "C", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 85.68}, { prrType: "C", ageGroup: "School-age", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.64}, { prrType: "C", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 101.59}, { prrType: "C", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 56.82}, { prrType: "C", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 42.84}, { prrType: "C", ageGroup: "School-age", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.32}, { prrType: "C", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 50.8}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 81.82}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 81.82}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 68.95}, { prrType: "H", ageGroup: "School-Age", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 75}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 40.91}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 40.91}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 34.48}, { prrType: "H", ageGroup: "School-Age", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 37.5}, { prrType: "F", ageGroup: "All", region: "4", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "School-age", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 54.18}, { prrType: "C", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 64}, { prrType: "C", ageGroup: "School-age", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 27.09}, { prrType: "C", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 32}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "School-Age", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 44.32}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "School-Age", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.16}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "F", ageGroup: "All", region: "5", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 77}, { prrType: "C", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 57.73}, { prrType: "C", ageGroup: "School-age", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50.23}, { prrType: "C", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 67.5}, { prrType: "C", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 38.5}, { prrType: "C", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28.87}, { prrType: "C", ageGroup: "School-age", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25.12}, { prrType: "C", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 33.75}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 53}, { prrType: "H", ageGroup: "School-Age", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 45}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 55}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 26.5}, { prrType: "H", ageGroup: "School-Age", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.5}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 27.5}, { prrType: "F", ageGroup: "All", region: "6", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "School-age", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 49}, { prrType: "C", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56.59}, { prrType: "C", ageGroup: "School-age", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 24.5}, { prrType: "C", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28.3}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 45}, { prrType: "H", ageGroup: "School-Age", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 45}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.5}, { prrType: "H", ageGroup: "School-Age", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.5}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "F", ageGroup: "All", region: "S", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "F", ageGroup: "All", region: "1", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "2", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "3", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "4", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "5", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "6", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "S", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 51.14}, { prrType: "H", ageGroup: "School-age", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25.57}, { prrType: "H", ageGroup: "School-age", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "F", ageGroup: "All", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 80}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 80}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 63.64}, { prrType: "H", ageGroup: "School-age", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 72.73}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 40}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 40}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 31.82}, { prrType: "H", ageGroup: "School-age", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 36.37}, { prrType: "F", ageGroup: "All", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 82}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 82}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 70}, { prrType: "H", ageGroup: "School-age", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 75}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 77.27}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 41}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 41}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 35}, { prrType: "H", ageGroup: "School-age", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 37.5}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 38.64}, { prrType: "F", ageGroup: "All", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 96.55}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 96.55}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90}, { prrType: "H", ageGroup: "School-age", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 78.79}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 98.49}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 48.28}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 48.28}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45}, { prrType: "H", ageGroup: "School-age", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 39.4}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 49.25}, { prrType: "F", ageGroup: "All", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 65}, { prrType: "H", ageGroup: "School-age", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 49.24}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 70}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 32.5}, { prrType: "H", ageGroup: "School-age", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 35}, { prrType: "F", ageGroup: "All", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 63.64}, { prrType: "H", ageGroup: "School-age", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 68.94}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 68.94}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 31.82}, { prrType: "H", ageGroup: "School-age", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 34.47}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 34.47}, { prrType: "F", ageGroup: "All", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50}, { prrType: "H", ageGroup: "School-age", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 55}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25}, { prrType: "H", ageGroup: "School-age", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 27.5}, { prrType: "F", ageGroup: "All", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}]);
+const RATES_TABLE = Object.freeze([ { prrType: "C", ageGroup: "All", region: "A", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "NSHB", rate: 150.00},{ prrType: "H", ageGroup: "All", region: "A", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "NSHB", rate: 150.00},{ prrType: "C", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 62.05}, { prrType: "C", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 53.18}, { prrType: "C", ageGroup: "School-age", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 53.36}, { prrType: "C", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56.14}, { prrType: "C", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 31.03}, { prrType: "C", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 26.59}, { prrType: "C", ageGroup: "School-age", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 26.68}, { prrType: "C", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28.07}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 40}, { prrType: "H", ageGroup: "School-Age", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 36.59}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 47.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 20}, { prrType: "H", ageGroup: "School-Age", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 18.3}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 23.55}, { prrType: "F", ageGroup: "All", region: "1", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 59.09}, { prrType: "C", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 44.77}, { prrType: "C", ageGroup: "School-age", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 32.73}, { prrType: "C", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 49.09}, { prrType: "C", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 29.55}, { prrType: "C", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 22.39}, { prrType: "C", ageGroup: "School-age", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 16.37}, { prrType: "C", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 24.55}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 66}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 66}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "School-Age", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 40}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 33}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 33}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "H", ageGroup: "School-Age", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 20}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "F", ageGroup: "All", region: "2", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 72.5}, { prrType: "C", ageGroup: "School-age", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 65.45}, { prrType: "C", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 80.36}, { prrType: "C", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 36.25}, { prrType: "C", ageGroup: "School-age", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 32.73}, { prrType: "C", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 40.18}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 65}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 65}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 54.18}, { prrType: "H", ageGroup: "School-Age", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 32.5}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 32.5}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 27.09}, { prrType: "H", ageGroup: "School-Age", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "F", ageGroup: "All", region: "3", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 113.64}, { prrType: "C", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 85.68}, { prrType: "C", ageGroup: "School-age", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.64}, { prrType: "C", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 101.59}, { prrType: "C", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 56.82}, { prrType: "C", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 42.84}, { prrType: "C", ageGroup: "School-age", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.32}, { prrType: "C", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 50.8}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 81.82}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 81.82}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 68.95}, { prrType: "H", ageGroup: "School-Age", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 75}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 40.91}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 40.91}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 34.48}, { prrType: "H", ageGroup: "School-Age", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 37.5}, { prrType: "F", ageGroup: "All", region: "4", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "School-age", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 54.18}, { prrType: "C", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 64}, { prrType: "C", ageGroup: "School-age", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 27.09}, { prrType: "C", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 32}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 49.23}, { prrType: "H", ageGroup: "School-Age", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 44.32}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "School-Age", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.16}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "F", ageGroup: "All", region: "5", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 77}, { prrType: "C", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 57.73}, { prrType: "C", ageGroup: "School-age", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50.23}, { prrType: "C", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 67.5}, { prrType: "C", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 38.5}, { prrType: "C", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28.87}, { prrType: "C", ageGroup: "School-age", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25.12}, { prrType: "C", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 33.75}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 59.09}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 53}, { prrType: "H", ageGroup: "School-Age", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 45}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 55}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 29.55}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 26.5}, { prrType: "H", ageGroup: "School-Age", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.5}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 27.5}, { prrType: "F", ageGroup: "All", region: "6", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "C", ageGroup: "School-age", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 49}, { prrType: "C", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56.59}, { prrType: "C", ageGroup: "School-age", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 24.5}, { prrType: "C", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28.3}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 45}, { prrType: "H", ageGroup: "School-Age", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 45}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Full Day", rate: 48}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.5}, { prrType: "H", ageGroup: "School-Age", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 22.5}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2023-07-01", endDt: "2025-06-30", unitType: "Half Day", rate: 24}, { prrType: "F", ageGroup: "All", region: "S", begDt: "2023-07-01", endDt: "2024-06-30", unitType: "Hour", rate: 3.85}, { prrType: "F", ageGroup: "All", region: "1", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "2", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "3", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "4", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "5", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "6", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "F", ageGroup: "All", region: "S", begDt: "2024-07-01", endDt: "2025-06-30", unitType: "Hour", rate: 4}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 51.14}, { prrType: "H", ageGroup: "School-age", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 60}, { prrType: "H", ageGroup: "Enh Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Infant", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Pre-School", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25.57}, { prrType: "H", ageGroup: "School-age", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "H", ageGroup: "Toddler", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 30}, { prrType: "F", ageGroup: "All", region: "1", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 80}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 80}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 63.64}, { prrType: "H", ageGroup: "School-age", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 72.73}, { prrType: "H", ageGroup: "Enh Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 40}, { prrType: "H", ageGroup: "Infant", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 40}, { prrType: "H", ageGroup: "Pre-School", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 31.82}, { prrType: "H", ageGroup: "School-age", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25}, { prrType: "H", ageGroup: "Toddler", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 36.37}, { prrType: "F", ageGroup: "All", region: "2", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 82}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 82}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 70}, { prrType: "H", ageGroup: "School-age", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 75}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 77.27}, { prrType: "H", ageGroup: "Enh Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 41}, { prrType: "H", ageGroup: "Infant", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 41}, { prrType: "H", ageGroup: "Pre-School", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 35}, { prrType: "H", ageGroup: "School-age", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 37.5}, { prrType: "H", ageGroup: "Toddler", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 38.64}, { prrType: "F", ageGroup: "All", region: "3", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 96.55}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 96.55}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90}, { prrType: "H", ageGroup: "School-age", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 78.79}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 98.49}, { prrType: "H", ageGroup: "Enh Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 48.28}, { prrType: "H", ageGroup: "Infant", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 48.28}, { prrType: "H", ageGroup: "Pre-School", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45}, { prrType: "H", ageGroup: "School-age", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 39.4}, { prrType: "H", ageGroup: "Toddler", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 49.25}, { prrType: "F", ageGroup: "All", region: "4", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 65}, { prrType: "H", ageGroup: "School-age", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 49.24}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 70}, { prrType: "H", ageGroup: "Enh Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Infant", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Pre-School", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 32.5}, { prrType: "H", ageGroup: "School-age", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 24.62}, { prrType: "H", ageGroup: "Toddler", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 35}, { prrType: "F", ageGroup: "All", region: "5", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 90.91}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 63.64}, { prrType: "H", ageGroup: "School-age", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 68.94}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 68.94}, { prrType: "H", ageGroup: "Enh Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Infant", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 45.46}, { prrType: "H", ageGroup: "Pre-School", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 31.82}, { prrType: "H", ageGroup: "School-age", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 34.47}, { prrType: "H", ageGroup: "Toddler", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 34.47}, { prrType: "F", ageGroup: "All", region: "6", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 56}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50}, { prrType: "H", ageGroup: "School-age", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 50}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Full Day", rate: 55}, { prrType: "H", ageGroup: "Enh Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28}, { prrType: "H", ageGroup: "Infant", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 28}, { prrType: "H", ageGroup: "Pre-School", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25}, { prrType: "H", ageGroup: "School-age", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 25}, { prrType: "H", ageGroup: "Toddler", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Half Day", rate: 27.5}, { prrType: "F", ageGroup: "All", region: "S", begDt: "2025-07-01", endDt: "2999-12-31", unitType: "Hour", rate: 4.5}]);
 // END OF RATES TABLE
 
 //SVC_CODES_TABLE
-const SVC_CODES_TABLE = Object.freeze([{ type: "LFHSchoolFTPartial", svcCode: "2902", desc: "LFH FT 3/4 Day", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCSchoolPT", svcCode: "2903", desc: "CC PT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHFT", svcCode: "2910", desc: "LFH FT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHPT", svcCode: "2911", desc: "LFH PT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCSchoolFT", svcCode: "2914", desc: "CC FT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSchoolFT", svcCode: "2916", desc: "LFH FT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHOT", svcCode: "2918", desc: "LFH Overtime", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSchoolPT", svcCode: "2919", desc: "LFH PT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSleep", svcCode: "2946", desc: "LFH Sleep Time", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSchoolPTPartial", svcCode: "2952", desc: "LFH PT 3/4 Day", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCFT", svcCode: "2961", desc: "CC FT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCPT", svcCode: "2962", desc: "CC PT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCOT", svcCode: "2965", desc: "CC Overtime", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCSleep", svcCode: "2966", desc: "CC Sleep Time", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "FFNPrrHome", svcCode: "2949", desc: "CARE IN PRR HOME", begDt: "1990-01-01", endDt: "2999-12-31" }, { type: "FFNClHome", svcCode: "2941/70/71", desc: "CARE IN CL'S HOME", begDt: "1990-01-01", endDt: "2999-12-31" }, { type: "FFNMutHome", svcCode: "2941/70/71", desc: "CARE IN MUTUAL HOME", begDt: "1990-01-01", endDt: "2999-12-31" }, { type: "CCFT", svcCode: "5401", desc: "CC FT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCPT", svcCode: "5402", desc: "CC PT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCSchoolFT", svcCode: "5403", desc: "CC FT School Age PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCSchoolPT", svcCode: "5405", desc: "CC PT School Age", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCSleep", svcCode: "5407", desc: "CC Sleep Time PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCOT", svcCode: "5408", desc: "CC Overtime PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHFT", svcCode: "5501", desc: "LFH FT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHPT", svcCode: "5502", desc: "LFH PT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolFT", svcCode: "5503", desc: "LFH FT School Age PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolFTPartial", svcCode: "5504", desc: "LFH FT 3/4 Day PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolPT", svcCode: "5505", desc: "LFH PT School Age PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolPTPartial", svcCode: "5506", desc: "LFH PT 3/4 Day PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSleep", svcCode: "5507", desc: "LFH Sleep Time PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHOT", svcCode: "5508", desc: "LFH Overtime PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }]);
+const SVC_CODES_TABLE = Object.freeze([ { type: "LFHNSHB", svcCode: "2938", desc: "Lic FAMILY Home NSHB", begDt: "1990-01-01", endDt: "2026-06-30" },{ type: "LFHNSHB", svcCode: "5509", desc: "Lic FAMILY Home NSHB", begDt: "2026-07-01", endDt: "2026-06-30" },{ type: "CCNSHB", svcCode: "2937", desc: "Lic Center NSHB", begDt: "1990-01-01", endDt: "2026-06-30" },{ type: "CCNSHB", svcCode: "5409", desc: "Lic Center NSHB", begDt: "2026-07-01", endDt: "2026-06-30" },{ type: "LFHSchoolFTPartial", svcCode: "2902", desc: "LFH FT 3/4 Day", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCSchoolPT", svcCode: "2903", desc: "CC PT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHFT", svcCode: "2910", desc: "LFH FT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHPT", svcCode: "2911", desc: "LFH PT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCSchoolFT", svcCode: "2914", desc: "CC FT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSchoolFT", svcCode: "2916", desc: "LFH FT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHOT", svcCode: "2918", desc: "LFH Overtime", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSchoolPT", svcCode: "2919", desc: "LFH PT School Age", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSleep", svcCode: "2946", desc: "LFH Sleep Time", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "LFHSchoolPTPartial", svcCode: "2952", desc: "LFH PT 3/4 Day", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCFT", svcCode: "2961", desc: "CC FT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCPT", svcCode: "2962", desc: "CC PT", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCOT", svcCode: "2965", desc: "CC Overtime", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "CCSleep", svcCode: "2966", desc: "CC Sleep Time", begDt: "1990-01-01", endDt: "2026-06-30" }, { type: "FFNPrrHome", svcCode: "2949", desc: "CARE IN PRR HOME", begDt: "1990-01-01", endDt: "2999-12-31" }, { type: "FFNClHome", svcCode: "2941/70/71", desc: "CARE IN CL'S HOME", begDt: "1990-01-01", endDt: "2999-12-31" }, { type: "FFNMutHome", svcCode: "2941/70/71", desc: "CARE IN MUTUAL HOME", begDt: "1990-01-01", endDt: "2999-12-31" }, { type: "CCFT", svcCode: "5401", desc: "CC FT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCPT", svcCode: "5402", desc: "CC PT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCSchoolFT", svcCode: "5403", desc: "CC FT School Age PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCSchoolPT", svcCode: "5405", desc: "CC PT School Age", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCSleep", svcCode: "5407", desc: "CC Sleep Time PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "CCOT", svcCode: "5408", desc: "CC Overtime PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHFT", svcCode: "5501", desc: "LFH FT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHPT", svcCode: "5502", desc: "LFH PT PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolFT", svcCode: "5503", desc: "LFH FT School Age PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolFTPartial", svcCode: "5504", desc: "LFH FT 3/4 Day PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolPT", svcCode: "5505", desc: "LFH PT School Age PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSchoolPTPartial", svcCode: "5506", desc: "LFH PT 3/4 Day PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHSleep", svcCode: "5507", desc: "LFH Sleep Time PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }, { type: "LFHOT", svcCode: "5508", desc: "LFH Overtime PROSP", begDt: "2026-07-01", endDt: "2999-12-31" }]);
 // END OF SVC_CODES_TABLE
 
 // AGE_GROUPS_TABLE
@@ -542,7 +562,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 		let nextResultId = Math.max(70000, ...(data.savedResults.map(r => r.id) || [0])) + 1;
 		let tempResult = { id: nextResultId++,
 							appid: 0,
-							stateDate: new Date().toLocaleDateString('en-CA'),
+							startDate: new Date().toLocaleDateString('en-CA'),
 							isPrimary: true,
 							saveDate: new Date().toLocaleDateString('en-CA')
 						};
@@ -561,6 +581,16 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
                 }
             });
         }
+		
+		// toggle verbose reporting, weird issue using ternary operator or condensing this at all
+		function toggleVerboseReporting()
+		{
+			verboseReporting = document.getElementById("repCheckbox").checked;
+			if(verboseReporting)
+			{ console.log('verbose reporting turned on.'); }
+			else
+			{ console.log('verbose reporting turned off.'); }
+		}
 
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -626,6 +656,8 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 			}
 			const myResult = data.savedResults.find(r => r.id === Number(activeResultId));
 			
+			//myResult.startDate
+			
 			// populate the result section with the authorization information from the selected saved result.
 			let newHTML = `<p>${myResult.isPrimary ? 'Current' : 'Previous'} care results for application ${data.activeApplicationId} calculated on ${myResult.saveDate} for care starting ${myResult.startDate} based on the following information:</p>`;
 			// Display case data captured at the time of the result from shortSchedules.
@@ -633,54 +665,78 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 			data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'A').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
 			// Then Provider-Child Link Schedules
 			data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
-			newHTML += '<p>Resulting Care Results:</p>';
 			
+			// display saved results, formatting should be similar to initial report formatting
+			newHTML += '<div id="careResultLine"><h5>Resulting Care Results:</h5><ul>';
 			// Then display the care results one at a time, should be formatted similarly to the initial results display
 			// first display normal lines
 				data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === false).sort((a, b) => a.line - b.line).forEach(r => { 
-							newHTML += `<p>Authorize a ${r.authType} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 monthly unit '} at ${r.rate}
-								per unit totaling ${r.ttl}, for child ${r.clID} to provider #${r.prrID} based on region ${r.region} rates.`;
-								// add summary of units indented
-								if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+							let mySvcCode = getSvcCodeObj(r.authType, myResult.startDate);
+							let svcDisp = '[' + r.xCode + mySvcCode.svcCode + '] ' + mySvcCode.desc;
+							
+							newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 unit '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
+								per unit totaling ${Number(r.ttl).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}, for child ${r.clID} to provider #${r.prrID}`;
+								if (r.region === 'A')
 								{
-									newHTML += ' Based on the following:<br><ul><li>';
-									if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
-									if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
-									if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
-									if(r.units.excess > 0) {newHTML += ` ${r.units.excess} in excess care. `;}
-									newHTML += '</li></ul></p>';
+									newHTML += ` based on region ${r.region} rates.`;
 								}
 								else
 								{
-									newHTML += '</p>';
+									newHTML += `.`;
+								}
+								// add summary of units indented
+								if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+								{
+									newHTML += ' Based on the following:<ul><li>';
+									if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
+									if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
+									if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
+									if(r.excess > 0) {newHTML += ` ${Number(r.excess).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} in excess care. `;}
+									newHTML += '</li></ul></li>';
+								}
+								else
+								{
+									newHTML += '</li>';
 								}
 								});
-							
+				newHTML += '</ul></div>';		
 			// next display summer lines
 			if(data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === true).length > 0)
 			{
-				newHTML += '<p>Care for Summer:</p>';
+				newHTML += '<div id="careResultLine"><h5>Care for Summer:</h5><ul>';
 				data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === true).sort((a, b) => a.line - b.line).forEach(r => { 
-							newHTML += `<p>Authorize a ${r.authType} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 monthly unit '} at ${r.rate}
-								per unit totaling ${r.ttl}, for child ${r.clID} to provider #${r.prrID} based on region ${r.region} rates.</p>`;
-								// add summary of units indented
-								if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+							let mySvcCode = getSvcCodeObj(r.authType, myResult.startDate);
+							let svcDisp = '[' + r.xCode + mySvcCode.svcCode + '] ' + mySvcCode.desc;
+							
+							newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 unit '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
+								per unit totaling ${Number(r.ttl).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}, for child ${r.clID} to provider #${r.prrID}`;
+								if (r.region === 'A')
 								{
-									newHTML += ' Based on the following:<br><ul><li>';
-									if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
-									if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
-									if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
-									if(r.units.excess > 0) {newHTML += ` ${r.units.excess} in excess care. `;}
-									newHTML += '</li></ul></p>';
+									newHTML += ` based on region ${r.region} rates.`;
 								}
 								else
 								{
-									newHTML += '</p>';
+									newHTML += `.`;
 								}
-								});				
+								// add summary of units indented
+								if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+								{
+									newHTML += ' Based on the following:<ul><li>';
+									if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
+									if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
+									if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
+									if(r.excess > 0) {newHTML += ` ${Number(r.excess).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} in excess care. `;}
+									newHTML += '</li></ul></li>';
+								}
+								else
+								{
+									newHTML += '</li>';
+								}
+								});		
+				newHTML += '</ul></div>';								
 			}
 			else{
-				newHTML += '<p>No Changes Required for the household for Summer</p>';
+				newHTML += '<div id="careResultLine"><h5>No Changes Required for the household for Summer</h5></div>';
 			}
 			result.innerHTML = newHTML;
 		}
@@ -798,6 +854,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             
             if (!name) {
                 alert('Provider name is required');
+				console.log('Provider name is required');
                 return;
             }
             
@@ -861,6 +918,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             
             if (!headOfHouseholdId) {
                 alert('Please select a head of household');
+				console.log('Please select a head of household');
                 return;
             }
             
@@ -996,6 +1054,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             
             if (!personId) {
                 alert('Please select a person');
+				console.log('Please select a person');
                 return;
             }
             
@@ -1142,6 +1201,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             
             if (!personId || !name || !type) {
                 alert('Please fill in all fields');
+				console.log('Please fill in all fields');
                 return;
             }
             
@@ -1282,6 +1342,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             
             if (!providerId || !personId) {
                 alert('Please select both provider and child');
+				console.log('Please select both provider and child');
                 return;
             }
             
@@ -1294,6 +1355,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
             
             if (existingLink) {
                 alert('This provider-child link already exists');
+				console.log('This provider-child link already exists');
                 return;
             }
             
@@ -2009,7 +2071,7 @@ function formatTimeUserFriendly(minutes) {
                     
                     // Apply maximums
                     dayTotalMinutes = Math.min(dayTotalMinutes, 960);
-                    daySleepMinutes = Math.min(daySleepMinutes, 960);
+                    //daySleepMinutes = Math.min(daySleepMinutes, 960);
                     dayNonStandardMinutes = Math.min(dayNonStandardMinutes, 960);
                     
                     // Calculate day types based on total minutes
@@ -2037,9 +2099,9 @@ function formatTimeUserFriendly(minutes) {
 							}
 							else if(daySleepMinutes < 600)
 							{
-								daySleepminutes = 600;
+								daySleepMinutes = 600;
 							}
-							else if(daySleepminutes < 900)
+							else if(daySleepMinutes < 900)
 							{
 								daySleepMinutes = 900;
 							}
@@ -2272,11 +2334,13 @@ function formatTimeUserFriendly(minutes) {
         function calculateCare() {
             if (!data.activeApplicationId) {
                 alert('No active application selected');
+				console.log('No active application selected');
                 return;
             }
 	    const careStartDate = document.getElementById('careStartDate').value
 	    if(!careStartDate) {
 		alert('Start date for care must be specified!');
+		console.log('Start date for care must be specified!');
                 return;
 	    }
             
@@ -2322,6 +2386,7 @@ function formatTimeUserFriendly(minutes) {
                             
                             if (schedule1 && schedule2 && schedulesOverlap(schedule1, schedule2)) {
                                 results.innerHTML += `<p class="error">ERROR: ${adult.name} has overlapping activity schedules: "${adultActivities[i].name}" and "${adultActivities[j].name}"</p>`;
+								console.log(`ERROR: ${adult.name} has overlapping activity schedules: "${adultActivities[i].name}" and "${adultActivities[j].name}"`);
                                 hasErrors = true;
                             }
                         }
@@ -2346,6 +2411,7 @@ function formatTimeUserFriendly(minutes) {
                 
                 if (childActivities.length > 1) {
                     results.innerHTML += `<p class="error">ERROR: ${person ? person.name : 'Unknown child'} has multiple school/preschool activities</p>`;
+					console.log(`ERROR: ${person ? person.name : 'Unknown child'} has multiple school/preschool activities`);
                     hasErrors = true;
                 }
             }
@@ -2571,7 +2637,7 @@ function formatTimeUserFriendly(minutes) {
 				const summ110 = careResult.totalTime >= 6540 && ! multProvs; // Care during the summer months exceeds 110 hrs 
 				// for all 110 rules it is actually anything over 109 hours
                 
-                // Create calculation result object
+                // Create calculation result object CALC_RESULT
                 const calculationResult = {
                     id: nextCalculationResultId++,
                     providerId: provider.id,
@@ -2613,16 +2679,15 @@ function formatTimeUserFriendly(minutes) {
 				// NOW SEND TO DETERMINEAUTHORIZATIONS
                 const careLines = determineAuthorizations(calculationResult);
 				let myHTMLString = ''
-				
 				myHTMLString += `<h5> Authorize the following lines of care to this provider (${provider.id}):</h5><div><ul>`;
 				for (let c of careLines.authLines){
 					if(c.inc)
 					{
-						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, 
+						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode, 
 						region: calculationResult.region, units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: false, authType: c.type});
 					}
 					myHTMLString += `<li>${displayLine(c, careStartDate)}`;
-					if(isCompoundUnits(c) || provider.type != 'F')
+					if(isCompoundUnits(c) || ((provider.type != 'F') && ((c.units.fd + c.units.hd + c.units.pd) > 0)))
 					{
 						myHTMLString += ` Based on the following: <ul>`;
 							if(Number(c.units.fd) > 0) {myHTMLString += `<li>${c.units.fd} Full Day Units at ${Number(c.rates.fd).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} per unit.</li>`;}
@@ -2639,7 +2704,7 @@ function formatTimeUserFriendly(minutes) {
 						for (let c of careLines.summerLines){
 							if(c.inc)
 							{
-								tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, 
+								tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode, 
 								region: calculationResult.region, units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: true, authType: c.type});
 							}
 							myHTMLString += `<li>${displayLine(c, careStartDate)}`;
@@ -2685,16 +2750,19 @@ function formatTimeUserFriendly(minutes) {
 			
 			// save all current household/schedule information in shortSchedules attached to this result
 			data.activities.filter(a => a.applicationId === Number(data.activeApplicationId)).forEach(e => {
+				let myPersonName = data.people.find(p => p.id === e.personId).name;
 				data.shortSchedules.push({did: tempResult.id,
 											type: 'A',
-											exp: ('* ' + e.type + ' schedule for ' + e.personId + '- ' + e.name),
+											exp: ('* ' + e.type + ' schedule for ' + myPersonName + '(' + e.personId + ')- ' + e.name),
 											sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
 										});
 			});
 			data.providerLinks.filter(p => p.applicationId === Number(data.activeApplicationId)).forEach(r => {
+				let myPrrName = data.providers.find(p => p.id === r.providerId).name;
+				let myPersonName = data.people.find(p => p.id === r.personId).name;
 				data.shortSchedules.push({did: tempResult.id,
 											type: 'P',
-											exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${r.providerId} for child ${r.personId}`,
+											exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${myPrrName} [#${r.providerId}] for child ${myPersonName} [${r.personId}]`,
 											sch: scheduleToCondensedString(data.schedules.find(s => s.id === r.scheduleId))
 										});
 			});
@@ -2773,6 +2841,8 @@ function formatTimeUserFriendly(minutes) {
 			FFNClHome
 			FFNMutHome
 			FFNPrrHome
+			CCNSHB
+			LFHNSHB
 		*/
 		function getSvcCodeObj(genType, onDt)
 		{
@@ -2786,14 +2856,14 @@ function formatTimeUserFriendly(minutes) {
 			return myCd ? {svcCode: myCd.svcCode, desc: myCd.desc } : {svcCode: '0000', desc: 'Code Not Found'}; 
 		}
 		
-		/* RATES_TABLE: 
+		/* RATES_TABLE: example/possibilities 
 		prrType: "C", "H", "F"
 		ageGroup: "Infant", "Toddler", "Enh Toddler", "Pre-School", "School-age", "All"
-		region: "1","2", "3", "4", "5", "6", "S"
+		region: "1","2", "3", "4", "5", "6", "S", "A"
 		begDt: "2023-07-01"
 		endDt: "2999-12-31"
-		unitType: "Full Day", "Half Day", "Hour"
-		rate: 
+		unitType: "Full Day", "Half Day", "Hour", "NSHB"
+		rate: 25.25
 		*/
 		function getRate(prrType, ageGroup, region, dtOf, unitType)
 		{
@@ -3222,6 +3292,25 @@ function formatTimeUserFriendly(minutes) {
 							summerAmntAuthd = summerAmntDue;
 						}
 					}
+					// calculate and add NSHB lines here
+					if(calculationResult.SummerNonStandardTime >= 1800) // 30 hours
+					{
+						xCode = (calculationResult.multProvs && !calculationResult.isPrimary) ? '9' : '0'; // 9 coded if this is not the primary provider
+						myType = myBaseType + 'NSHB';
+						myRate = getRate(calculationResult.providerType,"All","A", calculationResult.startDate, "NSHB");
+						
+						if(summerLines.length > 0)
+						{
+							summerLines.push({type: myType, xCode: xCode, authUnits: 1, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: 0}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: 0}});
+							if((calculationResult.nonStandardTime >= 1800) && (authLines.length > 0))
+							{
+								authLines.push({type: myType, xCode: xCode, authUnits: 1, amt: myRate, units: {fd: 0, hd: 0, pd: 0, hr: 0}, excess: 0, inc: true, msg:'', rates:{fd: 0, hd: 0, pd: 0, hr: 0}});
+							}
+							else{
+								summerChg = true;
+							}
+						}
+					}
 				}
 				else{
 					authLines.push({type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: {fd: 0, hd: 0, pd: 0, hr: 0}, excess: 0, inc: false, msg:'Provider type not yet implemented.', rates:{fd: 0, hd: 0, pd: 0, hr: 0}});
@@ -3384,7 +3473,8 @@ function formatTimeUserFriendly(minutes) {
 			if(myCnt <= 0)
 			{
 				myDay.checked = true;
-				// alert('At least one weekday must be specified');
+				console.log('At least one weekday must be specified');
+				
 			}
 		}
 		
@@ -3497,6 +3587,7 @@ function formatTimeUserFriendly(minutes) {
 			
             if (nextWeek > 4) {
                 alert('Maximum of 4 weeks allowed in a schedule');
+				console.log('Maximum of 4 weeks allowed in a schedule');
                 return;
             }
             
@@ -3520,6 +3611,7 @@ function formatTimeUserFriendly(minutes) {
             
             if (nextWeek > 4) {
                 alert('Maximum of 4 weeks allowed in a schedule');
+				console.log('Maximum of 4 weeks allowed in a schedule');
                 return;
             }
             
@@ -3532,6 +3624,7 @@ function formatTimeUserFriendly(minutes) {
             displaySchedule(schedule);
             
             alert(`Week ${nextWeek} added to schedule`);
+			console.log(`Week ${nextWeek} added to schedule`);
         }
 
 		/* This function should load the requested default schedule type into the week selected by the user on the schedule 
@@ -3713,6 +3806,7 @@ function formatTimeUserFriendly(minutes) {
 			if(getCheckBoxRes() === 0)
 			{
 				alert('At least one weekday must be specified!');
+				console.log('At least one weekday must be specified!');
 				return;
 			}
 			const selector = document.getElementById('scheduleSelector');
@@ -3722,8 +3816,8 @@ function formatTimeUserFriendly(minutes) {
             const schedule = data.schedules.find(s => s.id === scheduleId);
             if (!schedule) return;
 			
-			const startTimeStr = getTimeString('start'); //document.getElementById('periodStartTime').value.trim();
-            const endTimeStr = getTimeString('end'); //document.getElementById('periodEndTime').value.trim();
+			const startTimeStr = getTimeString('start');
+            const endTimeStr = getTimeString('end');
             
             document.getElementById('periodError').innerHTML = '';
             
@@ -3733,11 +3827,13 @@ function formatTimeUserFriendly(minutes) {
             
             if (startTime === null) {
                 document.getElementById('periodError').innerHTML += '<p>Invalid start time format. Use H:mm AM/PM</p>';
+				console.log('Invalid start time format. Use H:mm AM/PM');
                 haveIssue = true;
             }
             
             if (endTime === null) {
                 document.getElementById('periodError').innerHTML += '<p>Invalid end time format. Use H:mm AM/PM</p>';
+				console.log('Invalid end time format. Use H:mm AM/PM');
                 haveIssue = true;
             }
 			if(haveIssue)
@@ -3753,15 +3849,13 @@ function formatTimeUserFriendly(minutes) {
 			});
 			
 			 // Clear form
-            //document.getElementById('periodStartTime').value = '';
-            //document.getElementById('periodEndTime').value = '';
             modifyBoxes();
 			
             saveData();
             displaySchedule(schedule);
 		}
 		
-		// updated for the new day checkboxes
+		// adds the specified period to a specific day in the specified week
         function addPeriod(day) 
 		{
             const selector = document.getElementById('scheduleSelector');
@@ -3772,9 +3866,8 @@ function formatTimeUserFriendly(minutes) {
             if (!schedule) return;
             
             const week = parseInt(document.getElementById('periodWeek').value);
-            //const day = document.getElementById('periodDay').value;
-            const startTimeStr = getTimeString('start'); //document.getElementById('periodStartTime').value.trim();
-            const endTimeStr = getTimeString('end'); //document.getElementById('periodEndTime').value.trim();
+            const startTimeStr = getTimeString('start');
+            const endTimeStr = getTimeString('end');
             
             document.getElementById('periodError').innerHTML = '';
             
@@ -3784,11 +3877,13 @@ function formatTimeUserFriendly(minutes) {
             
             if (startTime === null) {
                 document.getElementById('periodError').innerHTML += '<p>Invalid start time format. Use H:mm AM/PM</p>';
+				console.log('Invalid start time format. Use H:mm AM/PM');
                 haveIssue = true;
             }
             
             if (endTime === null) {
                 document.getElementById('periodError').innerHTML += '<p>Invalid end time format. Use H:mm AM/PM</p>';
+				console.log('Invalid end time format. Use H:mm AM/PM');
                 haveIssue = true;
             }
 			if(haveIssue)
@@ -3832,7 +3927,7 @@ function formatTimeUserFriendly(minutes) {
             } else {
                 // Normal period within same day
                 if (!addPeriodToSchedule(schedule, week, day, startTime, endTime)) {
-                    return; // Error already set
+                    return; // Error already set by addPeriodToScehdule
                 }
             }
         }
@@ -3863,6 +3958,7 @@ function formatTimeUserFriendly(minutes) {
             for (let period of existingPeriods) {
                 if (!(endTime <= period.start || startTime >= period.end)) {
                     document.getElementById('periodError').innerHTML += `<p>Period overlaps with existing period in ${day} of week ${week}.</p>`;
+					console.log(`Period overlaps with existing period in ${day} of week ${week}.`);
                     return false;
                 }
             }
