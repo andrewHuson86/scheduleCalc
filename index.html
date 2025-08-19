@@ -1,19 +1,11 @@
 <!DOCTYPE html>
 <!-- I hope you like spaghetti! -->
 <!-- TODO List:
-	(*) MAJOR!!! Modify calculation, include table to choose calculation function to use, add calculation ability for Centers for non-monthly care.
-	first: add a table, providerType, startDate, endDate, and functionName
-	then: instead of current calculation logic, lookup function name and call that function to determine the careResults before displaying
-	finally: modify the calculation functions (calculateCare and determineAuthorizations) 
-		instead of directly using the global data object and using results page specific document element ids
-		have it accept a 'data' object and a name for the element id to target for all the output. 
-		When using from the calculate tab send it the global data object and the 'calculationResults' div id
-		when recalculating a result from a saved result using a new calculation date, create a tempData object using the 
-		information from the saved result, and then calling the calculate function sending the tempData object and the savedResults 'selectedCareResult' div id
-	(*) add functionality, add ability to recalculate care from a saved result using a new start date. Use the original activity schedules from the savedResult but use a new start date.
-		and should use the same original calculation.
-	(*) Modify shortSchedules objects add clientID, client name, client birthdate, and activity name so that tempData can be fully populated from selected result
-	(*) Modify savedResults to include HOH clientID so that tempData can be fully populated from selected result
+	(*) Add functionality, add ability to recalculate care from a saved result using a new start date. 
+		Use the original activity schedules from the savedResult but use a new start date.
+	(*) Add functionality: ability to 'load' a saved result and modify it before recalculating care.
+		When this is selected, pointer to data is saved, data points to the newTempData generated, and flag is set
+		When care using loaded state is recalculated and saved, after saving revert to current data.
 -->
 <html lang="en">
 <head>
@@ -650,12 +642,12 @@ if(!confirm('Are you sure? This will delete all stored data for this applcation.
 	data.providers = [];
 	data.applications = [];
 	data.householdMembers = [];
-	activities = [];
-	providerLinks = [];
-	schedules = [];
-	savedResults = [];
-	resultLines = [];
-	shortSchedules = [];
+	data.activities = [];
+	data.providerLinks = [];
+	data.schedules = [];
+	data.savedResults = [];
+	data.resultLines = [];
+	data.shortSchedules = [];
 	data.activeApplicationId = null;
 	
 	nextPersonId = 10000;
@@ -780,6 +772,7 @@ function updateResultSection()
 	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
 	
 	// display saved results, formatting should be similar to initial report formatting
+	// TODO: update this section! Must work for daily authoriations also
 	newHTML += '<div id="careResultLine"><h5>Resulting Care Results:</h5><ul>';
 	// Then display the care results one at a time, should be formatted similarly to the initial results display
 	// first display normal lines
@@ -787,7 +780,7 @@ function updateResultSection()
 					let mySvcCode = getSvcCodeObj(r.authType, myResult.startDate);
 					let svcDisp = '[' + r.xCode + mySvcCode.svcCode + '] ' + mySvcCode.desc;
 					
-					newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 unit '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
+					newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' ' + r.numUnits + ' unit(s) '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
 						per unit totaling ${Number(r.ttl).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}, for child ${r.clID} to provider #${r.prrID}`;
 						if (r.region === 'A')
 						{
@@ -798,7 +791,7 @@ function updateResultSection()
 							newHTML += `.`;
 						}
 						// add summary of units indented
-						if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+						if(r.exp && (r.units.fd + r.units.hd + r.units.pd + r.excess > 0))
 						{
 							newHTML += ' Based on the following:<ul><li>';
 							if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
@@ -821,7 +814,7 @@ function updateResultSection()
 					let mySvcCode = getSvcCodeObj(r.authType, myResult.startDate);
 					let svcDisp = '[' + r.xCode + mySvcCode.svcCode + '] ' + mySvcCode.desc;
 					
-					newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' 1 unit '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
+					newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' ' + r.numUnits + ' unit(s) '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
 						per unit totaling ${Number(r.ttl).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}, for child ${r.clID} to provider #${r.prrID}`;
 						if (r.region === 'A')
 						{
@@ -832,7 +825,7 @@ function updateResultSection()
 							newHTML += `.`;
 						}
 						// add summary of units indented
-						if(r.units.fd + r.units.hd + r.units.pd + r.excess > 0)
+						if(r.exp && (r.units.fd + r.units.hd + r.units.pd + r.excess > 0))
 						{
 							newHTML += ' Based on the following:<ul><li>';
 							if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
@@ -2857,6 +2850,9 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	// set up the tempResult
 	tempResult.id = nextResultId++;
 	tempResult.appid = Number(data.activeApplicationId);
+	tempResult.HOH = data.applications.find(a => a.id === Number(data.activeApplicationId)).headOfHouseholdId;
+	tempResult.name = data.people.find(p => p.id === Number(tempResult.HOH)).name;
+	tempResult.birthdate = data.people.find(p => p.id === Number(tempResult.HOH)).birthdate;
 	tempResult.startDate = careStartDate;
 	tempResult.saveDate = new Date().toLocaleDateString('en-CA');
 	let myCalcResults = [];
@@ -3157,8 +3153,6 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		}
 		myCareClients.find(c=> c.clientId === calculationResult.clientId).non9CodedTotal = Math.max(0,non9CodeRemain);
 		
-		//TODO: sort the authLines and summerLines before displaying and adding to tempResults
-		
 		//add the text for the authlines
 		let myHTMLString = ''
 		myHTMLString += `<h5> Authorize the following lines of care to this provider (${calculationResult.providerId}):</h5><div><ul>`;
@@ -3166,7 +3160,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 			if(c.inc)
 			{
 				tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode, 
-				region: calculationResult.region, units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: false, authType: c.type});
+				region: calculationResult.region, numUnits:c.authUnits, exp: (calculationResult.myFunc === 'MONTHLYUNITCALC' ? true : false), units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: false, authType: c.type});
 			}
 			myHTMLString += `<li>${displayLine(c, careStartDate)}`;
 			if(isCompoundUnits(c) || ((calculationResult.myFunc === 'MONTHLYUNITCALC') && ((c.units.fd + c.units.hd + c.units.pd) > 0)))
@@ -3187,7 +3181,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 					if(c.inc)
 					{
 						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode, 
-						region: calculationResult.region, units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: true, authType: c.type});
+						region: calculationResult.region, numUnits:c.authUnits, exp: (calculationResult.myFunc === 'MONTHLYUNITCALC' ? true : false), units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: true, authType: c.type});
 					}
 					myHTMLString += `<li>${displayLine(c, careStartDate)}`;
 					if(isCompoundUnits(c) || ((calculationResult.myFunc === 'MONTHLYUNITCALC') && ((c.units.fd + c.units.hd + c.units.pd) > 0)))
@@ -3233,21 +3227,25 @@ function saveTempResults()
 	
 	// save all current household/schedule information in shortSchedules attached to this result
 	data.activities.filter(a => a.applicationId === Number(data.activeApplicationId)).forEach(e => {
-		let myPersonName = data.people.find(p => p.id === e.personId).name;
+		let myPerson = data.people.find(p => p.id === e.personId);
 		data.shortSchedules.push({did: tempResult.id,
 									type: 'A',
-									//subType: data.schedules.find(s => s.id === e.scheduleId).type,
-									exp: ('* ' + e.type + ' schedule for ' + myPersonName + '(' + e.personId + ')- ' + e.name),
+									clID: myPerson.id,
+									linkID: null,
+									subType: data.schedules.find(s => s.id === e.scheduleId).type,
+									exp: ('* ' + e.type + ' schedule for ' + myPerson.name + '(' + e.personId + ')- ' + e.name),
 									sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
 								});
 	});
 	data.providerLinks.filter(p => p.applicationId === Number(data.activeApplicationId)).forEach(r => {
 		let myPrrName = data.providers.find(p => p.id === r.providerId).name;
-		let myPersonName = data.people.find(p => p.id === r.personId).name;
+		let myPerson = data.people.find(p => p.id === r.personId);
 		data.shortSchedules.push({did: tempResult.id,
 									type: 'P',
-									//subType : 'R',
-									exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${myPrrName} [#${r.providerId}] for child ${myPersonName} [${r.personId}]`,
+									clID: myPerson.id,
+									linkID: r.providerId,
+									subType : 'R',
+									exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${myPrrName} [#${r.providerId}] for child ${myPerson.name} [${r.personId}]`,
 									sch: scheduleToCondensedString(data.schedules.find(s => s.id === r.scheduleId))
 								});
 	});
@@ -4649,7 +4647,7 @@ function determineDailyAuthorizations(calculationResult, non9CodeRemain)
 			}
 			else // will be minimum 30 HDU
 			{
-				myType += 'HDU';
+				myType += 'SDU'; // school half day unit
 				myUnits = 30;
 				mySummerUnits = 46;
 				
@@ -5057,5 +5055,4 @@ function init() {
 window.onload = init;
 </script>
 </body>
-
 </html>
