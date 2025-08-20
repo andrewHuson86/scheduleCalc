@@ -3172,7 +3172,8 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 			region: provider.region,
 			clientId: child.id,
 			name: child.name,
-			totalTotalTime: 0, // this will be updated after all calculationResults are created
+			totalTotalTime: 0, // this will be updated after all calculationResults are created, used for sorting
+			totalTotalInitTime: 0, // this will be updated after all calculationResults are created, used for sorting
 			myFunc: getCalculationFunction(provider.type, careStartDate),
 			applicationId: parseInt(data.activeApplicationId),
 			startDate: careStartDate,
@@ -3232,21 +3233,26 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	const myUniqueCareClients = [...new Set(myCalcResults.map(obj => obj.clientId))];
 	for(let i = 0; i < myUniqueCareClients.length; i++)
 	{
-		myCareClients.push({clientId: myUniqueCareClients[i], totalTotalTime: 0.0, non9CodedTotal: 230.0});
+		myCareClients.push({clientId: myUniqueCareClients[i], totalTotalTime: 0.0, non9CodedTotal: 230.0, totalTotalInitTime: 0.0});
 	}
 	// add all the totalTime of the individual calculationResults for each client to the client array
-	myCalcResults.forEach(r => { myCareClients.find(m => m.clientId === r.clientId).totalTotalTime += r.totalTime; });
-	// set the totalTotalTime from the individual children into each calculationResult element
+	myCalcResults.forEach(r => { 
+		myCareClients.find(m => m.clientId === r.clientId).totalTotalTime += r.totalTime;
+		myCareClients.find(m => m.clientId === r.clientId).totalTotalInitTime += r.initCareResultTotalTime;
+		});
+	// set the totalTotalTime and totalTotalInitTime from the individual children into each calculationResult element
+	
 	for(let i = 0; i < myCalcResults.length; i++)
 	{
 		myCalcResults[i].totalTotalTime = myCareClients.find(m => m.clientId === myCalcResults[i].clientId).totalTotalTime;
+		myCalcResults[i].totalTotalInitTime = myCareClients.find(m => m.clientId === myCalcResults[i].clientId).totalTotalInitTime;
 	}
 	
 	// Sort the myCalcResults in place, order by totalTotalTime (descending), then birthdate (youngest to oldest), then client ID (largest to smallest), then isPrimary, then totalTime 
 	myCalcResults.sort((a, b) => {
-		if (Math.min(a.totalTotalTime, ((a.initCareResultTotalTime*52.0)/12.0)) !== Math.min(b.totalTotalTime,((b.initCareResultTotalTime*52.0)/12.0))) // First totalTotalTime (descending)
+		if (Math.min(a.totalTotalTime, a.totalTotalInitTime) !== Math.min(b.totalTotalTime, b.totalTotalInitTime)) // First totalTotalTime (descending)
 		{
-			return Math.min(b.totalTotalTime,((b.initCareResultTotalTime*52.0)/12.0)) - Math.min(a.totalTotalTime, ((a.initCareResultTotalTime*52.0)/12.0));
+			return (Math.min(b.totalTotalTime, b.totalTotalInitTime) - Math.min(a.totalTotalTime, a.totalTotalInitTime));
 		}
 		if((new Date(a.birthdate)) !== (new Date(b.birthdate))) // Then youngest to oldest
 		{
