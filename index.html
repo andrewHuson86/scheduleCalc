@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <!-- I hope you like spaghetti! -->
+<!--  Ability to delete people, providers, or applications was removed from the user interface -->
 <!-- TODO List:
+	(*) Modify the save results function based on toggled state using real data or temp data
+	(*) When a result is to be saved, if currently in tempData, save the data into real data and then clear tempdata and toggle state
 	(*) Add functionality, add ability to recalculate care from a saved result using a new start date. 
 		Use the original activity schedules from the savedResult but use a new start date.
 	(*) Add functionality: ability to 'load' a saved result and modify it before recalculating care.
@@ -743,6 +746,14 @@ function refreshSavedResults()
 		}
 		});
 	addHTML += `</select>`;
+	
+	// add date input field and recalculate button that allows recalculation of the currently selected result using the specified date
+	// add button to 'load' the selected result for modification, myTempData is built using data from result, then toggle data from actual to temp
+	addHTML+= `<p><label>New Care Start Date:</label><input type="date" id="reCalcStartDate"></p>
+		<button onclick="recalculateStoredResult()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Recalculate Care</button>
+		<button onclick="loadSavedResultState()" style="background: #dc3545; font-size: 16px; padding: 15px 30px;">Reload Stored Result State</button></p>`;
+		
+	
 	form.innerHTML += addHTML;
 	updateResultSection();
 }
@@ -772,7 +783,6 @@ function updateResultSection()
 	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
 	
 	// display saved results, formatting should be similar to initial report formatting
-	// TODO: update this section! Must work for daily authoriations also
 	newHTML += '<div id="careResultLine"><h5>Resulting Care Results:</h5><ul>';
 	// Then display the care results one at a time, should be formatted similarly to the initial results display
 	// first display normal lines
@@ -941,8 +951,7 @@ function refreshPeopleList()
 		div.className = 'list-item';
 		div.innerHTML = `
 			<span>ID: ${person.id} - ${person.name} (Born: ${person.birthdate})</span>
-			<button class="danger" onclick="deletePerson(${person.id})">Delete</button>
-		`;
+			`; // <button class="danger" onclick="deletePerson(${person.id})">Delete</button>`;
 		list.appendChild(div);
 	});
 	
@@ -1021,8 +1030,7 @@ function refreshProvidersList()
 		const typeName = provider.type === 'C' ? 'Center' : provider.type === 'F' ? 'FFN' : 'LFH';
 		div.innerHTML = `
 			<span>ID: ${provider.id} - ${provider.name} (${typeName})</span>
-			<button class="danger" onclick="deleteProvider(${provider.id})">Delete</button>
-		`;
+			`; // <button class="danger" onclick="deleteProvider(${provider.id})">Delete</button>`;
 		list.appendChild(div);
 	});
 }
@@ -1099,10 +1107,8 @@ function refreshApplicationsList()
 		div.innerHTML = `
 			<span>ID: ${app.id} - Head: ${person ? person.name : 'Unknown'}</span>
 			<div>
-				<button onclick="setActiveApplication(${app.id})">Set Active</button>
-				<button class="danger" onclick="deleteApplication(${app.id})">Delete</button>
-			</div>
-		`;
+				<button onclick="setActiveApplication(${app.id})">Set Active</button> 
+				</div>`; // <button class="danger" onclick="deleteApplication(${app.id})">Delete</button></div>`;
 		list.appendChild(div);
 	});
 	
@@ -2597,17 +2603,81 @@ function calculateCurrentCare()
 	calculateCare(data, 'calculationResults', careStartDate);
 }
 
-// calculate care from a stored result, store it in 'selectedCareResult' div
-function calculateStoredResult()
+// recalculate care from a stored result, store it in 'recalculationSection' div
+function recalculateStoredResult()
 {
-	// TODO build this!!
-	// build myTempData using information based on the current selected stored result
-	// and the requested new calc start date
 	const selectedResult = data.savedResults.find(r => r.id === Number(activeResultId));
+	if(!selectedResult)
+	{
+		alert('Error: No result selected!');
+		console.log('Error: No result selected!');
+		return;
+	}
+	const careStartDate = document.getElementById('reCalcStartDate').value
+	if(!careStartDate) {
+		alert('Recalculation start date for care must be specified!');
+		console.log('Recalculation start date for care must be specified!');
+		return;
+	}
 	
-	myStartDate = '';
+	// build myTempData using information based on the current selected stored result
+	buildMyTemp(selectedResult);
 	
-	calculateCare(myTempData, 'selectedCareResult', myStartDate);
+	calculateCare(myTempData, 'recalculationSection', careStartDate);
+	// clear myTempData
+	clearTempData();
+}
+
+// TODO: write this!
+function loadSavedResultState()
+{
+	// buildMyTemp();
+	// toggle usingTemp
+	
+}
+
+// Populate myTemp with all data needed for calculations using the data in the selected Result
+// TODO ! FINISH THIS!
+function buildMyTemp(selectedResult)
+{
+	// populate all people and providers from real data these things can't be deleted
+	myTempData.providers = JSON.parse(JSON.stringify(actualData.people));
+	myTempData.providers = JSON.parse(JSON.stringify(actualData.providers));
+	myTempData.applications = [{headOfHouseholdId: selectedResult.HOH, id: selectedResult.appid}]; // populate applications with single application
+	const uniqueResultChildren = [...new Set(actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id) && s.type === 'P').map(obj => obj.clID))];
+	uniqueResultChildren.forEach(c => {
+		myTempData.householdMembers.push({ 
+			applicationId: selectedResult.appid,
+			included: 'Y',
+			memberType: 'C',
+			personId: c });
+		});
+	const uniqueRemainingPeople = [...new Set(actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).map(obj => obj.clID))];
+		uniqueRemainingPeople.forEach(c => {
+		if(!myTempData.householdMembers.find(f => f.personID === c) && c !== selectedResult.HOH)
+		myTempData.householdMembers.push({ 
+			applicationId: selectedResult.appid,
+			included: 'Y',
+			memberType: 'C',
+			personId: c });
+		});
+	// populate schedules, provider-child links, and activities
+	actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).forEach(l => { 
+		// create a new schedule using the condensed schedule and input into schedules
+		let myNewSchedule = parseCondensedScheduleString(s.sch);
+		
+		// TODO : continue here
+		if(s.type === 'P')
+		{
+			// if it is a provider-child link schedule, input the provider-child link into provider-child links and link the newly created scheduleid
+			//myTempData.providerLinks.push({});
+		}
+		else
+		{
+			// If it is an activity schedule, create a new activity in activities and link the newly created scheduleid
+		}
+	});
+	myTempData.activeApplicationId = selectedResult.appid;
 }
 		
 // Main calculation function
@@ -3180,7 +3250,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 				for (let c of careLines.summerLines){
 					if(c.inc)
 					{
-						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode, 
+						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode,
 						region: calculationResult.region, numUnits:c.authUnits, exp: (calculationResult.myFunc === 'MONTHLYUNITCALC' ? true : false), units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: true, authType: c.type});
 					}
 					myHTMLString += `<li>${displayLine(c, careStartDate)}`;
@@ -3232,6 +3302,11 @@ function saveTempResults()
 									type: 'A',
 									clID: myPerson.id,
 									linkID: null,
+									loc: null,
+									subLoc: null,
+									isPrimary: null,
+									actName: a.name,
+									actType: a.type,
 									subType: data.schedules.find(s => s.id === e.scheduleId).type,
 									exp: ('* ' + e.type + ' schedule for ' + myPerson.name + '(' + e.personId + ')- ' + e.name),
 									sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
@@ -3244,6 +3319,11 @@ function saveTempResults()
 									type: 'P',
 									clID: myPerson.id,
 									linkID: r.providerId,
+									loc: p.locCare,
+									subLoc: p.subLoc,
+									isPrimary: p.primary,
+									actName: null,
+									actType: null,
 									subType : 'R',
 									exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${myPrrName} [#${r.providerId}] for child ${myPerson.name} [${r.personId}]`,
 									sch: scheduleToCondensedString(data.schedules.find(s => s.id === r.scheduleId))
