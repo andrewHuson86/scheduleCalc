@@ -1,14 +1,9 @@
 <!DOCTYPE html>
 <!-- I hope you like spaghetti! -->
-<!--  Ability to delete people, providers, or applications was removed from the user interface -->
+<!--  Ability to delete people, providers, or applications was removed from the user interface to allow loading stored results, 
+		and because those should be permanent items in Barcode -->
 <!-- TODO List:
-	(*) Modify the save results function based on toggled state using real data or temp data
-	(*) When a result is to be saved, if currently in tempData, save the data into real data and then clear tempdata and toggle state
-	(*) Add functionality, add ability to recalculate care from a saved result using a new start date. 
-		Use the original activity schedules from the savedResult but use a new start date.
-	(*) Add functionality: ability to 'load' a saved result and modify it before recalculating care.
-		When this is selected, pointer to data is saved, data points to the newTempData generated, and flag is set
-		When care using loaded state is recalculated and saved, after saving revert to current data.
+	
 -->
 <html lang="en">
 <head>
@@ -279,6 +274,7 @@
 <body>
     <div class="container">
 		<div class="deleteAll"><button class="danger" onclick="removeAllStoredData()">Delete Stored Data</button></div>
+		<div id="exitLoadedState" class="deleteAll"></div>
         <h1>CCSP Schedule Management System</h1>
 		<div class="reporting_checkbox"><div><input type="checkbox" id="repCheckbox" onchange="toggleVerboseReporting()" checked="false"></div><div><label for="repCheckbox">Verbose Reporting</label></div></div>
         <div class="nav-tabs">
@@ -574,7 +570,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 const CALC_FUNCTION_TABLE = Object.freeze([{ type: "H", func: "MONTHLYUNITCALC", begDt: "1990-01-01", endDt: "2999-12-31" },{ type: "C", func: "DAILYUNITCALC", begDt: "1990-01-01", endDt: "2026-06-30" },{ type: "F", func: "FFNCALCHRLY", begDt: "1990-01-01", endDt: "2999-12-31" },{ type: "C", func: "MONTHLYUNITCALC", begDt: "2026-07-01", endDt: "2999-12-31" }]);
 //END OF CALC_FUNCTION_TABLE
 
-let data = {
+let actualData = {
 	people: JSON.parse(localStorage.getItem('people') || '[]'),
 	providers: JSON.parse(localStorage.getItem('providers') || '[]'),
 	applications: JSON.parse(localStorage.getItem('applications') || '[]'),
@@ -602,14 +598,84 @@ let myTempData = {
 	activeApplicationId:  null
 };
 
-// ID counters
-let nextPersonId = Math.max(10000, ...(data.people.map(p => p.id) || [9999])) + 1;
-let nextProviderId = Math.max(100001, ...(data.providers.map(p => p.id) || [100000])) + 1;
-let nextApplicationId = Math.max(2003000000, ...(data.applications.map(a => a.id) || [2002999999])) + 1;
-let nextActivityId = Math.max(1, ...(data.activities.map(a => a.id) || [0])) + 1;
-let nextScheduleId = Math.max(1, ...(data.schedules.map(s => s.id) || [0])) + 1;
-let nextResultId = Math.max(70000, ...(data.savedResults.map(r => r.id) || [0])) + 1;
-let tempResult = { id: nextResultId++,
+// usingTemp true will cause data to point to myTempData
+let usingTemp = false;
+let nextTempScheduleId = 1;
+
+// Create a proxy object for data, most of the code will reference data which can be actual or tempData
+// Only saving results accesses actualData directly
+let data = new Proxy({}, {
+  get: function(target, prop) {
+    return usingTemp ? myTempData[prop] : actualData[prop];
+  },
+  set: function(target, prop, value) {
+    if (usingTemp) {
+      myTempData[prop] = value;
+    } else {
+      actualData[prop] = value;
+    }
+    return true;
+  },
+  deleteProperty: function(target, prop) {
+    if (usingTemp) {
+      delete myTempData[prop];
+    } else {
+      delete actualData[prop];
+    }
+    return true;
+  },
+  has: function(target, prop) {
+    return usingTemp ? prop in myTempData : prop in actualData;
+  },
+  ownKeys: function(target) {
+    return usingTemp ? Object.keys(myTempData) : Object.keys(actualData);
+  }
+});
+
+// Toggle function
+function toggleDataSource() 
+{
+	usingTemp = !usingTemp;
+	if(usingTemp)
+	{
+		document.getElementById('exitLoadedState').innerHTML = `<button class="danger" onclick="toggleDataSource()"> Exit Loaded State </button>`;
+	}
+	else
+	{
+		document.getElementById('exitLoadedState').innerHTML = '';
+	}
+	clearTempData();
+	if(verboseReporting)
+	{
+		console.log(`Switched to ${usingTemp ? 'temporary' : 'actual'} data`);
+	}
+	refreshAll();
+}
+
+function saveData() {
+	if (usingTemp) {
+    console.log('Save operation skipped - using temporary data');
+    return;
+	 }
+	Object.keys(actualData)
+	.forEach(key => {
+		if (key !== 'activeApplicationId') {
+			localStorage.setItem(key, JSON.stringify(actualData[key]));
+		} else {
+			localStorage.setItem(key, actualData[key] || '');
+		}
+	});
+}
+
+// get ID functions
+function getNextPersonId() { return Math.max(10000, ...(data.people.map(p => p.id) || [9999])) + 1; }
+function getNextproviderId() { return Math.max(100001, ...(data.providers.map(p => p.id) || [100000])) + 1; }
+function getNextApplicationId() { return Math.max(2003000000, ...(data.applications.map(a => a.id) || [2002999999])) + 1; }
+function getNextActivityId() { return Math.max(1, ...(data.activities.map(a => a.id) || [0])) + 1; }
+function getNextScheduleId() { return Math.max(1, ...(data.schedules.map(s => s.id) || [0])) + 1; }
+function getNextResultId() { return Math.max(70000, ...(actualData.savedResults.map(r => r.id) || [0])) + 1; } // all results are only stored in actual data
+
+let tempResult = { id: 0,
 					appid: 0,
 					startDate: new Date().toLocaleDateString('en-CA'),
 					isPrimary: true,
@@ -620,20 +686,8 @@ let tempShortSchedules = [];
 let activeResultId = null;
 let verboseReporting = true; // set default to false later
 
-
 // end of global data 
 
-// Utility functions
-function saveData() {
-	Object.keys(data)
-	.forEach(key => {
-		if (key !== 'activeApplicationId') {
-			localStorage.setItem(key, JSON.stringify(data[key]));
-		} else {
-			localStorage.setItem(key, data[key] || '');
-		}
-	});
-}
 // remove all data from localStorage
 function removeAllStoredData()
 {
@@ -653,13 +707,7 @@ if(!confirm('Are you sure? This will delete all stored data for this applcation.
 	data.shortSchedules = [];
 	data.activeApplicationId = null;
 	
-	nextPersonId = 10000;
-	nextProviderId = 100000;
-	nextApplicationId = 2003000001;
-	nextActivityId = 1;
-	nextScheduleId = 1;
-	nextResultId = 1;
-	tempResult = { id: nextResultId++,
+	tempResult = { id: 0,
 					appid: 0,
 					startDate: new Date().toLocaleDateString('en-CA'),
 					isPrimary: true,
@@ -670,7 +718,7 @@ if(!confirm('Are you sure? This will delete all stored data for this applcation.
 	activeResultId = null;
 	
 	saveData();
-	init();
+	refreshAll();
 }
 
 function clearTempData()
@@ -724,6 +772,12 @@ function showTab(tabName)
 function refreshSavedResults()
 {
 	const form = document.getElementById('savedResultsForm');
+	
+	if (usingTemp) {
+		form.innerHTML = '<p>You are currently in a loaded state.</p>';
+		document.getElementById('selectedCareResult').innerHTML = `<p>No other saved results can be accessed while in a loaded state.</p>`;
+		return;
+	}
 	
 	if (!data.activeApplicationId) {
 		form.innerHTML = '<p>Please select an active application first.</p>';
@@ -855,6 +909,8 @@ function updateResultSection()
 		newHTML += '<div id="careResultLine"><h5>No Changes Required for the household for Summer</h5></div>';
 	}
 	result.innerHTML = newHTML;
+	// clear any calculation results in the recalculation section
+	document.getElementById('recalculationSection').innerHTML = '';
 }
 
 function formatTime(minutes) 
@@ -916,7 +972,7 @@ function addPerson()
 	if (hasError) return;
 	
 	const person = {
-		id: nextPersonId++,
+		id: getNextPersonId(),
 		name: name,
 		birthdate: birthdate
 	};
@@ -980,7 +1036,7 @@ const region = document.getElementById('providerRegion').value;
 	}
 	
 	const provider = {
-		id: nextProviderId++,
+		id: getNextProviderId(),
 		name: name,
 		type: type,
 		region: region
@@ -1045,9 +1101,15 @@ function addApplication()
 		console.log('Please select a head of household');
 		return;
 	}
+	if(tempData)
+	{
+		alert('Applications can not be created in a reloaded state.');
+		console.log('Applications can not be created in a reloaded state.');
+		return;
+	}
 	
 	const application = {
-		id: nextApplicationId++,
+		id: getNextApplicationId(),
 		headOfHouseholdId: headOfHouseholdId
 	};
 	
@@ -1358,7 +1420,7 @@ function addActivity()
 	const schedule = createEmptySchedule(scheduleType);
 	
 	const activity = {
-		id: nextActivityId++,
+		id: getNextActivityId(),
 		applicationId: parseInt(data.activeApplicationId),
 		personId: personId,
 		name: name,
@@ -1694,7 +1756,7 @@ function combineSchedules(schedule1, schedule2)
 	const totalWeeks = lcm(weeks1, weeks2);
 	
 	const combinedSchedule = {
-		id: nextScheduleId++,
+		id: getNextTempScheduleId++,
 		type: 'A',
 		weeks: {}
 	};
@@ -1793,7 +1855,7 @@ function getScheduleOverlap(schedule1, schedule2)
 	const totalWeeks = lcm(weeks1, weeks2);
 	
 	const overlapSchedule = {
-		id: nextScheduleId++,
+		id: nextTempScheduleId++,
 		type: 'A',
 		weeks: {}
 	};
@@ -1866,7 +1928,7 @@ function subtractSchedule(schedule1, schedule2)
 	const totalWeeks = lcm(weeks1, weeks2);
 	
 	const resultSchedule = {
-		id: nextScheduleId++,
+		id: nextTempScheduleId++,
 		type: schedule1.type,
 		weeks: {}
 	};
@@ -1976,7 +2038,7 @@ function scheduleToCondensedString(schedule)
 function parseCondensedScheduleString(condensedString) 
 {
 	const schedule = {
-		id: nextScheduleId++,
+		id: nextTempScheduleId++,
 		type: 'A',
 		weeks: {}
 	};
@@ -1985,13 +2047,13 @@ function parseCondensedScheduleString(condensedString)
 	let content = condensedString.slice(1, -1);
 	
 	// Parse weeks
-	const weekRegex = /\(W(\d+)\)\[(.*?)\](?=,\(W\d+\)|\]|$)/g;
+	// I hate regEx so much
+	const weekRegex = /\(W(\d+)\)\[([^\]]*?(?:\[.*?\][^\]]*?)*)\](?=,\(W\d+\)|\]|$)/g;
 	let weekMatch;
 	
 	while ((weekMatch = weekRegex.exec(content)) !== null) {
 		const weekNum = parseInt(weekMatch[1]);
-		const weekContent = weekMatch[2];
-		
+		const weekContent = weekMatch[2];	
 		schedule.weeks[weekNum] = {};
 		
 		// Parse days
@@ -2074,7 +2136,7 @@ function scheduleToUserFriendlyString(schedule)
                 if (processedDays.has(compareDay)) continue;
                 
                 const comparePeriods = schedule.weeks[week] ? schedule.weeks[week][compareDay] || [] : [];
-                
+				
                 if (periodsMatch(currentPeriods, comparePeriods)) {
                     matchingDays.push(compareDay);
                 }
@@ -2099,7 +2161,7 @@ function scheduleToUserFriendlyString(schedule)
     return result.join('. ') + '.';
 }
 
-// Helper function to check if two period arrays are identical
+// checks if two period arrays are identical
 function periodsMatch(periods1, periods2) {
     if (periods1.length !== periods2.length) return false;
     
@@ -2606,7 +2668,7 @@ function calculateCurrentCare()
 // recalculate care from a stored result, store it in 'recalculationSection' div
 function recalculateStoredResult()
 {
-	const selectedResult = data.savedResults.find(r => r.id === Number(activeResultId));
+	const selectedResult = actualData.savedResults.find(r => r.id === Number(activeResultId));
 	if(!selectedResult)
 	{
 		alert('Error: No result selected!');
@@ -2619,6 +2681,12 @@ function recalculateStoredResult()
 		console.log('Recalculation start date for care must be specified!');
 		return;
 	}
+	if(careStartDate === selectedResult.startDate)
+	{
+		alert('Recalculation start date for care is the same as the original start date!');
+		console.log('Recalculation start date for care is the same as the original start date!');
+		return;
+	}
 	
 	// build myTempData using information based on the current selected stored result
 	buildMyTemp(selectedResult);
@@ -2628,21 +2696,38 @@ function recalculateStoredResult()
 	clearTempData();
 }
 
-// TODO: write this!
+// If old result is selected, toggles to using temp data, and builds dataset from stored result data
 function loadSavedResultState()
 {
-	// buildMyTemp();
-	// toggle usingTemp
-	
+	document.getElementById('selectedCareResult').innerHTML = '';
+	const selectedResult = actualData.savedResults.find(r => r.id === Number(activeResultId));
+	if(!selectedResult)
+	{
+		alert('Error: No result selected!');
+		console.log('Error: No result selected!');
+		return;
+	}
+	if(!usingTemp)
+	{
+		toggleDataSource();
+	}
+	else // this shouldn't be possible
+	{
+		clearTempData();
+	}
+	buildMyTemp(selectedResult);
+	refreshAll(); // refresh all screens and go to household screen
+	showTab('household'); // schedules ? calculation ?
 }
 
 // Populate myTemp with all data needed for calculations using the data in the selected Result
-// TODO ! FINISH THIS!
 function buildMyTemp(selectedResult)
 {
 	// populate all people and providers from real data these things can't be deleted
-	myTempData.providers = JSON.parse(JSON.stringify(actualData.people));
+	myTempData.people = JSON.parse(JSON.stringify(actualData.people));
 	myTempData.providers = JSON.parse(JSON.stringify(actualData.providers));
+	// resultLines, savedResults, and shortSchedules will always be empty in myTempData, stored results will only ever be saved in actual Data
+	
 	myTempData.applications = [{headOfHouseholdId: selectedResult.HOH, id: selectedResult.appid}]; // populate applications with single application
 	const uniqueResultChildren = [...new Set(actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id) && s.type === 'P').map(obj => obj.clID))];
 	uniqueResultChildren.forEach(c => {
@@ -2650,32 +2735,47 @@ function buildMyTemp(selectedResult)
 			applicationId: selectedResult.appid,
 			included: 'Y',
 			memberType: 'C',
-			personId: c });
+			personId: Number(c) });
 		});
 	const uniqueRemainingPeople = [...new Set(actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).map(obj => obj.clID))];
 		uniqueRemainingPeople.forEach(c => {
-		if(!myTempData.householdMembers.find(f => f.personID === c) && c !== selectedResult.HOH)
+		if((!myTempData.householdMembers.find(f => Number(f.personId) === Number(c))) && (Number(c) != Number(selectedResult.HOH)))
 		myTempData.householdMembers.push({ 
 			applicationId: selectedResult.appid,
 			included: 'Y',
 			memberType: 'C',
-			personId: c });
+			personId: Number(c) });
 		});
 	// populate schedules, provider-child links, and activities
 	actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).forEach(l => { 
 		// create a new schedule using the condensed schedule and input into schedules
-		let myNewSchedule = parseCondensedScheduleString(s.sch);
+		let myNewSchedule = parseCondensedScheduleString(l.sch);
+		myNewSchedule.type = l.subType;
 		
-		// TODO : continue here
-		if(s.type === 'P')
+		if(l.type === 'P')
 		{
 			// if it is a provider-child link schedule, input the provider-child link into provider-child links and link the newly created scheduleid
-			//myTempData.providerLinks.push({});
+			myTempData.providerLinks.push({applicationId: selectedResult.appid,
+											locCare: l.loc,
+											personId: l.clID,
+											primary: l.isPrimary,
+											providerId: l.linkID,
+											scheduleId: myNewSchedule.id,
+											subLoc: l.subLoc
+											});
 		}
 		else
 		{
 			// If it is an activity schedule, create a new activity in activities and link the newly created scheduleid
+			myTempData.activities.push({applicationId: selectedResult.appid,
+											id: getNextActivityId(),
+											name: l.actName,
+											personId: l.clID,
+											scheduleId: myNewSchedule.id,
+											type: l.actType
+											});
 		}
+		myTempData.schedules.push(myNewSchedule);
 	});
 	myTempData.activeApplicationId = selectedResult.appid;
 }
@@ -2683,20 +2783,33 @@ function buildMyTemp(selectedResult)
 // Main calculation function
 function calculateCare(myData, myTargetElementId, careStartDate) 
 {
+	const dataSnapShot = JSON.stringify(data);
 	const results = document.getElementById(myTargetElementId);
 	if(!results)
 	{
 		console.log(`Error target elementID ${myTargetElementId} not found in document`);
 		return;
 	}
+	// Always clear the two potential calculation display sections before starting a new calculation
+	if(myTargetElementId === 'recalculationSection')
+	{
+		document.getElementById('calculationResults').innerHTML = '<p>No calculation performed yet.</p>';
+		results.innerHTML = `<p><h3>Recalculating Care<h3></p>`;
+	}
+	else
+	{
+		document.getElementById('recalculationSection').innerHTML = '';
+		results.innerHTML = '';
+	}
 	
 	if (!myData.activeApplicationId) {
+		results.innerHTML = '';
 		alert('No active application selected');
 		console.log('No active application selected');
 		return;
 	}
 	 
-	results.innerHTML = '<h4>Care Calculation Process</h4>';
+	results.innerHTML += '<h4>Care Calculation Process</h4>';
 	
 	const app = myData.applications.find(a => a.id == myData.activeApplicationId);
 	if (!app) {
@@ -2867,7 +2980,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		
 		if (adultActivities.length === 0) {
 			// No activities, create empty schedule
-			const emptySchedule = createEmptySchedule('A');
+			const emptySchedule = createTempEmptySchedule('A');
 			adultCombinedSchedules.push(emptySchedule);
 			results.innerHTML += `<p>${adult.name}'s Schedule: No scheduled periods</p>`;
 		} else if (adultActivities.length === 1) {
@@ -2918,7 +3031,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	tempResultLines.length = 0; // build new temp results array to allow the user to save the data from the calculation
 	let myL = 1;
 	// set up the tempResult
-	tempResult.id = nextResultId++;
+	tempResult.id = getNextResultId();
 	tempResult.appid = Number(data.activeApplicationId);
 	tempResult.HOH = data.applications.find(a => a.id === Number(data.activeApplicationId)).headOfHouseholdId;
 	tempResult.name = data.people.find(p => p.id === Number(tempResult.HOH)).name;
@@ -3281,32 +3394,39 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	{
 		results.innerHTML += `<p><div id = "saveResultsButton"><button onclick="saveTempResults()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Save Care Results</button><div></p>`;
 	}
+	
+	if(JSON.stringify(data) != dataSnapShot)
+	{
+		console.log("Error: data was modified in the calculateCareFunction!!");
+	}
 }
 // end of calculateCare function
 
 // add the tempResults to the savedResults, first update any existing results for this application to primary = false
+// This function should always push results to the actualData
+// if we are currently using tempData, after push, toggle back to normal data.
 function saveTempResults()
 {
 	// set all other saved results 
-	data.savedResults.forEach(res => {
+	actualData.savedResults.forEach(res => {
 		if (res.appid === Number(tempResult.appid) && res.isPrimary === true) {
 			res.isPrimary = false;
 		}
 	});
-	data.savedResults.push(JSON.parse(JSON.stringify(tempResult)));
+	actualData.savedResults.push(JSON.parse(JSON.stringify(tempResult)));
 	
 	// save all current household/schedule information in shortSchedules attached to this result
 	data.activities.filter(a => a.applicationId === Number(data.activeApplicationId)).forEach(e => {
 		let myPerson = data.people.find(p => p.id === e.personId);
-		data.shortSchedules.push({did: tempResult.id,
+		actualData.shortSchedules.push({did: tempResult.id,
 									type: 'A',
 									clID: myPerson.id,
 									linkID: null,
 									loc: null,
 									subLoc: null,
 									isPrimary: null,
-									actName: a.name,
-									actType: a.type,
+									actName: e.name,
+									actType: e.type,
 									subType: data.schedules.find(s => s.id === e.scheduleId).type,
 									exp: ('* ' + e.type + ' schedule for ' + myPerson.name + '(' + e.personId + ')- ' + e.name),
 									sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
@@ -3315,13 +3435,13 @@ function saveTempResults()
 	data.providerLinks.filter(p => p.applicationId === Number(data.activeApplicationId)).forEach(r => {
 		let myPrrName = data.providers.find(p => p.id === r.providerId).name;
 		let myPerson = data.people.find(p => p.id === r.personId);
-		data.shortSchedules.push({did: tempResult.id,
+		actualData.shortSchedules.push({did: tempResult.id,
 									type: 'P',
 									clID: myPerson.id,
 									linkID: r.providerId,
-									loc: p.locCare,
-									subLoc: p.subLoc,
-									isPrimary: p.primary,
+									loc: r.locCare,
+									subLoc: r.subLoc,
+									isPrimary: r.primary,
 									actName: null,
 									actType: null,
 									subType : 'R',
@@ -3331,10 +3451,10 @@ function saveTempResults()
 	});
 	
 	// add tempLines to saved result Lines
-	tempResultLines.forEach(l => {data.resultLines.push(l)});
+	tempResultLines.forEach(l => {actualData.resultLines.push(l)});
 	
 	// reset tempResult and tempLines
-	tempResult.id = nextResultId++;
+	tempResult.id = getNextResultId();
 	tempResult.saveDate = new Date().toLocaleDateString('en-CA');
 	tempResultLines.length = 0;
 	
@@ -3342,6 +3462,12 @@ function saveTempResults()
 	const saveButton = document.getElementById('saveResultsButton');
 	saveButton.style.visibility = 'hidden';
 	saveButton.style.display = 'none';
+
+	if(usingTemp === true)
+	{
+		toggleDataSource();
+	}
+	refreshSavedResults();
 	saveData();
 }
 
@@ -3470,7 +3596,7 @@ function getMaxRate(prrType, dtOf, unitType)
 function createEmptySchedule(type) 
 {
 	const schedule = {
-		id: nextScheduleId++,
+		id: getNextScheduleId(),
 		type: type,
 		weeks: {
 			1: {
@@ -3483,6 +3609,21 @@ function createEmptySchedule(type)
 	saveData();
 	return schedule;
 }
+
+function createTempEmptySchedule(type) 
+{
+	const schedule = {
+		id: nextTempScheduleId++,
+		type: type,
+		weeks: {
+			1: {
+				Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
+			}
+		}
+	};
+	return schedule;
+}
+
 
 function refreshScheduleSelector() 
 {
@@ -3875,6 +4016,7 @@ function refreshCalculationForm()
 <p><label>Care Start Date:</label><input type="date" id="careStartDate"></p>
 		<button onclick="calculateCurrentCare()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Calculate All Care</button>
 	`;
+	document.getElementById('calculationResults').innerHTML = '<p>No calculation performed yet.</p>';
 }
 
 
@@ -5116,6 +5258,23 @@ function createAlignedOutput(schoolFull, schoolHalf, schoolZero,summerFull, summ
 
 // Initialize the application
 function init() {
+	refreshPeopleList();
+	refreshProvidersList();
+	refreshApplicationsList();
+	refreshHouseholdForm();
+	refreshHouseholdList();
+	refreshActivityForm();
+	refreshActivitiesList();
+	refreshProviderLinkForm();
+	refreshProviderLinksList();
+	refreshScheduleSelector();
+	refreshCalculationForm();
+	refreshSavedResults();
+	document.getElementById('repCheckbox').checked = verboseReporting;
+}
+
+function refreshAll()
+{
 	refreshPeopleList();
 	refreshProvidersList();
 	refreshApplicationsList();
