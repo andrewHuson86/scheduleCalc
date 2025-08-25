@@ -4,7 +4,8 @@
 		and because those should be permanent items in Barcode -->
 <!-- Now uses a temporary object myTempSchedule for all schedule editing, only saves schedule to data when using the save changes button -->
 <!-- TODO List:
-
+	Change people, Providers, Applications so that clientIDs, su numbers, and provider IDs are input directly
+	Modify the application tab, specify the su-num and HOH, then click set application, this creates the application and sets that application active.
 -->
 <html lang="en">
 <head>
@@ -281,20 +282,18 @@
 </head>
 <body>
     <div class="container">
-		<div class="deleteAll"><button class="danger" onclick="removeAllStoredData()">Delete Stored Data</button></div>
-		<div id="exitLoadedState" class="deleteAll"></div>
+		<div class="deleteAll"><button class="danger" onclick="removeAllStoredData()">Clear Data</button></div>
         <h1>CCSP Schedule Management System</h1>
 		<div class="reporting_checkbox"><div><input type="checkbox" id="repCheckbox" onchange="toggleVerboseReporting()" checked="false"></div><div><label for="repCheckbox">Verbose Reporting</label></div></div>
-        <div class="nav-tabs">
+		<div id= "nav-tabs" class="nav-tabs">
             <div class="nav-tab active" onclick="showTab('people')">People</div>
             <div class="nav-tab" onclick="showTab('providers')">Providers</div>
-            <div class="nav-tab" onclick="showTab('applications')">Applications</div>
-            <div class="nav-tab" onclick="showTab('household')">Household</div>
+            <div class="nav-tab" onclick="showTab('applications')">Application</div>
+            <div class="nav-tab" onclick="showTab('household')">Household</div> 
             <div class="nav-tab" onclick="showTab('activities')">Activities</div>
             <div class="nav-tab" onclick="showTab('provider-links')">Provider Links</div>
             <div class="nav-tab" onclick="showTab('schedules')">Schedules</div>
             <div class="nav-tab" onclick="showTab('calculation')">Calculate Care</div>
-			<div class="nav-tab" onclick="showTab('savedResults')">Saved Results</div>
         </div>
 
         <!-- People Tab -->
@@ -302,6 +301,9 @@
             <div class="section">
                 <h3>Add New Person</h3>
                 <div class="form-group">
+					<label>Client Id:</label>
+                    <input type="number" id="personId" placeholder="Enter the client Id">
+					<div id="personCLIDError" class="error"></div>
                     <label>Name:</label>
                     <input type="text" id="personName" placeholder="Enter person's name">
                     <div id="personNameError" class="error"></div>
@@ -325,6 +327,8 @@
             <div class="section">
                 <h3>Add New Provider</h3>
                 <div class="form-group">
+					<label>SSPS ID:</label>
+                    <input type="text" maxlength="6" id="providerId" placeholder="Enter the SSPS ID">
                     <label>Name:</label>
                     <input type="text" id="providerName" placeholder="Enter provider name">
                 </div>
@@ -349,6 +353,7 @@
                     </select>
                 </div>
                 <button onclick="addProvider()">Add Provider</button>
+				<div id="prrError" class="error"></div>
             </div>
             
             <div class="section">
@@ -360,14 +365,17 @@
         <!-- Applications Tab -->
         <div id="applications" class="tab-content">
             <div class="section">
-                <h3>Add New Application</h3>
+                <h3>Specify Application</h3>
                 <div class="form-group">
+				<label>Su-Num:</label>
+                    <input type="number" id="appId" placeholder="Enter the application number">
                     <label>Head of Household:</label>
                     <select id="headOfHousehold">
                         <option value="">Select a person</option>
                     </select>
                 </div>
-                <button onclick="addApplication()">Add Application</button>
+                <button onclick="addApplication()">Create Application</button>
+				<div id="appError" class="error"></div>
             </div>
             
             <div class="section">
@@ -439,7 +447,7 @@
                 
                 <div id="scheduleEditor">
 				<h3>Schedule Editor</h3>
-                    <button onclick="clearSchedule()" class="danger">Clear Schedule</button><button id="saveChangesButton" onclick="saveTempSchedule()" class="saveButton">Save Changes</button>
+                    <button onclick="clearSchedule()" class="danger">Clear Schedule</button>
                     
                     <div class="sch-form-group">
                         <!-- Instead of selecting a day from a dropdown, have checkbox for each day Sun->Sat, user can select multiple weekdays for the week to add the period to -->
@@ -539,25 +547,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-		<!-- Saved Results Care Tab -->
-        <div id="savedResults" class="tab-content">
-            <div class="section">
-                <h3>Saved Care results</h3>
-                <div id="savedResultsForm">
-                    <p>Please select an active application first.</p>
-					<div id ="recalculateForm"></div>
-                </div>
-                <div class="section">
-                    <h3>Care Results</h3>
-                    <div id="selectedCareResult">
-                        <p>No Result yet selected.</p>
-                    </div>
-					<div id="recalculationSection"></div>
-                </div>
-            </div>
-        </div>
-		
+        </div>	
     </div>
 <script>
 // Data structures and storage
@@ -578,7 +568,7 @@ const AGE_GROUPS_TABLE = Object.freeze([{ prrType: "C", ageGroup: "Infant", minM
 const CALC_FUNCTION_TABLE = Object.freeze([{ type: "H", func: "MONTHLYUNITCALC", begDt: "1990-01-01", endDt: "2999-12-31" },{ type: "C", func: "DAILYUNITCALC", begDt: "1990-01-01", endDt: "2026-06-30" },{ type: "F", func: "FFNCALCHRLY", begDt: "1990-01-01", endDt: "2999-12-31" },{ type: "C", func: "MONTHLYUNITCALC", begDt: "2026-07-01", endDt: "2999-12-31" }]);
 //END OF CALC_FUNCTION_TABLE
 
-let actualData = {
+let data = {
 	people: JSON.parse(localStorage.getItem('people') || '[]'),
 	providers: JSON.parse(localStorage.getItem('providers') || '[]'),
 	applications: JSON.parse(localStorage.getItem('applications') || '[]'),
@@ -586,116 +576,25 @@ let actualData = {
 	activities: JSON.parse(localStorage.getItem('activities') || '[]'),
 	providerLinks: JSON.parse(localStorage.getItem('providerLinks') || '[]'),
 	schedules: JSON.parse(localStorage.getItem('schedules') || '[]'),
-	savedResults: JSON.parse(localStorage.getItem('savedResults') || '[]'),
-	resultLines: JSON.parse(localStorage.getItem('resultLines') || '[]'),
-	shortSchedules: JSON.parse(localStorage.getItem('shortSchedules') || '[]'),
 	activeApplicationId: localStorage.getItem('activeApplicationId') || null
 };
-
-let myTempData = {
-	people: [],
-	providers: [],
-	applications: [],
-	householdMembers: [],
-	activities: [],
-	providerLinks: [],
-	schedules: [],
-	savedResults: [],
-	resultLines: [],
-	shortSchedules: [],
-	activeApplicationId:  null
-};
-
-// usingTemp true will cause data to point to myTempData
-let usingTemp = false;
 let nextTempScheduleId = 1;
-let myTempSchedule = createTempEmptySchedule('A');
-let selectedScheduleId = null;
-let mySelectedIndex = null;
-
-
-// Create a proxy object for data, most of the code will reference data which can be actual or tempData
-// Only saving results accesses actualData directly
-let data = new Proxy({}, {
-  get: function(target, prop) {
-    return usingTemp ? myTempData[prop] : actualData[prop];
-  },
-  set: function(target, prop, value) {
-    if (usingTemp) {
-      myTempData[prop] = value;
-    } else {
-      actualData[prop] = value;
-    }
-    return true;
-  },
-  deleteProperty: function(target, prop) {
-    if (usingTemp) {
-      delete myTempData[prop];
-    } else {
-      delete actualData[prop];
-    }
-    return true;
-  },
-  has: function(target, prop) {
-    return usingTemp ? prop in myTempData : prop in actualData;
-  },
-  ownKeys: function(target) {
-    return usingTemp ? Object.keys(myTempData) : Object.keys(actualData);
-  }
-});
-
-// Toggle function
-function toggleDataSource() 
-{
-	usingTemp = !usingTemp;
-	if(usingTemp)
-	{
-		document.getElementById('exitLoadedState').innerHTML = `<button class="danger" onclick="toggleDataSource()"> Exit Loaded State </button>`;
-	}
-	else
-	{
-		document.getElementById('exitLoadedState').innerHTML = '';
-	}
-	clearTempData();
-	if(verboseReporting)
-	{
-		console.log(`Switched to ${usingTemp ? 'temporary' : 'actual'} data`);
-	}
-	refreshAll();
-}
 
 function saveData() {
-	if (usingTemp) {
-    console.log('Save operation skipped - using temporary data');
-    return;
-	 }
-	Object.keys(actualData)
+	Object.keys(data)
 	.forEach(key => {
 		if (key !== 'activeApplicationId') {
-			localStorage.setItem(key, JSON.stringify(actualData[key]));
+			localStorage.setItem(key, JSON.stringify(data[key]));
 		} else {
-			localStorage.setItem(key, actualData[key] || '');
+			localStorage.setItem(key, data[key] || '');
 		}
 	});
 }
 
 // get ID functions
-function getNextPersonId() { return Math.max(10000, ...(data.people.map(p => p.id) || [9999])) + 1; }
-function getNextProviderId() { return Math.max(100001, ...(data.providers.map(p => p.id) || [100000])) + 1; }
-function getNextApplicationId() { return Math.max(2003000000, ...(data.applications.map(a => a.id) || [2002999999])) + 1; }
 function getNextActivityId() { return Math.max(1, ...(data.activities.map(a => a.id) || [0])) + 1; }
 function getNextScheduleId() { return Math.max(1, ...(data.schedules.map(s => s.id) || [0])) + 1; }
-function getNextResultId() { return Math.max(70000, ...(actualData.savedResults.map(r => r.id) || [0])) + 1; } // all results are only stored in actual data
 
-let tempResult = { id: 0,
-					appid: 0,
-					startDate: new Date().toLocaleDateString('en-CA'),
-					isPrimary: true,
-					saveDate: new Date().toLocaleDateString('en-CA')
-				};
-let tempResultLines = [];
-let tempShortSchedules = [];
-let activeResultId = null;
 let verboseReporting = true; // set default to false later
 
 // end of global data 
@@ -714,40 +613,13 @@ if(!confirm('Are you sure? This will delete all stored data for this applcation.
 	data.activities = [];
 	data.providerLinks = [];
 	data.schedules = [];
-	data.savedResults = [];
-	data.resultLines = [];
-	data.shortSchedules = [];
 	data.activeApplicationId = null;
 	
-	tempResult = { id: 0,
-					appid: 0,
-					startDate: new Date().toLocaleDateString('en-CA'),
-					isPrimary: true,
-					saveDate: new Date().toLocaleDateString('en-CA')
-				};
-	tempResultLines = [];
-	tempShortSchedules = [];
-	activeResultId = null;
 	
 	saveData();
 	refreshAll();
 }
 
-function clearTempData()
-{
-	myTempData = {
-	people: [],
-	providers: [],
-	applications: [],
-	householdMembers: [],
-	activities: [],
-	providerLinks: [],
-	schedules: [],
-	savedResults: [],
-	resultLines: [],
-	shortSchedules: [],
-	activeApplicationId:  null };
-}
 		
 // toggle verbose reporting, weird issue using ternary operator or condensing this at all
 function toggleVerboseReporting()
@@ -761,27 +633,6 @@ function toggleVerboseReporting()
 
 function showTab(tabName) 
 {
-	if(selectedScheduleId != null)
-	{
-		const refSchedule = data.schedules.find(s => s.id === selectedScheduleId);
-		if(refSchedule)
-		{
-			if(JSON.stringify(myTempSchedule.weeks) != JSON.stringify(refSchedule.weeks))
-			{
-				if (!confirm('There are unsaved changes to the current schedule, are you sure you want to continue?'))
-				{
-					return;
-				}
-				else
-				{
-					selectedScheduleId = null;
-					myTempSchedule = createTempEmptySchedule('A');
-				}
-			}
-		}
-	}
-
-
 	document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
 	document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
 	
@@ -802,149 +653,6 @@ function showTab(tabName)
 	}
 }
 
-function refreshSavedResults()
-{
-	const form = document.getElementById('savedResultsForm');
-	
-	if (usingTemp) {
-		form.innerHTML = '<p>You are currently in a loaded state.</p>';
-		document.getElementById('selectedCareResult').innerHTML = `<p>No other saved results can be accessed while in a loaded state.</p>`;
-		return;
-	}
-	
-	if (!data.activeApplicationId) {
-		form.innerHTML = '<p>Please select an active application first.</p>';
-		return;
-	}
-	const currResult = data.savedResults.find(r => r.appid === Number(data.activeApplicationId) && r.isPrimary === true);
-	if (!currResult){
-		form.innerHTML = '<p>There are no saved results for the selected applcation.</p>';
-		return;
-	}
-	form.innerHTML = '';
-	activeResultId = currResult.id;
-	let addHTML = `<p>Active Application: ${data.activeApplicationId}</p>`;
-	
-	addHTML = addHTML + `<label for="results">Choose a care Result:</label><select id="careResult" onchange="updateResultSection()"><option value="${currResult.id}">${currResult.id} - Current Result - Saved: ${currResult.saveDate}</option>`;
-	data.savedResults.forEach(l => {
-		if(l.appid === Number(currResult.appid) && l.isPrimary === false && l.id !== currResult.id)
-		{
-			addHTML = addHTML + `<option value="${l.id}">${l.id} - Previous Result - Saved: ${l.saveDate}</option>`;
-		}
-		});
-	addHTML += `</select>`;
-	
-	// add date input field and recalculate button that allows recalculation of the currently selected result using the specified date
-	// add button to 'load' the selected result for modification, myTempData is built using data from result, then toggle data from actual to temp
-	addHTML+= `<p><label>New Care Start Date:</label><input type="date" id="reCalcStartDate"></p>
-		<button onclick="recalculateStoredResult()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Recalculate Care</button>
-		<button onclick="loadSavedResultState()" style="background: #dc3545; font-size: 16px; padding: 15px 30px;">Reload Stored Result State</button></p>`;
-		
-	
-	form.innerHTML += addHTML;
-	updateResultSection();
-}
-		
-// Should include all the data from shortSchedules along with actual formatted data for each resultLine
-function updateResultSection()
-{
-	const result = document.getElementById('selectedCareResult');
-	const resultID = document.getElementById('careResult').value;
-	activeResultId = resultID;
-	result.innerHTML = '';
-	
-	if(!activeResultId){
-		result.innerHTML = '<p>No Result yet selected.</p>';
-		return;
-	}
-	const myResult = data.savedResults.find(r => r.id === Number(activeResultId));
-	
-	//myResult.startDate
-	
-	// populate the result section with the authorization information from the selected saved result.
-	let newHTML = `<p>${myResult.isPrimary ? 'Current' : 'Previous'} care results for application ${data.activeApplicationId} calculated on ${myResult.saveDate} for care starting ${myResult.startDate} based on the following information:</p>`;
-	// Display case data captured at the time of the result from shortSchedules.
-	// Activiy Schedules first
-	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'A').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
-	// Then Provider-Child Link Schedules
-	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
-	
-	// display saved results, formatting should be similar to initial report formatting
-	newHTML += '<div id="careResultLine"><h5>Resulting Care Results:</h5><ul>';
-	// Then display the care results one at a time, should be formatted similarly to the initial results display
-	// first display normal lines
-		data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === false).sort((a, b) => a.line - b.line).forEach(r => { 
-					let mySvcCode = getSvcCodeObj(r.authType, myResult.startDate);
-					let svcDisp = '[' + r.xCode + mySvcCode.svcCode + '] ' + mySvcCode.desc;
-					
-					newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' ' + r.numUnits + ' unit(s) '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
-						per unit totaling ${Number(r.ttl).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}, for child ${r.clID} to provider #${r.prrID}`;
-						if (r.region === 'A')
-						{
-							newHTML += ` based on region ${r.region} rates.`;
-						}
-						else
-						{
-							newHTML += `.`;
-						}
-						// add summary of units indented
-						if(r.exp && (r.units.fd + r.units.hd + r.units.pd + r.excess > 0))
-						{
-							newHTML += ' Based on the following:<ul><li>';
-							if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
-							if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
-							if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
-							if(r.excess > 0) {newHTML += ` ${Number(r.excess).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} in excess care. `;}
-							newHTML += '</li></ul></li>';
-						}
-						else
-						{
-							newHTML += '</li>';
-						}
-						});
-		newHTML += '</ul></div>';		
-	// next display summer lines
-	if(data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === true).length > 0)
-	{
-		newHTML += '<div id="careResultLine"><h5>Care for Summer:</h5><ul>';
-		data.resultLines.filter(f => f.rid === Number(resultID) && f.isSummer === true).sort((a, b) => a.line - b.line).forEach(r => { 
-					let mySvcCode = getSvcCodeObj(r.authType, myResult.startDate);
-					let svcDisp = '[' + r.xCode + mySvcCode.svcCode + '] ' + mySvcCode.desc;
-					
-					newHTML += `<li>Authorize a ${svcDisp} care line, ${r.units.hr > 0 ? r.units.hr + ' hrs ' : ' ' + r.numUnits + ' unit(s) '} at ${Number(r.rate).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}
-						per unit totaling ${Number(r.ttl).toLocaleString('en-US', {style: 'currency', currency: 'USD'})}, for child ${r.clID} to provider #${r.prrID}`;
-						if (r.region === 'A')
-						{
-							newHTML += ` based on region ${r.region} rates.`;
-						}
-						else
-						{
-							newHTML += `.`;
-						}
-						// add summary of units indented
-						if(r.exp && (r.units.fd + r.units.hd + r.units.pd + r.excess > 0))
-						{
-							newHTML += ' Based on the following:<ul><li>';
-							if(r.units.fd > 0) {newHTML += ` ${r.units.fd} full days. `;}
-							if(r.units.pd > 0) {newHTML += ` ${r.units.pd} partial days. `;}
-							if(r.units.hd > 0) {newHTML += ` ${r.units.hd} half days. `;}
-							if(r.excess > 0) {newHTML += ` ${Number(r.excess).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} in excess care. `;}
-							newHTML += '</li></ul></li>';
-						}
-						else
-						{
-							newHTML += '</li>';
-						}
-						});		
-		newHTML += '</ul></div>';								
-	}
-	else{
-		newHTML += '<div id="careResultLine"><h5>No Changes Required for the household for Summer</h5></div>';
-	}
-	result.innerHTML = newHTML;
-	// clear any calculation results in the recalculation section
-	document.getElementById('recalculationSection').innerHTML = '';
-}
 
 function formatTime(minutes) 
 {
@@ -980,14 +688,27 @@ function parseTime(timeString)
 // People functions
 function addPerson() 
 {
+	const clid = parseInt(document.getElementById('personId').value);
 	const name = document.getElementById('personName').value.trim();
 	const birthdate = document.getElementById('personBirthdate').value;
 	
 	// Clear previous errors
+	document.getElementById('personCLIDError').textContent = '';
 	document.getElementById('personNameError').textContent = '';
 	document.getElementById('personBirthdateError').textContent = '';
 	
 	let hasError = false;
+	
+	if(!clid)
+	{
+		document.getElementById('personCLIDError').textContent = 'A client ID is required';
+		hasError = true;
+	}
+	if(data.people.find(p => Number(p.id) === Number(clid)))
+	{
+		document.getElementById('personCLIDError').textContent = 'A person with this client ID already exists.';
+		hasError = true;
+	}
 	
 	if (!name) {
 		document.getElementById('personNameError').textContent = 'Name is required';
@@ -1005,7 +726,7 @@ function addPerson()
 	if (hasError) return;
 	
 	const person = {
-		id: getNextPersonId(),
+		id: Number(clid),
 		name: name,
 		birthdate: birthdate
 	};
@@ -1013,6 +734,7 @@ function addPerson()
 	data.people.push(person);
 	saveData();
 	
+	document.getElementById('personId').value = '';
 	document.getElementById('personName').value = '';
 	document.getElementById('personBirthdate').value = '';
 	
@@ -1058,18 +780,58 @@ function refreshPeopleList()
 // Provider functions
 function addProvider() 
 {
+	const prrId = document.getElementById('providerId').value.trim();
 	const name = document.getElementById('providerName').value.trim();
 	const type = document.getElementById('providerType').value;
-const region = document.getElementById('providerRegion').value;
+	const region = document.getElementById('providerRegion').value;
+	const errReg = document.getElementById('prrError');
+	let hasError = false;
 	
-	if (!name) {
-		alert('Provider name is required');
+	errReg.innerHTML = '';
+	
+	if (!prrId) 
+	{
+		errReg.innerHTML += `<p>Provider SSPSID is required!</p>`;
+		console.log('Provider SSPSID is required');
+		hasError = true;
+	}
+	else if(((isNaN(parseInt(prrId))) && (isFinite(prrId))) || (prrId.length > 6))
+	{
+		errReg.innerHTML += `<p>Provider SSPSID ${prrId} is invalid!</p>`;
+		console.log(`Provider SSPSID ${prrId} is invalid!`);
+		hasError = true;
+	}
+	else if(data.providers.find(p => p.id === Number(prrId)))
+	{
+		errReg.innerHTML += `<p>Provider SSPSID ${prrId} already exists!</p>`;
+		console.log(`Provider SSPSID ${prrId} already exists!`);
+		hasError = true;
+	}
+	if (!name) 
+	{
+		errReg.innerHTML += `<p>Provider name is required!</p>`;
 		console.log('Provider name is required');
+		hasError = true;
+	}
+	if (!type) 
+	{
+		errReg.innerHTML += `<p>Provider type is required!</p>`;
+		console.log('Provider type is required');
+		hasError = true;
+	}
+	if (!region) 
+	{
+		errReg.innerHTML += `<p>Provider region is required!</p>`;
+		console.log('Provider region is required');
+		hasError = true;
+	}
+	if(hasError)
+	{
 		return;
 	}
 	
 	const provider = {
-		id: getNextProviderId(),
+		id: Number(parseInt(prrId)),
 		name: name,
 		type: type,
 		region: region
@@ -1079,6 +841,7 @@ const region = document.getElementById('providerRegion').value;
 	saveData();
 	
 	document.getElementById('providerName').value = '';
+	document.getElementById('providerId').value = '';
 	
 	refreshProvidersList();
 }
@@ -1127,22 +890,48 @@ function refreshProvidersList()
 // Application functions
 function addApplication() 
 {
+	const appId = parseInt(document.getElementById('appId').value);
+	const appStr = document.getElementById('appId').value.trim();
 	const headOfHouseholdId = parseInt(document.getElementById('headOfHousehold').value);
+	const errReg = document.getElementById('appError');
+	let hasError = false;
 	
-	if (!headOfHouseholdId) {
-		alert('Please select a head of household');
-		console.log('Please select a head of household');
-		return;
-	}
-	if(usingTemp)
+	errReg.innerHTML = '';
+	
+	if (!appStr) 
 	{
-		alert('Applications can not be created in a reloaded state.');
-		console.log('Applications can not be created in a reloaded state.');
+		errReg.innerHTML += `<p>Application Number is required!</p>`;
+		console.log('Application Number is required!');
+		hasError = true;
+	}
+	else if(appStr.length != 10 || isNaN(parseInt(appStr)) || appStr.slice(0,3) != '200' || parseInt(appStr) <= 0)
+	{
+		errReg.innerHTML += `<p>Application number ${appStr} is invalid!</p>`;
+		console.log(`Application number ${appStr} is invalid!`);
+		hasError = true;
+	}
+	else if(data.applications.find(a => a.id === appId))
+	{
+		errReg.innerHTML += `<p>Error! Application ${appId} already exists!</p>`;
+		console.log(`Error! Application ${appId} already exists!`);
+		hasError = true;
+	}
+	
+	if (!headOfHouseholdId) 
+	{
+		errReg.innerHTML += `<p>Please select a head of household.</p>`;
+		console.log('Please select a head of household.');
+		hasError = true;
+	}
+	
+	if(hasError)
+	{
 		return;
 	}
 	
-	const application = {
-		id: getNextApplicationId(),
+	const application = 
+	{
+		id: appId,
 		headOfHouseholdId: headOfHouseholdId
 	};
 	
@@ -1150,11 +939,12 @@ function addApplication()
 	
 	if(data.applications.length === 1)
 	{
-		data.activeApplicationId = application.id;
+		data.activeApplicationId = appId;
 	}
 	
 	saveData();
 	
+	document.getElementById('appId').value = '';
 	document.getElementById('headOfHousehold').value = '';
 	
 	refreshApplicationsList();
@@ -2742,123 +2532,6 @@ function calculateCurrentCare()
 	calculateCare(data, 'calculationResults', careStartDate);
 }
 
-// recalculate care from a stored result, store it in 'recalculationSection' div
-function recalculateStoredResult()
-{
-	const selectedResult = actualData.savedResults.find(r => r.id === Number(activeResultId));
-	if(!selectedResult)
-	{
-		alert('Error: No result selected!');
-		console.log('Error: No result selected!');
-		return;
-	}
-	const careStartDate = document.getElementById('reCalcStartDate').value
-	if(!careStartDate) {
-		alert('Recalculation start date for care must be specified!');
-		console.log('Recalculation start date for care must be specified!');
-		return;
-	}
-	if(careStartDate === selectedResult.startDate)
-	{
-		alert('Recalculation start date for care is the same as the original start date!');
-		console.log('Recalculation start date for care is the same as the original start date!');
-		return;
-	}
-	
-	// build myTempData using information based on the current selected stored result
-	buildMyTemp(selectedResult);
-	
-	calculateCare(myTempData, 'recalculationSection', careStartDate);
-	// clear myTempData
-	clearTempData();
-}
-
-// If old result is selected, toggles to using temp data, and builds dataset from stored result data
-function loadSavedResultState()
-{
-	document.getElementById('selectedCareResult').innerHTML = '';
-	const selectedResult = actualData.savedResults.find(r => r.id === Number(activeResultId));
-	if(!selectedResult)
-	{
-		alert('Error: No result selected!');
-		console.log('Error: No result selected!');
-		return;
-	}
-	if(!usingTemp)
-	{
-		toggleDataSource();
-	}
-	else // this shouldn't be possible
-	{
-		clearTempData();
-	}
-	buildMyTemp(selectedResult);
-	refreshAll(); // refresh all screens and go to household screen
-	showTab('household'); // schedules ? calculation ?
-}
-
-// Populate myTemp with all data needed for calculations using the data in the selected Result
-function buildMyTemp(selectedResult)
-{
-	// populate all people and providers from real data these things can't be deleted
-	myTempData.people = JSON.parse(JSON.stringify(actualData.people));
-	myTempData.providers = JSON.parse(JSON.stringify(actualData.providers));
-	// resultLines, savedResults, and shortSchedules will always be empty in myTempData, stored results will only ever be saved in actual Data
-	
-	myTempData.applications = [{headOfHouseholdId: selectedResult.HOH, id: selectedResult.appid}]; // populate applications with single application
-	const uniqueResultChildren = [...new Set(actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id) && s.type === 'P').map(obj => obj.clID))];
-	uniqueResultChildren.forEach(c => {
-	const myInc = actualData.shortSchedules.find(f=> f.did === Number(selectedResult.id) && f.clID === Number(c)).included;
-		myTempData.householdMembers.push({ 
-			applicationId: selectedResult.appid,
-			included: myInc,
-			memberType: 'C',
-			personId: Number(c) });
-		});
-	const uniqueRemainingPeople = [...new Set(actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).map(obj => obj.clID))];
-		uniqueRemainingPeople.forEach(c => {
-		const myInc = actualData.shortSchedules.find(f=> f.did === Number(selectedResult.id) && f.clID === Number(c)).included;
-		if((!myTempData.householdMembers.find(f => Number(f.personId) === Number(c))) && (Number(c) != Number(selectedResult.HOH)))
-		myTempData.householdMembers.push({ 
-			applicationId: selectedResult.appid,
-			included: myInc,
-			memberType: 'A',
-			personId: Number(c) });
-		});
-	// populate schedules, provider-child links, and activities
-	actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).forEach(l => { 
-		// create a new schedule using the condensed schedule and input into schedules
-		let myNewSchedule = parseCondensedScheduleString(l.sch);
-		myNewSchedule.type = l.subType;
-		
-		if(l.type === 'P')
-		{
-			// if it is a provider-child link schedule, input the provider-child link into provider-child links and link the newly created scheduleid
-			myTempData.providerLinks.push({applicationId: selectedResult.appid,
-											locCare: l.loc,
-											personId: l.clID,
-											primary: l.isPrimary,
-											providerId: l.linkID,
-											scheduleId: myNewSchedule.id,
-											subLoc: l.subLoc
-											});
-		}
-		else
-		{
-			// If it is an activity schedule, create a new activity in activities and link the newly created scheduleid
-			myTempData.activities.push({applicationId: selectedResult.appid,
-											id: getNextActivityId(),
-											careNeeded: l.careNeeded,
-											name: l.actName,
-											personId: l.clID,
-											scheduleId: myNewSchedule.id,
-											type: l.actType
-											});
-		}
-		myTempData.schedules.push(myNewSchedule);
-	});
-	myTempData.activeApplicationId = selectedResult.appid;
-}
 		
 // Main calculation function
 function calculateCare(myData, myTargetElementId, careStartDate) 
@@ -2870,17 +2543,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		console.log(`Error target elementID ${myTargetElementId} not found in document`);
 		return;
 	}
-	// Always clear the two potential calculation display sections before starting a new calculation
-	if(myTargetElementId === 'recalculationSection')
-	{
-		document.getElementById('calculationResults').innerHTML = '<p>No calculation performed yet.</p>';
-		results.innerHTML = `<p><h3>Recalculating Care<h3></p>`;
-	}
-	else
-	{
-		document.getElementById('recalculationSection').innerHTML = '';
-		results.innerHTML = '';
-	}
+	results.innerHTML = '';
 	
 	if (!myData.activeApplicationId) {
 		results.innerHTML = '';
@@ -3134,16 +2797,6 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		return;
 	}
 	
-	tempResultLines.length = 0; // build new temp results array to allow the user to save the data from the calculation
-	let myL = 1;
-	// set up the tempResult
-	tempResult.id = getNextResultId();
-	tempResult.appid = Number(data.activeApplicationId);
-	tempResult.HOH = data.applications.find(a => a.id === Number(data.activeApplicationId)).headOfHouseholdId;
-	tempResult.name = data.people.find(p => p.id === Number(tempResult.HOH)).name;
-	tempResult.birthdate = data.people.find(p => p.id === Number(tempResult.HOH)).birthdate;
-	tempResult.startDate = careStartDate;
-	tempResult.saveDate = new Date().toLocaleDateString('en-CA');
 	let myCalcResults = [];
 	let myCareClients = [];
 	const providerTypeMap = { 'C': 'Center', 'F': 'FFN', 'H': 'LFH' };
@@ -3452,11 +3105,6 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		let myHTMLString = ''
 		myHTMLString += `<h5> Authorize the following lines of care to this provider (${calculationResult.providerId}):</h5><div><ul>`;
 		for (let c of careLines.authLines){
-			if(c.inc)
-			{
-				tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode, 
-				region: calculationResult.region, numUnits:c.authUnits, exp: (calculationResult.myFunc === 'MONTHLYUNITCALC' ? true : false), units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: false, authType: c.type});
-			}
 			myHTMLString += `<li>${displayLine(c, careStartDate)}`;
 			if(isCompoundUnits(c) || ((calculationResult.myFunc === 'MONTHLYUNITCALC') && ((c.units.fd + c.units.hd + c.units.pd) > 0)))
 			{
@@ -3473,11 +3121,6 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 			if (careLines.summerChg){
 				myHTMLString += `<h5> For the summer months authorize the following lines of care:</h5><div><ul>`;
 				for (let c of careLines.summerLines){
-					if(c.inc)
-					{
-						tempResultLines.push({rid: tempResult.id, line: myL++, clID: calculationResult.clientId, prrID: calculationResult.providerId, xCode: c.xCode,
-						region: calculationResult.region, numUnits:c.authUnits, exp: (calculationResult.myFunc === 'MONTHLYUNITCALC' ? true : false), units: c.units, rate: c.amt, ttl: (c.amt * c.authUnits) + c.excess, excess: c.excess, isSummer: true, authType: c.type});
-					}
 					myHTMLString += `<li>${displayLine(c, careStartDate)}`;
 					if(isCompoundUnits(c) || ((calculationResult.myFunc === 'MONTHLYUNITCALC') && ((c.units.fd + c.units.hd + c.units.pd) > 0)))
 					{
@@ -3502,10 +3145,6 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	}      
 	
 	results.innerHTML += '<p><strong>Calculation process completed.</strong></p>';
-	if(tempResultLines.length > 0) 
-	{
-		results.innerHTML += `<p><div id = "saveResultsButton"><button onclick="saveTempResults()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Save Care Results</button><div></p>`;
-	}
 	
 	if(JSON.stringify(data) != dataSnapShot)
 	{
@@ -3513,83 +3152,6 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	}
 }
 // end of calculateCare function
-
-// add the tempResults to the savedResults, first update any existing results for this application to primary = false
-// This function should always push results to the actualData
-// if we are currently using tempData, after push, toggle back to normal data.
-function saveTempResults()
-{
-	// set all other saved results 
-	actualData.savedResults.forEach(res => {
-		if (res.appid === Number(tempResult.appid) && res.isPrimary === true) {
-			res.isPrimary = false;
-		}
-	});
-	actualData.savedResults.push(JSON.parse(JSON.stringify(tempResult)));
-	
-	// save all current household/schedule information in shortSchedules attached to this result
-	data.activities.filter(a => a.applicationId === Number(data.activeApplicationId)).forEach(e => {
-		let myPerson = data.people.find(p => p.id === e.personId);
-		let myHHMember = data.householdMembers.find(m => m.applicationId === Number(data.activeApplicationId) && m.personId === e.personId);
-		// it might be the HOH who is not in the household, but they are always included for calculation
-		let myInc = myHHMember ? myHHMember.included : 'Y'
-		actualData.shortSchedules.push({did: tempResult.id,
-									type: 'A',
-									clID: myPerson.id,
-									careNeeded: e.careNeeded,
-									included: myInc,
-									linkID: null,
-									loc: null,
-									subLoc: null,
-									isPrimary: null,
-									actName: e.name,
-									actType: e.type,
-									subType: data.schedules.find(s => s.id === e.scheduleId).type,
-									exp: (`* ${e.type} schedule for ${myPerson.name} (${e.personId})-${e.name} ${myInc === 'Y' ? (e.careNeeded ? '' : '- No Care Needed.') : '- Not Included.'}`),
-									sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
-								});
-	});
-	data.providerLinks.filter(p => p.applicationId === Number(data.activeApplicationId)).forEach(r => {
-		let myPrrName = data.providers.find(p => p.id === r.providerId).name;
-		let myPerson = data.people.find(p => p.id === r.personId);
-		let myHHMember = data.householdMembers.find(m => m.applicationId === Number(data.activeApplicationId) && m.personId === r.personId);
-		actualData.shortSchedules.push({did: tempResult.id,
-									type: 'P',
-									clID: myPerson.id,
-									careNeeded: true,
-									included: myHHMember.included,
-									linkID: r.providerId,
-									loc: r.locCare,
-									subLoc: r.subLoc,
-									isPrimary: r.primary,
-									actName: null,
-									actType: null,
-									subType : 'R',
-									exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${myPrrName} [#${r.providerId}] for child ${myPerson.name} [${r.personId}] ${myHHMember.included === 'N' ? '(Not included)':''}`,
-									sch: scheduleToCondensedString(data.schedules.find(s => s.id === r.scheduleId))
-								});
-	});
-	
-	// add tempLines to saved result Lines
-	tempResultLines.forEach(l => {actualData.resultLines.push(l)});
-	
-	// reset tempResult and tempLines
-	tempResult.id = getNextResultId();
-	tempResult.saveDate = new Date().toLocaleDateString('en-CA');
-	tempResultLines.length = 0;
-	
-	// hide the save button
-	const saveButton = document.getElementById('saveResultsButton');
-	saveButton.style.visibility = 'hidden';
-	saveButton.style.display = 'none';
-
-	if(usingTemp === true)
-	{
-		toggleDataSource();
-	}
-	refreshSavedResults();
-	saveData();
-}
 
 // convert to line for an authorization 
 // {type: 'Err', xCode: '0', authUnits: 0, amt: 0, units: [{fd: 0, hd: 0, pd: 0, hr: 0}], excess : 0, inc: false, msg:'Provider type not yet implemented.'}
@@ -3775,29 +3337,6 @@ function refreshScheduleSelector()
 	loadSchedule();
 }
 
-function saveTempSchedule()
-{
-	if(selectedScheduleId === null)
-	{
-		alert('Error: No selected schedule found!');
-		console.log('Error: No selected schedule found!');
-		return;
-	}
-	const schedule = data.schedules.find(s => s.id === selectedScheduleId);
-	if (!schedule) {
-		alert('Error: Unable to access the selected schedule!');
-		console.log('Error: Unable to access the selected schedule!');
-		return;
-	}
-	schedule.weeks = JSON.parse(JSON.stringify(myTempSchedule.weeks));
-	saveData();
-	displaySchedule();
-	
-	alert('Schedule saved.');
-	console.log('Schedule saved.');
-}
-
-// Loads the selected schedule into myTempSchedule for display and editing
 function loadSchedule() 
 {
 	const selector = document.getElementById('scheduleSelector');
@@ -3811,47 +3350,17 @@ function loadSchedule()
 	const scheduleId = parseInt(selector.value.split('-')[1]);
 	const schedule = data.schedules.find(s => s.id === scheduleId);
 	
-	if((selectedScheduleId != scheduleId) && (selectedScheduleId != null))
-	{
-		if(JSON.stringify(myTempSchedule.weeks) != JSON.stringify(data.schedules.find(s => s.id === selectedScheduleId).weeks))
-		{
-			if (!confirm('There are unsaved changes to the current schedule, are you sure you want to continue?'))
-			{
-				selector.selectedIndex = mySelectedIndex;
-				displaySchedule();
-				return;
-			}
-		}
-	}
-	
-	if (!schedule)
-	{
-		alert(`Error: Selected schedule [${scheduleId}] does not exist in data.`);
-		console.log(`Error: Selected schedule [${scheduleId}] does not exist in data.`);
-	}
-	else
-	{
-		mySelectedIndex = selector.selectedIndex;
-		selectedScheduleId = scheduleId;
-		myTempSchedule.type = schedule.type;
-		myTempSchedule.weeks = JSON.parse(JSON.stringify(schedule.weeks));
-		
+	if (schedule) {
 		editor.style.display = 'block';
-		updateDayOptions(); // schedule.type);
-		updateDefaultButtons(); // schedule);
-		displaySchedule(); // schedule);
+		updateDayOptions(schedule.type);
+		updateDefaultButtons(schedule);
+		displaySchedule(schedule);
 	}
 }
 
 //This function toggles the checkboxes for which days are enabled for a schedule type, based on type the checkBoxes are enabled/disabled
-function updateDayOptions() // scheduleType) 
+function updateDayOptions(scheduleType) 
 {
-	if(!myTempSchedule)
-	{
-		return;
-	}
-	const scheduleType = myTempSchedule.type;
-	
 	document.getElementById('periodError').innerHTML = ''; // clear any existing periodError messages
 	
 	if(scheduleType === 'S' || scheduleType === 'P')
@@ -3879,10 +3388,8 @@ function removeWeek()
 	const selector = document.getElementById('scheduleSelector');
 	if (!selector.value) return;
 	
-	const scheduleId = selectedScheduleId; // parseInt(selector.value.split('-')[1]);
-	const schedule = myTempSchedule; // data.schedules.find(s => s.id === scheduleId);
-	
-	
+	const scheduleId = parseInt(selector.value.split('-')[1]);
+	const schedule = data.schedules.find(s => s.id === scheduleId);
 	if (!schedule) return;
 	const week = parseInt(document.getElementById('periodWeek').value);
 	const existingWeeks = Math.max(1, ...Object.keys(schedule.weeks).map(Number).sort((a, b) => a - b));
@@ -3913,8 +3420,8 @@ function removeWeek()
 		schedule.weeks = newObject;
 	}
 	
-	//saveData();
-	displaySchedule(); // schedule);
+	saveData();
+	displaySchedule(schedule);
 }
 
 function checkDayBoxes(boxNum)
@@ -3959,10 +3466,8 @@ function getCheckBoxRes()
 }
 
  
-function updateDefaultButtons() // schedule)
+function updateDefaultButtons(schedule)
 {
-	const schedule = myTempSchedule;
-	
 	if(!schedule)
 	{
 		return;
@@ -4061,14 +3566,13 @@ function addNewWeektoSch(schedule)
 	};
 }
 
-// Adds a new week to the end of the current schedule for myTempSchedule
 function addNewWeek() 
 {
 	const selector = document.getElementById('scheduleSelector');
 	if (!selector.value) return;
 	
-	const scheduleId = selectedScheduleId; // parseInt(selector.value.split('-')[1]);
-	const schedule = myTempSchedule; //data.schedules.find(s => s.id === scheduleId);
+	const scheduleId = parseInt(selector.value.split('-')[1]);
+	const schedule = data.schedules.find(s => s.id === scheduleId);
 	if (!schedule) return;
 	
 	// Find the next available week number
@@ -4086,8 +3590,8 @@ function addNewWeek()
 		Sun: [], Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: []
 	};
 	
-	//saveData();
-	displaySchedule(); // schedule);
+	saveData();
+	displaySchedule(schedule);
 	
 	alert(`Week ${nextWeek} added to schedule`);
 	console.log(`Week ${nextWeek} added to schedule`);
@@ -4095,14 +3599,13 @@ function addNewWeek()
 
 /* This function should load the requested default schedule type into the week selected by the user on the schedule 
 	screen without modifying any other weeks in the existing schedule, but adding the week(s) up to the seclected week if it does not exist yet. */
-	// Uses the myTempSchedule item
 function loadDefaultSchedule(type) 
 {
 	const selector = document.getElementById('scheduleSelector');
 	if (!selector.value) return;
 	
-	const scheduleId = selectedScheduleId; // parseInt(selector.value.split('-')[1]);
-	const schedule = myTempSchedule; // data.schedules.find(s => s.id === scheduleId);
+	const scheduleId = parseInt(selector.value.split('-')[1]);
+	const schedule = data.schedules.find(s => s.id === scheduleId);
 	if (!schedule) return;
 	
 	const week = parseInt(document.getElementById('periodWeek').value);
@@ -4169,8 +3672,8 @@ function loadDefaultSchedule(type)
 		});
 	}
 	
-	//saveData();
-	displaySchedule(); //schedule);
+	saveData();
+	displaySchedule(schedule);
 }
 
 // Calculate Care functions
@@ -4198,28 +3701,9 @@ function refreshCalculationForm()
 	document.getElementById('calculationResults').innerHTML = '<p>No calculation performed yet.</p>';
 }
 
-function displaySchedule() // schedule) 
+
+function displaySchedule(schedule) 
 {
-	const schedule = myTempSchedule;
-	const refSchedule = data.schedules.find(s => s.id === selectedScheduleId);
-	if(!myTempSchedule)
-	{
-		myTempSchedule = createTempEmptySchedule('A');
-	}
-	const saveButton = document.getElementById('saveChangesButton');
-	saveButton.style.visibility = 'hidden';
-	saveButton.style.display = 'none';
-	
-	if(selectedScheduleId != null && refSchedule)
-	{
-		if(JSON.stringify(schedule.weeks) != JSON.stringify(refSchedule.weeks))
-		{
-			// show the save changes button
-			saveButton.style.visibility = 'visible';
-			saveButton.style.display = 'inline-block';
-		}
-	}
-	
 	const display = document.getElementById('scheduleDisplay');
 	
 	// Create 5x8 grid (weeks + 7 days)
@@ -4256,7 +3740,6 @@ function displaySchedule() // schedule)
 	display.innerHTML = html;
 }
 
-// Clears the schedule in the myTempSchedule object
 function clearSchedule() 
 {
 	const selector = document.getElementById('scheduleSelector');
@@ -4292,7 +3775,6 @@ function getTimeString(which)
 }
 
 // Should add period to the selected week of the selected schedule for each day checkbox selected
-// Uses the myTempSchedule object
 function addPeriods()
 {
 	if(getCheckBoxRes() === 0)
@@ -4304,8 +3786,8 @@ function addPeriods()
 	const selector = document.getElementById('scheduleSelector');
 	if (!selector.value) return;
 	
-	const scheduleId = selectedScheduleId; // parseInt(selector.value.split('-')[1]);
-	const schedule = myTempSchedule; // data.schedules.find(s => s.id === scheduleId);
+	const scheduleId = parseInt(selector.value.split('-')[1]);
+	const schedule = data.schedules.find(s => s.id === scheduleId);
 	if (!schedule) return;
 	
 	const startTimeStr = getTimeString('start');
@@ -4343,19 +3825,18 @@ function addPeriods()
 	 // Clear form
 	modifyBoxes();
 	
-	//saveData();
-	displaySchedule(); //schedule);
+	saveData();
+	displaySchedule(schedule);
 }
 
 // adds the specified period to a specific day in the specified week
-// Uses the myTempSchedule object
 function addPeriod(day) 
 {
 	const selector = document.getElementById('scheduleSelector');
 	if (!selector.value) return;
 	
-	const scheduleId = selectedScheduleId;// parseInt(selector.value.split('-')[1]);
-	const schedule = myTempSchedule; // data.schedules.find(s => s.id === scheduleId);
+	const scheduleId = parseInt(selector.value.split('-')[1]);
+	const schedule = data.schedules.find(s => s.id === scheduleId);
 	if (!schedule) return;
 	
 	const week = parseInt(document.getElementById('periodWeek').value);
@@ -4468,20 +3949,19 @@ function addPeriodToSchedule(schedule, week, day, startTime, endTime)
 	return true;
 }
 
-// Uses the myTempSchedule object
 function removePeriod(scheduleId, week, day, startTime, endTime) 
 {
 	if (!confirm('Remove this period?')) return;
 	document.getElementById('periodError').innerHTML = '';
 	
-	const schedule = myTempSchedule; // data.schedules.find(s => s.id === scheduleId);
+	const schedule = data.schedules.find(s => s.id === scheduleId);
 	if (!schedule || !schedule.weeks[week]) return;
 	
 	schedule.weeks[week][day] = schedule.weeks[week][day].filter(p => 
 		!(p.start === startTime && p.end === endTime));
 	
-	//saveData();
-	displaySchedule(); // schedule);
+	saveData();
+	displaySchedule(schedule);
 }
 
 // formats a date into a string MM/DD/YYYY
@@ -5454,8 +4934,6 @@ function createAlignedOutput(schoolFull, schoolHalf, schoolZero,summerFull, summ
 	return { schoolLines: cleanSchoolLines, summerLines: cleanSummerLines };
 }
 
-
-
 // End of authorization Calculation Functions
 
 // Initialize the application
@@ -5471,7 +4949,6 @@ function init() {
 	refreshProviderLinksList();
 	refreshScheduleSelector();
 	refreshCalculationForm();
-	refreshSavedResults();
 	document.getElementById('repCheckbox').checked = verboseReporting;
 }
 
@@ -5488,7 +4965,6 @@ function refreshAll()
 	refreshProviderLinksList();
 	refreshScheduleSelector();
 	refreshCalculationForm();
-	refreshSavedResults();
 	document.getElementById('repCheckbox').checked = verboseReporting;
 }
 
