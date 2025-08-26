@@ -4,8 +4,8 @@
 		and because those should be permanent items in Barcode -->
 <!-- Now uses a temporary object myTempSchedule for all schedule editing, only saves schedule to data when using the save changes button -->
 <!-- TODO List:
-	Change people, Providers, Applications so that clientIDs, su numbers, and provider IDs are input directly
-	Modify the application tab, specify the su-num and HOH, then click set application, this creates the application and sets that application active.
+	Modify so that only one application exists at any one time, when a new app is created, all the old data except for people and providers 
+	is removed. The current application su_num and head num should be shown in a seperate section at the top above the tabs.
 -->
 <html lang="en">
 <head>
@@ -2809,20 +2809,24 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		
 		if (!provider || !child || !providerSchedule) continue;
 		
-		// Check for non-care activities
-		const childNonCareActivities = data.activities.filter(a => 
-			a.applicationId == data.activeApplicationId && 
-			a.personId === child.id &&
-			a.type === 'non care'
-		);
-		
 		let finalSchedule = householdSchedule;
 		
-		// Subtract non-care schedules
-		for (let nonCareActivity of childNonCareActivities) {
-			const nonCareSchedule = data.schedules.find(s => s.id === nonCareActivity.scheduleId);
-			if (nonCareSchedule) {
-				finalSchedule = subtractSchedule(finalSchedule, nonCareSchedule);
+		// Check for non-care activities
+		// Limit this to MONTHLYUNITCALC only
+		if(getCalculationFunction(provider.type, careStartDate) === 'MONTHLYUNITCALC')
+		{
+			const childNonCareActivities = data.activities.filter(a => 
+				a.applicationId == data.activeApplicationId && 
+				a.personId === child.id &&
+				a.type === 'non care'
+			);
+			
+			// Subtract non-care schedules
+			for (let nonCareActivity of childNonCareActivities) {
+				const nonCareSchedule = data.schedules.find(s => s.id === nonCareActivity.scheduleId);
+				if (nonCareSchedule) {
+					finalSchedule = subtractSchedule(finalSchedule, nonCareSchedule);
+				}
 			}
 		}
 		

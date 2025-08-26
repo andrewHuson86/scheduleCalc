@@ -3156,20 +3156,24 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		
 		if (!provider || !child || !providerSchedule) continue;
 		
-		// Check for non-care activities
-		const childNonCareActivities = data.activities.filter(a => 
-			a.applicationId == data.activeApplicationId && 
-			a.personId === child.id &&
-			a.type === 'non care'
-		);
-		
 		let finalSchedule = householdSchedule;
 		
-		// Subtract non-care schedules
-		for (let nonCareActivity of childNonCareActivities) {
-			const nonCareSchedule = data.schedules.find(s => s.id === nonCareActivity.scheduleId);
-			if (nonCareSchedule) {
-				finalSchedule = subtractSchedule(finalSchedule, nonCareSchedule);
+		// Check for non-care activities
+		// Limit this to MONTHLYUNITCALC only
+		if(getCalculationFunction(provider.type, careStartDate) === 'MONTHLYUNITCALC')
+		{
+			const childNonCareActivities = data.activities.filter(a => 
+				a.applicationId == data.activeApplicationId && 
+				a.personId === child.id &&
+				a.type === 'non care'
+			);
+			
+			// Subtract non-care schedules
+			for (let nonCareActivity of childNonCareActivities) {
+				const nonCareSchedule = data.schedules.find(s => s.id === nonCareActivity.scheduleId);
+				if (nonCareSchedule) {
+					finalSchedule = subtractSchedule(finalSchedule, nonCareSchedule);
+				}
 			}
 		}
 		
