@@ -864,10 +864,11 @@ function updateResultSection()
 	// populate the result section with the authorization information from the selected saved result.
 	let newHTML = `<p>${myResult.isPrimary ? 'Current' : 'Previous'} care results for application ${data.activeApplicationId} calculated on ${myResult.saveDate} for care starting ${myResult.startDate} based on the following information:</p>`;
 	// Display case data captured at the time of the result from shortSchedules.
-	// Activiy Schedules first
-	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'A').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
+	// Activity Schedules first
+	// Now uses compressedStringToSchedule instead of parseCondensedScheduleString
+	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'A').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(compressedStringToSchedule(a.sch))}</p>`;});
 	// Then Provider-Child Link Schedules
-	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(parseCondensedScheduleString(a.sch))}</p>`;});
+	data.shortSchedules.filter(s => s.did === myResult.id && s.type === 'P').forEach(a => {newHTML += `<p>${a.exp}: ${scheduleToUserFriendlyString(compressedStringToSchedule(a.sch))}</p>`;});
 	
 	// display saved results, formatting should be similar to initial report formatting
 	newHTML += '<div id="careResultLine"><h5>Resulting Care Results:</h5><ul>';
@@ -2828,7 +2829,8 @@ function buildMyTemp(selectedResult)
 	// populate schedules, provider-child links, and activities
 	actualData.shortSchedules.filter(s => s.did === Number(selectedResult.id)).forEach(l => { 
 		// create a new schedule using the condensed schedule and input into schedules
-		let myNewSchedule = parseCondensedScheduleString(l.sch);
+		// Now uses compressedStringToSchedule instead of parseCondensedScheduleString
+		let myNewSchedule = compressedStringToSchedule(l.sch);
 		myNewSchedule.type = l.subType;
 		
 		if(l.type === 'P')
@@ -3537,6 +3539,7 @@ function saveTempResults()
 		let myHHMember = data.householdMembers.find(m => m.applicationId === Number(data.activeApplicationId) && m.personId === e.personId);
 		// it might be the HOH who is not in the household, but they are always included for calculation
 		let myInc = myHHMember ? myHHMember.included : 'Y'
+		// Now uses scheduleToCompressedString for shortSchedule storage and retrieval
 		actualData.shortSchedules.push({did: tempResult.id,
 									type: 'A',
 									clID: myPerson.id,
@@ -3550,7 +3553,7 @@ function saveTempResults()
 									actType: e.type,
 									subType: data.schedules.find(s => s.id === e.scheduleId).type,
 									exp: (`* ${e.type} schedule for ${myPerson.name} (${e.personId})-${e.name} ${myInc === 'Y' ? (e.careNeeded ? '' : '- No Care Needed.') : '- Not Included.'}`),
-									sch: scheduleToCondensedString(data.schedules.find(s => s.id === e.scheduleId))
+									sch: scheduleToCompressedString(data.schedules.find(s => s.id === e.scheduleId))
 								});
 	});
 	data.providerLinks.filter(p => p.applicationId === Number(data.activeApplicationId)).forEach(r => {
@@ -3570,7 +3573,7 @@ function saveTempResults()
 									actType: null,
 									subType : 'R',
 									exp: `* ${(r.primary === 'Y' ? 'Primary ' : 'Secondary ')} provider ${myPrrName} [#${r.providerId}] for child ${myPerson.name} [${r.personId}] ${myHHMember.included === 'N' ? '(Not included)':''}`,
-									sch: scheduleToCondensedString(data.schedules.find(s => s.id === r.scheduleId))
+									sch: scheduleToCompressedString(data.schedules.find(s => s.id === r.scheduleId))
 								});
 	});
 	
@@ -4396,6 +4399,8 @@ function addPeriod(day)
 	// Ensure the target week exists, and create any missing weeks up to it
 	ensureWeeksExist(schedule, week);
 	
+	// Adding period shouldn't ever fail anymore, overlapping periods become merged now.
+	
 	// Handle periods that cross midnight (end time is next day)
 	if (endTime <= startTime && endTime !== 1440) {
 		// This is an overnight period, split it
@@ -4415,7 +4420,6 @@ function addPeriod(day)
 			const nextExistingWeek = existingWeeks.find(w => w > week);
 			nextWeek = nextExistingWeek || 1; // Use next existing week or wrap to week 1
 		}
-		
 		if (!addPeriodToSchedule(schedule, nextWeek, nextDay, 0, endTime)) {
 			// If second period fails, remove the first period we just added
 			schedule.weeks[week][day].pop();
@@ -4456,10 +4460,20 @@ function addPeriodToSchedule(schedule, week, day, startTime, endTime)
 	// Check for overlaps
 	const existingPeriods = schedule.weeks[week][day];
 	for (let period of existingPeriods) {
-		if (!(endTime <= period.start || startTime >= period.end)) {
-			document.getElementById('periodError').innerHTML += `<p>Period overlaps with existing period in ${day} of week ${week}.</p>`;
-			console.log(`Period overlaps with existing period in ${day} of week ${week}.`);
-			return false;
+		if ((endTime >= period.start) && (startTime <= period.end)) // Overlaps with existing period.
+		{
+			document.getElementById('periodError').innerHTML += `<p>Warning: Period overlapped with existing period in ${day} of week ${week}.</p>`;
+			console.log(`Warning: Period overlapped with existing period in ${day} of week ${week}.`);
+			// return false;
+			if(startTime < period.start)
+			{
+				period.start = startTime;
+			}
+			if(endTime > period.end)
+			{
+				period.end = endTime;
+			}
+			return true;
 		}
 	}
 	
@@ -4486,6 +4500,189 @@ function removePeriod(scheduleId, week, day, startTime, endTime)
 	
 	//saveData();
 	displaySchedule(); // schedule);
+}
+
+// new functions for schedule compression and decompression
+
+// Convert schedule to compressed string format
+function scheduleToCompressedString(schedule) 
+{
+    const weekCount = getScheduleWeekCount(schedule);
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Start with week count and schedule type
+    let result = weekCount.toString() + schedule.type;
+    
+    // Create a map to group identical periods across days
+    const periodGroups = new Map();
+    
+    // Collect all periods and group by time range
+    for (let week = 1; week <= weekCount; week++) {
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+            const dayName = dayNames[dayIndex];
+            const dayChar = String.fromCharCode(64 + (week - 1) * 7 + dayIndex); // '@' + offset
+            
+            const periods = schedule.weeks[week] && schedule.weeks[week][dayName] ? schedule.weeks[week][dayName] : [];
+                
+            periods.forEach(period => {
+                const periodKey = `${period.start}:${period.end}`;
+                if (!periodGroups.has(periodKey)) {
+                    periodGroups.set(periodKey, []);
+                }
+                periodGroups.get(periodKey).push({
+                    dayChar: dayChar,
+                    week: week,
+                    dayIndex: dayIndex
+                });
+            });
+        }
+    }
+    
+    // Process each period group
+    for (let [periodKey, days] of periodGroups) 
+	{
+        if (days.length === 0) continue;
+        
+        // Sort days by their character code (chronological order)
+        days.sort((a, b) => a.dayChar.charCodeAt(0) - b.dayChar.charCodeAt(0));
+        
+        // Group consecutive days
+        const dayGroups = [];
+        let currentGroup = [days[0]];
+        
+        for (let i = 1; i < days.length; i++) 
+		{
+            const prevCode = days[i-1].dayChar.charCodeAt(0);
+            const currentCode = days[i].dayChar.charCodeAt(0);
+            
+            if (currentCode === prevCode + 1) // Consecutive day
+			{
+                currentGroup.push(days[i]);
+            } 
+			else // Gap found, start new group
+			{
+                dayGroups.push(currentGroup);
+                currentGroup = [days[i]];
+            }
+        }
+        dayGroups.push(currentGroup);
+        
+        // Format day groups
+        const dayGroupStrings = dayGroups.map(group => 
+		{
+            if (group.length >= 4) // Use range notation for 4+ consecutive days
+			{
+                return group[0].dayChar + '-' + group[group.length - 1].dayChar;
+            } 
+			else // List individual days for 3 or fewer 
+			{
+                return group.map(d => d.dayChar).join('');
+            }
+        });
+        
+        // Add to result
+        result += dayGroupStrings.join('') + periodKey;
+        
+        const remainingGroups = Array.from(periodGroups.entries()).slice(Array.from(periodGroups.keys()).indexOf(periodKey) + 1);
+		// Add comma if this isn't the last period group
+        if (remainingGroups.length > 0) 
+		{
+            result += ',';
+        }
+    }
+    
+    return result;
+}
+
+// Convert compressed string back to schedule object
+function compressedStringToSchedule(compressedString) 
+{ 
+    const weekCount = Math.min(4,parseInt(compressedString[0])); // always 1-4
+    const scheduleType = compressedString[1];
+    const periodsString = compressedString.slice(2);
+	const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Initialize empty schedule
+    const schedule = createTempEmptySchedule(scheduleType);
+    
+    for (let week = 1; week < weekCount; week++) 
+	{
+        addNewWeektoSch(schedule);
+    }
+    
+    if (periodsString.length === 0) 
+	{
+        return schedule; // Empty schedule
+    }
+    
+    // Split by commas to get individual period groups
+    const periodGroups = periodsString.split(',');
+    
+    for (let group of periodGroups) 
+	{
+        if (!group) continue;
+        
+        // Find the time specification (last occurrence of digit:digit pattern)
+        const timeMatch = group.match(/(\d+):(\d+)$/); 
+        const startTime = parseInt(timeMatch[1]);
+        const endTime = parseInt(timeMatch[2]);
+        const dayPart = group.slice(0, group.length - timeMatch[0].length);
+        
+        // Parse day specifications
+        const dayChars = parseDaySpecification(dayPart);
+        
+        // Add periods to appropriate days
+        dayChars.forEach(dayChar => 
+		{
+            const charCode = dayChar.charCodeAt(0);
+            const offset = charCode - 64; // '@' is 64
+            const week = Math.floor(offset / 7) + 1;
+            const dayIndex = offset % 7;        
+            const dayName = dayNames[dayIndex];
+			
+            schedule.weeks[week][dayName].push({
+                start: startTime,
+                end: endTime,
+                type: scheduleType
+            });
+        });
+    }
+    
+    return schedule;
+}
+
+// function to parse day specifications
+function parseDaySpecification(daySpec) 
+{
+    const dayChars = [];
+    let i = 0;
+    
+    while (i < daySpec.length) 
+	{
+        const currentChar = daySpec[i];
+        
+        // Check if this is a range (next character is '-')
+        if (i + 2 < daySpec.length && daySpec[i + 1] === '-') {
+            const startChar = currentChar;
+            const endChar = daySpec[i + 2];
+            const startCode = startChar.charCodeAt(0);
+            const endCode = endChar.charCodeAt(0);
+            
+            // Add all characters in range
+            for (let code = startCode; code <= endCode; code++) 
+			{
+                dayChars.push(String.fromCharCode(code));
+            }
+            i += 3; // Skip start, dash, and end
+        } 
+		else // Individual day character 
+		{
+            dayChars.push(currentChar);
+            i++;
+        }
+    }
+    
+    return dayChars;
 }
 
 // formats a date into a string MM/DD/YYYY
@@ -5202,7 +5399,7 @@ function determineDailyAuthorizations(calculationResult, non9CodeRemain)
 	return {authLines: authLines, summerLines: summerLines, summerChg: summerChg};
 }
 
-// Helper Functions for Daily Unit Authorization Optimization
+// Functions for Daily Unit Authorization Optimization
 
 function calculateOptimalCareAuthorizations(schoolFull, schoolHalf, schoolZero,summerFull, summerHalf, summerZero)
 {
@@ -5457,8 +5654,6 @@ function createAlignedOutput(schoolFull, schoolHalf, schoolZero,summerFull, summ
 
 	return { schoolLines: cleanSchoolLines, summerLines: cleanSummerLines };
 }
-
-
 
 // End of authorization Calculation Functions
 

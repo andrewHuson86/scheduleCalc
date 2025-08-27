@@ -4,8 +4,7 @@
 		and because those should be permanent items in Barcode -->
 <!-- Now uses a temporary object myTempSchedule for all schedule editing, only saves schedule to data when using the save changes button -->
 <!-- TODO List:
-	Modify so that only one application exists at any one time, when a new app is created, all the old data except for people and providers 
-	is removed. The current application su_num and head num should be shown in a seperate section at the top above the tabs.
+	
 -->
 <html lang="en">
 <head>
@@ -285,6 +284,7 @@
 		<div class="deleteAll"><button class="danger" onclick="removeAllStoredData()">Clear Data</button></div>
         <h1>CCSP Schedule Management System</h1>
 		<div class="reporting_checkbox"><div><input type="checkbox" id="repCheckbox" onchange="toggleVerboseReporting()" checked="false"></div><div><label for="repCheckbox">Verbose Reporting</label></div></div>
+		<div class="section"><h3>Active Application</h3><div id="activeApplication">No active application</div></div>
 		<div id= "nav-tabs" class="nav-tabs">
             <div class="nav-tab active" onclick="showTab('people')">People</div>
             <div class="nav-tab" onclick="showTab('providers')">Providers</div>
@@ -374,18 +374,8 @@
                         <option value="">Select a person</option>
                     </select>
                 </div>
-                <button onclick="addApplication()">Create Application</button>
+                <button onclick="addApplication()">Set Application</button>
 				<div id="appError" class="error"></div>
-            </div>
-            
-            <div class="section">
-                <h3>Applications List</h3>
-                <div id="applicationsList"></div>
-            </div>
-            
-            <div class="section">
-                <h3>Active Application</h3>
-                <div id="activeApplication">No active application selected</div>
             </div>
         </div>
 
@@ -746,9 +736,25 @@ function deletePerson(id)
 {
 	if (confirm('Are you sure you want to delete this person?')) {
 		data.people = data.people.filter(p => p.id !== id);
+		data.applications = data.applications.filter(a => a.headOfHouseholdId !== id);
+		data.householdMembers = data.householdMembers.filter(h => h.personId !== id);
+		data.activities.filter(a => a.personId == id).forEach(e => {
+			data.schedules = data.schedules.filter(s => s.id !== e.scheduleId);
+			});
+		data.activities = data.activities.filter(a => a.personId !== id);
+		data.providerLinks.filter(p => p.personId == id).forEach(l => {
+			data.schedules = data.schedules.filter(s => s.id !== l.scheduleId);
+			});
+		data.providerLinks = data.providerLinks.filter(p => p.persionId !== id);
+		if(data.activeApplicationId !== null)
+		{
+			if(!data.applications.find(a => Number(a.id) === Number(data.activeApplicationId)))
+			{
+				data.activeApplicationId = null;
+			}
+		}
 		saveData();
-		refreshPeopleList();
-		refreshApplicationsList();
+		refreshAll();
 	}
 }
 
@@ -762,7 +768,7 @@ function refreshPeopleList()
 		div.className = 'list-item';
 		div.innerHTML = `
 			<span>ID: ${person.id} - ${person.name} (Born: ${person.birthdate})</span>
-			`; // <button class="danger" onclick="deletePerson(${person.id})">Delete</button>`;
+			<button class="danger" onclick="deletePerson(${person.id})">Delete</button>`;
 		list.appendChild(div);
 	});
 	
@@ -866,8 +872,13 @@ function deleteProvider(id)
 {
 	if (confirm('Are you sure you want to delete this provider?')) {
 		data.providers = data.providers.filter(p => p.id !== id);
+		data.providerLinks.filter(p => p.providerId == id).forEach(l => {
+			data.schedules = data.schedules.filter(s => s.id !== l.scheduleId);
+			});
+		data.providerLinks = data.providerLinks.filter(p => p.providerId !== id);
+		
 		saveData();
-		refreshProvidersList();
+		refreshAll();
 	}
 }
 
@@ -882,7 +893,7 @@ function refreshProvidersList()
 		const typeName = provider.type === 'C' ? 'Center' : provider.type === 'F' ? 'FFN' : 'LFH';
 		div.innerHTML = `
 			<span>ID: ${provider.id} - ${provider.name} (${typeName})</span>
-			`; // <button class="danger" onclick="deleteProvider(${provider.id})">Delete</button>`;
+			<button class="danger" onclick="deleteProvider(${provider.id})">Delete</button>`;
 		list.appendChild(div);
 	});
 }
@@ -890,6 +901,22 @@ function refreshProvidersList()
 // Application functions
 function addApplication() 
 {
+	if(data.applications.length > 0)
+	{
+		if(!confirm('There is currently an active application, creating a new application will clear all current application data.'))
+		{
+			return;
+		}
+		else
+		{
+			data.activeApplicationId = null;
+			data.applications = [];
+			data.householdMembers = [];
+			data.providerLinks = [];
+			data.activities = [];
+			data.schedules = [];
+		}
+	}
 	const appId = parseInt(document.getElementById('appId').value);
 	const appStr = document.getElementById('appId').value.trim();
 	const headOfHouseholdId = parseInt(document.getElementById('headOfHousehold').value);
@@ -985,37 +1012,13 @@ function setActiveApplication(id)
 
 function refreshApplicationsList() 
 {
-	const list = document.getElementById('applicationsList');
-	list.innerHTML = '';
-	
-	if(data.applications.length === 1)
-	{
-		data.activeApplicationId = data.applications[0].id;
-	}
-	
-	data.applications.forEach(app => {
-		const person = data.people.find(p => p.id === app.headOfHouseholdId);
-		const div = document.createElement('div');
-		div.className = 'list-item';
-		if (data.activeApplicationId == app.id) {
-			div.classList.add('active-app');
-		}
-		div.innerHTML = `
-			<span>ID: ${app.id} - Head: ${person ? person.name : 'Unknown'}</span>
-			<div>
-				<button onclick="setActiveApplication(${app.id})">Set Active</button> 
-				</div>`; // <button class="danger" onclick="deleteApplication(${app.id})">Delete</button></div>`;
-		list.appendChild(div);
-	});
-	
 	// Update active application display
 	const activeDiv = document.getElementById('activeApplication');
 	if (data.activeApplicationId) {
 		const app = data.applications.find(a => a.id == data.activeApplicationId);
-		const person = app ? data.people.find(p => p.id === app.headOfHouseholdId) : null;
-		activeDiv.innerHTML = `Active: Application ${data.activeApplicationId} - Head: ${person ? person.name : 'Unknown'}`;
+		activeDiv.innerHTML = `Su: ${data.activeApplicationId} Head Num: ${app.headOfHouseholdId}`;
 	} else {
-		activeDiv.innerHTML = 'No active application selected';
+		activeDiv.innerHTML = 'No current application.';
 	}
 }
 
@@ -1126,7 +1129,7 @@ function refreshHouseholdList()
 	list.innerHTML = '';
 	
 	if (!data.activeApplicationId) {
-		list.innerHTML = '<p>No active application selected.</p>';
+		list.innerHTML = '<p>No active application.</p>';
 		return;
 	}
 	
@@ -1322,7 +1325,7 @@ function refreshActivitiesList()
 	list.innerHTML = '';
 	
 	if (!data.activeApplicationId) {
-		list.innerHTML = '<p>No active application selected.</p>';
+		list.innerHTML = '<p>No active application.</p>';
 		return;
 	}
 	
@@ -1525,7 +1528,7 @@ function refreshProviderLinksList()
 	list.innerHTML = '';
 	
 	if (!data.activeApplicationId) {
-		list.innerHTML = '<p>No active application selected.</p>';
+		list.innerHTML = '<p>No active application.</p>';
 		return;
 	}
 	
@@ -1861,99 +1864,6 @@ function subtractSchedule(schedule1, schedule2)
 	}
 	
 	return resultSchedule;
-}
-
-// Convert schedule to condensed standard format string
-function scheduleToCondensedString(schedule) 
-{
-	const weekCount = getScheduleWeekCount(schedule);
-	const days = ['S', 'M', 'T', 'W', 'R', 'F', 'A']; // Sun, Mon, Tue, Wed, Thu, Fri, Sat
-	const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-	
-	let result = '[';
-	
-	for (let week = 1; week <= weekCount; week++) {
-		if (week > 1) result += ',';
-		result += `(W${week})[`;
-		
-		for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-			if (dayIndex > 0) result += ',';
-			const dayName = dayNames[dayIndex];
-			const dayCode = days[dayIndex];
-			
-			result += `${dayCode}[`;
-			
-			const periods = schedule.weeks[week] ? schedule.weeks[week][dayName] || [] : [];
-			
-			for (let periodIndex = 0; periodIndex < periods.length; periodIndex++) {
-				if (periodIndex > 0) result += ',';
-				const period = periods[periodIndex];
-				result += `${period.type}${period.start}-${period.end}`;
-			}
-			
-			result += ']';
-		}
-		
-		result += ']';
-	}
-	
-	result += ']';
-	return result;
-}
-
-// Parse condensed standard format string back to schedule object
-function parseCondensedScheduleString(condensedString) 
-{
-	const schedule = {
-		id: nextTempScheduleId++,
-		type: 'A',
-		weeks: {}
-	};
-	
-	// Remove outer brackets
-	let content = condensedString.slice(1, -1);
-	
-	// Parse weeks
-	// I hate regEx so much
-	const weekRegex = /\(W(\d+)\)\[([^\]]*?(?:\[.*?\][^\]]*?)*)\](?=,\(W\d+\)|\]|$)/g;
-	let weekMatch;
-	
-	while ((weekMatch = weekRegex.exec(content)) !== null) {
-		const weekNum = parseInt(weekMatch[1]);
-		const weekContent = weekMatch[2];	
-		schedule.weeks[weekNum] = {};
-		
-		// Parse days
-		const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-		const dayRegex = /[SMTWRFA]\[(.*?)\]/g;
-		let dayMatch;
-		let dayIndex = 0;
-		
-		while ((dayMatch = dayRegex.exec(weekContent)) !== null && dayIndex < 7) {
-			const dayName = dayNames[dayIndex];
-			const dayContent = dayMatch[1];
-			
-			schedule.weeks[weekNum][dayName] = [];
-			
-			if (dayContent) {
-				// Parse periods
-				const periodRegex = /([ALSPRN])(\d+)-(\d+)/g;
-				let periodMatch;
-				
-				while ((periodMatch = periodRegex.exec(dayContent)) !== null) {
-					schedule.weeks[weekNum][dayName].push({
-						type: periodMatch[1],
-						start: parseInt(periodMatch[2]),
-						end: parseInt(periodMatch[3])
-					});
-				}
-			}
-			
-			dayIndex++;
-		}
-	}
-	
-	return schedule;
 }
         
 // Convert schedule to user-friendly format
@@ -2547,8 +2457,8 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 	
 	if (!myData.activeApplicationId) {
 		results.innerHTML = '';
-		alert('No active application selected');
-		console.log('No active application selected');
+		alert('No active application');
+		console.log('No active application');
 		return;
 	}
 	 
@@ -3279,6 +3189,45 @@ function getMaxRate(prrType, dtOf, unitType)
 }	
 
 // Schedule functions
+
+// Convert schedule to condensed standard format string
+function scheduleToCondensedString(schedule) 
+{
+	const weekCount = getScheduleWeekCount(schedule);
+	const days = ['S', 'M', 'T', 'W', 'R', 'F', 'A']; // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+	const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+	
+	let result = '[';
+	
+	for (let week = 1; week <= weekCount; week++) {
+		if (week > 1) result += ',';
+		result += `(W${week})[`;
+		
+		for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+			if (dayIndex > 0) result += ',';
+			const dayName = dayNames[dayIndex];
+			const dayCode = days[dayIndex];
+			
+			result += `${dayCode}[`;
+			
+			const periods = schedule.weeks[week] ? schedule.weeks[week][dayName] || [] : [];
+			
+			for (let periodIndex = 0; periodIndex < periods.length; periodIndex++) {
+				if (periodIndex > 0) result += ',';
+				const period = periods[periodIndex];
+				result += `${period.type}${period.start}-${period.end}`;
+			}
+			
+			result += ']';
+		}
+		
+		result += ']';
+	}
+	
+	result += ']';
+	return result;
+}
+
 function createEmptySchedule(type) 
 {
 	const schedule = {
@@ -3877,6 +3826,8 @@ function addPeriod(day)
 	// Ensure the target week exists, and create any missing weeks up to it
 	ensureWeeksExist(schedule, week);
 	
+	// Adding period shouldn't ever fail anymore, overlapping periods become merged now.
+	
 	// Handle periods that cross midnight (end time is next day)
 	if (endTime <= startTime && endTime !== 1440) {
 		// This is an overnight period, split it
@@ -3896,7 +3847,6 @@ function addPeriod(day)
 			const nextExistingWeek = existingWeeks.find(w => w > week);
 			nextWeek = nextExistingWeek || 1; // Use next existing week or wrap to week 1
 		}
-		
 		if (!addPeriodToSchedule(schedule, nextWeek, nextDay, 0, endTime)) {
 			// If second period fails, remove the first period we just added
 			schedule.weeks[week][day].pop();
@@ -3936,11 +3886,28 @@ function addPeriodToSchedule(schedule, week, day, startTime, endTime)
 	
 	// Check for overlaps
 	const existingPeriods = schedule.weeks[week][day];
-	for (let period of existingPeriods) {
+	/*for (let period of existingPeriods) {
 		if (!(endTime <= period.start || startTime >= period.end)) {
 			document.getElementById('periodError').innerHTML += `<p>Period overlaps with existing period in ${day} of week ${week}.</p>`;
 			console.log(`Period overlaps with existing period in ${day} of week ${week}.`);
 			return false;
+		}
+	}*/
+	for (let period of existingPeriods) {
+		if ((endTime >= period.start) && (startTime <= period.end)) // Overlaps with existing period.
+		{
+			document.getElementById('periodError').innerHTML += `<p>Warning: Period overlapped with existing period in ${day} of week ${week}.</p>`;
+			console.log(`Warning: Period overlapped with existing period in ${day} of week ${week}.`);
+			// return false;
+			if(startTime < period.start)
+			{
+				period.start = startTime;
+			}
+			if(endTime > period.end)
+			{
+				period.end = endTime;
+			}
+			return true;
 		}
 	}
 	
@@ -3967,6 +3934,8 @@ function removePeriod(scheduleId, week, day, startTime, endTime)
 	saveData();
 	displaySchedule(schedule);
 }
+
+
 
 // formats a date into a string MM/DD/YYYY
 function getFormattedDate(dateStr) 
