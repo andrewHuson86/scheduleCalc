@@ -1434,14 +1434,14 @@ function updateActivityTypeOptions()
 			typeSelect.innerHTML += '<option value="Activity">Activity</option>';
 			typeSelect.innerHTML += '<option value="Sleep">Sleep</option>';
 		} else if (memberType === 'C') { // Child
-			if(data.activities.filter(a => a.applicationId === Number(data.activeApplicationId) && ((a.type === 'school') || (a.type === 'preschool'))).length === 0)
+			if(data.activities.filter(a => a.applicationId === Number(data.activeApplicationId) && ((a.type === 'School') || (a.type === 'Preschool'))).length === 0)
 			{
-				typeSelect.innerHTML += '<option value="school">School</option>';
-				typeSelect.innerHTML += '<option value="preschool">Preschool</option>';
+				typeSelect.innerHTML += '<option value="School">School</option>';
+				typeSelect.innerHTML += '<option value="Preschool">Preschool</option>';
 			}
-			if(data.activities.filter(a => a.applicationId === Number(data.activeApplicationId) && a.type === 'non care').length === 0)
+			if(data.activities.filter(a => a.applicationId === Number(data.activeApplicationId) && a.type === 'Non care').length === 0)
 			{
-				typeSelect.innerHTML += '<option value="non care">Non Care</option>';
+				typeSelect.innerHTML += '<option value="Non care">Non Care</option>';
 			}
 		}
 	}
@@ -1465,9 +1465,9 @@ function addActivity()
 	switch(type) {
 		case 'Activity': scheduleType = 'A'; break;
 		case 'Sleep': scheduleType = 'L'; break;
-		case 'school': scheduleType = 'S'; break;
-		case 'preschool': scheduleType = 'P'; break;
-		case 'non care': scheduleType = 'N'; break;
+		case 'School': scheduleType = 'S'; break;
+		case 'Preschool': scheduleType = 'P'; break;
+		case 'Non care': scheduleType = 'N'; break;
 		default: scheduleType = 'A';
 	}
 	
@@ -2985,7 +2985,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		const childActivities = data.activities.filter(a => 
 			a.applicationId == data.activeApplicationId && 
 			a.personId === child.personId &&
-			(a.type === 'school' || a.type === 'preschool')
+			(a.type === 'School' || a.type === 'Preschool')
 		);
 		const childAgeMonths = calculateCompleteMonths(person.birthdate, careStartDate);
 		const cSD = new Date(careStartDate);
@@ -3020,7 +3020,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 				console.log(`WARNING: School schedule for ${person.name} is empty!`);
 				hasWarnings = true;
 			}
-			if(((childAgeMonths >= 84) || (ageLastSchoolYear >= 60)) && a.type === 'preschool') // School-aged child with preschool type schedule
+			if(((childAgeMonths >= 84) || (ageLastSchoolYear >= 60)) && a.type === 'Preschool') // School-aged child with preschool type schedule
 			{
 				results.innerHTML += `<p class="warning">WARNING: School age child ${person.name} has a preschool type schedule!</p>`;
 				console.log(`WARNING: School age child ${person.name} has a preschool type schedule!`);
@@ -3167,7 +3167,7 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 			const childNonCareActivities = data.activities.filter(a => 
 				a.applicationId == data.activeApplicationId && 
 				a.personId === child.id &&
-				a.type === 'non care'
+				a.type === 'Non care'
 			);
 			
 			// Subtract non-care schedules
@@ -3196,13 +3196,13 @@ function calculateCare(myData, myTargetElementId, careStartDate)
 		const childSchoolActivities = data.activities.filter(a => 
 			a.applicationId == data.activeApplicationId && 
 			a.personId === child.id &&
-			a.type === 'school'
+			a.type === 'School'
 		);
 
 		const childPreschoolActivities = data.activities.filter(a => 
 			a.applicationId == data.activeApplicationId && 
 			a.personId === child.id &&
-			a.type === 'preschool'
+			a.type === 'Preschool'
 		);
 		
 		const schoolAge = (childSchoolActivities.length > 0 && childAge >= 5) || childAge >= 7;
