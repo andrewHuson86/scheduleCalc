@@ -745,10 +745,18 @@ function deletePerson(id)
 		data.applications = data.applications.filter(a => a.headOfHouseholdId !== id);
 		data.householdMembers = data.householdMembers.filter(h => h.personId !== id);
 		data.activities.filter(a => a.personId == id).forEach(e => {
+			if(selectedScheduleId === e.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
 			data.schedules = data.schedules.filter(s => s.id !== e.scheduleId);
 			});
 		data.activities = data.activities.filter(a => a.personId !== id);
 		data.providerLinks.filter(p => p.personId == id).forEach(l => {
+			if(selectedScheduleId === l.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
 			data.schedules = data.schedules.filter(s => s.id !== l.scheduleId);
 			});
 		data.providerLinks = data.providerLinks.filter(p => p.persionId !== id);
@@ -879,6 +887,10 @@ function deleteProvider(id)
 	if (confirm('Are you sure you want to delete this provider?')) {
 		data.providers = data.providers.filter(p => p.id !== id);
 		data.providerLinks.filter(p => p.providerId == id).forEach(l => {
+			if(selectedScheduleId === l.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
 			data.schedules = data.schedules.filter(s => s.id !== l.scheduleId);
 			});
 		data.providerLinks = data.providerLinks.filter(p => p.providerId !== id);
@@ -974,7 +986,7 @@ function addApplication()
 	{
 		data.activeApplicationId = appId;
 	}
-	
+	selectedScheduleId = null;
 	saveData();
 	
 	document.getElementById('appId').value = '';
@@ -985,16 +997,38 @@ function addApplication()
 
 function deleteApplication(id) 
 {
-	if (confirm('Are you sure you want to delete this application?')) {
+	if (confirm('Are you sure you want to delete this application?')) 
+	{
 		data.applications = data.applications.filter(a => a.id !== id);
 		// Clean up related data
+		const myHouseholdMembers = data.householdMembers.filter(m => m.applicationId == id);
+		// Remove the schedules for all the activities and providerLinks
+		myHouseholdMembers.forEach(m => {
+			data.activities.filter(a => a.personId == m.personId && m.applicationId == id).forEach(e => {
+			if(selectedScheduleId === e.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
+			data.schedules = data.schedules.filter(s => s.id !== e.scheduleId);
+			});
+			data.providerLinks.filter(p => p.personId == m.personId && m.applicationId == id).forEach(l => {
+			if(selectedScheduleId === l.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
+			data.schedules = data.schedules.filter(s => s.id !== l.scheduleId);
+			});
+		});
+		
 		data.householdMembers = data.householdMembers.filter(h => h.applicationId !== id);
 		data.activities = data.activities.filter(a => a.applicationId !== id);
 		data.providerLinks = data.providerLinks.filter(p => p.applicationId !== id);
 		
-		if (data.activeApplicationId == id) {
+		if (data.activeApplicationId == id) 
+		{
 			data.activeApplicationId = null;
 		}
+		selectedScheduleId = null;
 		
 		saveData();
 		refreshApplicationsList();
@@ -1008,6 +1042,7 @@ function deleteApplication(id)
 function setActiveApplication(id) 
 {
 	data.activeApplicationId = id;
+	selectedScheduleId = null;
 	saveData();
 	refreshApplicationsList();
 	refreshHouseholdForm();
@@ -1117,9 +1152,25 @@ function toggleIncluded(applicationId, personId)
 
 function deleteHouseholdMember(applicationId, personId) 
 {
-	if (confirm('Are you sure you want to remove this household member?')) {
+	if (confirm('Are you sure you want to remove this household member?')) 
+	{
 		data.householdMembers = data.householdMembers.filter(h => 
 			!(h.applicationId === applicationId && h.personId === personId));
+		data.activities.filter(a => a.personId == personId && a.applicationId == applicationId).forEach(e => {
+			if(selectedScheduleId === e.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
+			data.schedules = data.schedules.filter(s => s.id !== e.scheduleId);
+			});
+			data.providerLinks.filter(p => p.personId == personId && p.applicationId == applicationId).forEach(l => {
+			if(selectedScheduleId === l.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
+			data.schedules = data.schedules.filter(s => s.id !== l.scheduleId);
+			});
+			
 		saveData();
 		refreshHouseholdForm();
 		refreshHouseholdList();
@@ -1317,6 +1368,10 @@ function deleteActivity(id)
 			// Remove associated schedule
 			data.schedules = data.schedules.filter(s => s.id !== activity.scheduleId);
 		}
+		if(selectedScheduleId === activity.scheduleId)
+		{
+			selectedScheduleId = null;
+		}
 		data.activities = data.activities.filter(a => a.id !== id);
 		saveData();
 		refreshActivitiesList();
@@ -1503,7 +1558,10 @@ function deleteProviderLink(providerId, applicationId, personId, locCare)
 		if (link) {
 			// Remove associated schedule
 			data.schedules = data.schedules.filter(s => s.id !== link.scheduleId);
-			
+			if(selectedScheduleId === link.scheduleId)
+			{
+				selectedScheduleId = null;
+			}
 			// If this was the primary provider, make another one primary if available
 			if (link.primary === 'Y') {
 				const otherLinks = data.providerLinks.filter(l => 
@@ -4043,7 +4101,7 @@ function determineMonthlyAuthorizations(calculationResult, non9CodeRemain)
 			if(calculationResult.schoolAge && calculationResult.schoolOverlap)
 			{
 				myType += 'SchoolPT';
-				if(calculationResult.initSchoolPartDays > 0)
+				if((calculationResult.initSchoolPartDays > 0) && (calculationResult.initSchoolPartDays >= (calculationResult.initSchoolMFHalfDays - calculationResult.initSchoolPartDays)))
 				{
 					myType += 'Partial';
 				}
@@ -4657,7 +4715,7 @@ function determineDailyAuthorizations(calculationResult, non9CodeRemain)
 	return {authLines: authLines, summerLines: summerLines, summerChg: summerChg};
 }
 
-// Helper Functions for Daily Unit Authorization Optimization
+// Functions for Daily Unit Authorization Optimization
 
 function calculateOptimalCareAuthorizations(schoolFull, schoolHalf, schoolZero,summerFull, summerHalf, summerZero)
 {
