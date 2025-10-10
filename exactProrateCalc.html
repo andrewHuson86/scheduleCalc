@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exact Authorization Proration Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .date-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .result.error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+        }
+        
+        .result.success {
+            background: #efe;
+            border: 2px solid #cfc;
+            color: #363;
+        }
+        
+        .result.no-solution {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        
+        .result:empty {
+            display: none;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .result-details {
+            line-height: 1.6;
+        }
+        
+        .result-details div {
+            margin-bottom: 8px;
+        }
+        
+        .result-details strong {
+            display: inline-block;
+            min-width: 180px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Exact Authorization Proration Calculator</h1>
+        
+        <div class="form-group">
+            <label for="serviceCodeMax">Service Code Max ($)</label>
+            <input type="number" id="serviceCodeMax" step="0.01" min="0.01" max="9999.99" placeholder="0.00">
+        </div>
+        
+        <div class="form-group">
+            <label>Authorization Period</label>
+            <div class="date-group">
+                <div>
+                    <label for="startDate">Minimum Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div>
+                    <label for="endDate">Maximum End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="requiredAmount">Required Amount ($)</label>
+            <input type="number" id="requiredAmount" step="0.01" min="0.01" placeholder="0.00">
+        </div>
+        
+        <button onclick="calculate()">Calculate</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+    
+    <script>
+        function truncate(num, decimals) {
+            const factor = Math.pow(10, decimals);
+            return Math.floor(num * factor) / factor;
+        }
+        
+        function getDaysInMonth(year, month) {
+            return new Date(year, month, 0).getDate();
+        }
+        
+        function calculateProration(authAmount, numDays) {
+            const dailyRate = truncate(authAmount / 30.41, 2);
+            return dailyRate * numDays;
+        }
+        
+        function formatDate(date) {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            return `${month}/${day}/${year}`;
+        }
+        
+        function showResult(type, title, content) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<div class="result-title">${title}</div><div class="result-details">${content}</div>`;
+        }
+        
+        function calculate() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            resultDiv.className = 'result';
+            
+            // Get inputs
+            const serviceCodeMax = parseFloat(document.getElementById('serviceCodeMax').value);
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+            const requiredAmount = parseFloat(document.getElementById('requiredAmount').value);
+            
+            // Validate inputs exist
+            if (!serviceCodeMax || !startDateStr || !endDateStr || !requiredAmount) {
+                showResult('error', 'Error', 'All fields are required.');
+                return;
+            }
+            
+            // Validate service code max range
+            if (serviceCodeMax < 0.01 || serviceCodeMax > 9999.99) {
+                showResult('error', 'Error', 'Service Code Max must be between $0.01 and $9999.99.');
+                return;
+            }
+            
+            // Validate required amount
+            if (requiredAmount < 0.01) {
+                showResult('error', 'Error', 'Required Amount must be at least $0.01.');
+                return;
+            }
+            
+            if (requiredAmount > serviceCodeMax) {
+                showResult('error', 'Error', 'Required Amount cannot exceed Service Code Max.');
+                return;
+            }
+            
+            const startDate = new Date(startDateStr + 'T00:00:00');
+            const endDate = new Date(endDateStr + 'T00:00:00');
+            
+            // Validate dates are in same month
+            if (startDate.getMonth() !== endDate.getMonth() || startDate.getFullYear() !== endDate.getFullYear()) {
+                showResult('error', 'Error', 'Start and End dates must be in the same calendar month.');
+                return;
+            }
+            
+            // Validate start <= end
+            if (startDate > endDate) {
+                showResult('error', 'Error', 'Start date must be less than or equal to End date.');
+                return;
+            }
+            
+            // Validate not entire month
+            const year = startDate.getFullYear();
+            const month = startDate.getMonth() + 1;
+            const daysInMonth = getDaysInMonth(year, month);
+            
+            const startDay = startDate.getDate();
+            const endDay = endDate.getDate();
+            
+            if (startDay === 1 && endDay === daysInMonth) {
+                showResult('error', 'Error', 'The date range cannot span the entire month.');
+                return;
+            }
+            
+            // Calculate available days
+            const availableDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Try to find solution starting from maximum days down to 1
+            let solution = null;
+			let closestSol = null;
+			let maxDiff = Infinity;
+			let found = false;
+            
+            for (let days = availableDays; days >= 1; days--) 
+			{
+                const targetDailyRate = requiredAmount / days;              
+                const minAuthAmount = targetDailyRate * 30.41;
+                
+                for (let testAmount = minAuthAmount; testAmount <= serviceCodeMax; testAmount += 0.01) 
+				{
+                    testAmount = Math.round(testAmount * 100) / 100;
+                    const prorated = calculateProration(testAmount, days);
+                    const proratedRounded = Math.round(prorated * 100) / 100;
+                    
+                    if (proratedRounded === requiredAmount) 
+					{
+						found = true;
+                        solution = {
+                            authAmount: testAmount,
+                            days: days,
+                            dailyRate: truncate(testAmount / 30.41, 2),
+							foundAmnt: truncate(testAmount / 30.41, 2) * days};
+                        break;
+                    } 
+					else if (prorated > requiredAmount) 
+					{
+                        if((prorated - requiredAmount) < maxDiff)
+						{
+							maxDiff = (prorated - requiredAmount);
+							closestSol = {
+								authAmount: testAmount,
+								days: days,
+								dailyRate: truncate(testAmount / 30.41, 2),
+								foundAmnt: truncate(testAmount / 30.41, 2) * days};
+						}
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            let resultHTML = '';
+			
+            if (!found) 
+			{
+				resultHTML += `<div><strong>No valid authorization amount could be found that prorates to exactly the required amount within the given constraints.</strong></div>
+				<div><strong>Closest possible solution:</strong></div>
+				`;
+				solution = closestSol;
+            }
+            
+            // Determine which dates to use
+            let solutionStartDate, solutionEndDate;
+            
+            if (solution.days === availableDays) 
+			{
+                solutionStartDate = new Date(startDate);
+                solutionEndDate = new Date(endDate);
+            } 
+			else 
+			{
+                const distanceFromStart = startDay - 1; // Days from start of month
+                const distanceFromEnd = daysInMonth - endDay; // Days from end of month
+                
+                if (distanceFromStart < distanceFromEnd) 
+				{
+                    // Closer to start of month, use start date
+                    solutionStartDate = new Date(startDate);
+                    solutionEndDate = new Date(startDate);
+                    solutionEndDate.setDate(solutionStartDate.getDate() + solution.days - 1);
+                } 
+				else 
+				{
+                    // Closer to end of month, use end date
+                    solutionEndDate = new Date(endDate);
+                    solutionStartDate = new Date(endDate);
+                    solutionStartDate.setDate(solutionEndDate.getDate() - solution.days + 1);
+                }
+            }
+            
+            resultHTML += `
+                <div><strong>Authorization Amount:</strong> $${solution.authAmount.toFixed(2)}</div>
+                <div><strong>Authorization Period:</strong> ${formatDate(solutionStartDate)} - ${formatDate(solutionEndDate)}</div>
+                <div><strong>Number of Days:</strong> ${solution.days}</div>
+                <div><strong>Daily Rate:</strong> $${solution.dailyRate.toFixed(2)}</div>
+                <div><strong>Prorated Amount:</strong> $${solution.foundAmnt.toFixed(2)}</div>
+            `;
+            
+            showResult((found===true?'success':'no-solution'), (found===true?'Solution Found':'No Solution Found'), resultHTML);
+        }
+    </script>
+</body>
+</html>
