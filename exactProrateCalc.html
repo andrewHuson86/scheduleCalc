@@ -316,7 +316,15 @@
 				resultHTML += `<div><strong>No valid authorization amount could be found that prorates to exactly the required amount within the given constraints.</strong></div>
 				<div><strong>Closest possible solution:</strong></div>
 				`;
-				solution = closestSol;
+				if(closestSol)
+				{
+					solution = closestSol;
+				}
+				else
+				{
+					showResult('no-solution', 'No Solution Found', 'No possible solution found.');
+					return;
+				}
             }
             
             // Determine which dates to use
