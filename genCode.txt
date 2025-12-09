@@ -1,0 +1,923 @@
+Option Explicit
+
+' Define constants for distributions
+Const SINGLE_MOTHER_RATE As Double = 0.8
+Const SINGLE_FATHER_RATE As Double = 0.1
+Const TWO_PARENT_RATE As Double = 0.08
+Const NNR_RATE As Double = 0.02
+
+' Race distribution
+Const WHITE_RATE As Double = 0.65
+Const HISPANIC_RATE As Double = 0.18
+Const BLACK_RATE As Double = 0.09
+Const ASIAN_RATE As Double = 0.06
+Const NATIVE_AMERICAN_RATE As Double = 0.02
+
+' Language distribution
+Const WHITE_ENGLISH_RATE As Double = 0.95
+Const HISPANIC_SPANISH_RATE As Double = 0.8
+
+' Enumerations for data types
+Enum HouseholdType
+    SingleMother = 1
+    SingleFather = 2
+    TwoParentUnmarriedCommon = 3
+    TwoParentUnmarriedBlended = 4
+    TwoParentMarriedCommon = 5
+    TwoParentMarriedBlended = 6
+    NonNeedyRelative = 7
+End Enum
+
+Enum MaritalStatus
+    NeverMarried = 1
+    Divorced = 2
+    Widowed = 3
+    Married = 4
+End Enum
+
+Enum Race
+    White = 1
+    Hispanic = 2
+    Black = 3
+    Asian = 4
+    NativeAmerican = 5
+End Enum
+
+Enum Gender
+    Male = 1
+    Female = 2
+End Enum
+
+' Person data structure
+Type Person
+    FirstName As String
+    LastName As String
+    Gender As Gender
+    Age As Integer
+    Race As Race
+    Language As String
+    IsAlive As Boolean
+    IsParent As Boolean
+    IsHouseholdMember As Boolean
+    IsPrimaryApplicant As Boolean
+    MaritalStatus As MaritalStatus
+    IsBiologicalParent As Boolean
+End Type
+
+' Child data structure (extends Person)
+Type Child
+    BasePerson As Person
+    OtherParent As Person
+    OtherParentIsUnknown As Boolean
+    OtherParentIsSameForAllChildren As Boolean
+End Type
+
+' Household data structure
+Type Household
+    HouseholdType As HouseholdType
+    PrimaryApplicant As Person
+    SecondParent As Person
+    Children() As Child
+    NonNeedyRelative As Person
+    CustodyType As String ' "Temporary" or "Permanent" for NNR households
+End Type
+
+' Main procedure to generate a scenario
+Sub GenerateChildcareBenefitScenario()
+    Dim household As Household
+    Dim ws As Worksheet
+    Dim outputRow As Integer
+    
+    ' Set up output worksheet
+    Set ws = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.Count))
+    ws.Name = "Benefit Scenario " & Format(Now, "yyyy-mm-dd hh-mm-ss")
+    
+    ' Create headers
+    SetupWorksheetHeaders ws
+    
+    ' Generate the household
+    household = GenerateHousehold()
+    
+    ' Output the household data to the worksheet
+    outputRow = 2
+    outputRow = OutputHouseholdData(ws, household, outputRow)
+    
+    ' Format the worksheet
+    FormatWorksheet ws
+    
+    MsgBox "Childcare benefit scenario generated successfully!", vbInformation
+End Sub
+
+' Generate a complete household
+Function GenerateHousehold() As Household
+    Dim household As Household
+    Dim randomValue As Double
+    Dim numChildren As Integer
+    Dim i As Integer
+    
+    ' Determine household type based on distribution
+    randomValue = Rnd()
+    
+    If randomValue < SINGLE_MOTHER_RATE Then
+        household.HouseholdType = SingleMother
+    ElseIf randomValue < SINGLE_MOTHER_RATE + SINGLE_FATHER_RATE Then
+        household.HouseholdType = SingleFather
+    ElseIf randomValue < SINGLE_MOTHER_RATE + SINGLE_FATHER_RATE + TWO_PARENT_RATE Then
+        ' Determine if married or unmarried
+        randomValue = Rnd()
+        If randomValue < 0.5 Then
+            ' Determine if blended or common children
+            randomValue = Rnd()
+            If randomValue < 0.5 Then
+                household.HouseholdType = TwoParentMarriedCommon
+            Else
+                household.HouseholdType = TwoParentMarriedBlended
+            End If
+        Else
+            ' Determine if blended or common children
+            randomValue = Rnd()
+            If randomValue < 0.5 Then
+                household.HouseholdType = TwoParentUnmarriedCommon
+            Else
+                household.HouseholdType = TwoParentUnmarriedBlended
+            End If
+        End If
+    Else
+        household.HouseholdType = NonNeedyRelative
+    End If
+    
+    ' Generate the primary applicant
+    household.PrimaryApplicant = GeneratePrimaryApplicant(household.HouseholdType)
+    
+    ' Generate the second parent if applicable
+    Select Case household.HouseholdType
+        Case SingleMother, SingleFather
+            ' No second parent in household
+        Case TwoParentUnmarriedCommon, TwoParentUnmarriedBlended, TwoParentMarriedCommon, TwoParentMarriedBlended
+            household.SecondParent = GenerateSecondParent(household.PrimaryApplicant, household.HouseholdType)
+        Case NonNeedyRelative
+            household.NonNeedyRelative = GenerateNonNeedyRelative()
+            ' Generate parents for the children
+            household.SecondParent = GenerateSecondParent(household.PrimaryApplicant, TwoParentMarriedCommon)
+    End Select
+    
+    ' Determine number of children (average 1.2, max 4)
+    numChildren = GetRandomNumberWithAverage(1.2, 4)
+    ReDim household.Children(1 To numChildren)
+    
+    ' Generate children
+    For i = 1 To numChildren
+        household.Children(i) = GenerateChild(household, i)
+    Next i
+    
+    ' For NNR households, determine custody type
+    If household.HouseholdType = NonNeedyRelative Then
+        If Rnd() < 0.5 Then
+            household.CustodyType = "Temporary"
+        Else
+            household.CustodyType = "Permanent"
+        End If
+    End If
+    
+    GenerateHousehold = household
+End Function
+
+' Generate the primary applicant
+Function GeneratePrimaryApplicant(householdType As HouseholdType) As Person
+    Dim applicant As Person
+    
+    ' Set as primary applicant
+    applicant.IsPrimaryApplicant = True
+    applicant.IsHouseholdMember = True
+    
+    ' Set gender based on household type
+    Select Case householdType
+        Case SingleMother
+            applicant.Gender = Female
+        Case SingleFather
+            applicant.Gender = Male
+        Case NonNeedyRelative
+            ' Random gender for NNR
+            applicant.Gender = IIf(Rnd() < 0.5, Male, Female)
+        Case Else ' Two parent households
+            ' Random gender
+            applicant.Gender = IIf(Rnd() < 0.5, Male, Female)
+    End Select
+    
+    ' Set age (18-65)
+    applicant.Age = 18 + Int(Rnd() * 48)
+    
+    ' Set race based on distribution
+    applicant.Race = GetRandomRace()
+    
+    ' Set language based on race
+    applicant.Language = GetLanguage(applicant.Race)
+    
+    ' Set name based on gender and race
+    applicant.FirstName = GetFirstName(applicant.Gender, applicant.Race)
+    applicant.LastName = GetLastName(applicant.Race)
+    
+    ' Set marital status
+    Select Case householdType
+        Case SingleMother, SingleFather
+            ' For single parents, determine marital status
+            Dim randomValue As Double
+            randomValue = Rnd()
+            If randomValue < 0.4 Then
+                applicant.MaritalStatus = NeverMarried
+            ElseIf randomValue < 0.8 Then
+                applicant.MaritalStatus = Divorced
+            Else
+                applicant.MaritalStatus = Widowed
+            End If
+        Case TwoParentMarriedCommon, TwoParentMarriedBlended
+            applicant.MaritalStatus = Married
+        Case TwoParentUnmarriedCommon, TwoParentUnmarriedBlended
+            applicant.MaritalStatus = NeverMarried
+        Case NonNeedyRelative
+            ' Random marital status for NNR
+            randomValue = Rnd()
+            If randomValue < 0.25 Then
+                applicant.MaritalStatus = NeverMarried
+            ElseIf randomValue < 0.5 Then
+                applicant.MaritalStatus = Divorced
+            ElseIf randomValue < 0.75 Then
+                applicant.MaritalStatus = Widowed
+            Else
+                applicant.MaritalStatus = Married
+            End If
+    End Select
+    
+    ' Set as alive
+    applicant.IsAlive = True
+    
+    ' Set as parent (except for NNR)
+    applicant.IsParent = (householdType <> NonNeedyRelative)
+    
+    GeneratePrimaryApplicant = applicant
+End Function
+
+' Generate the second parent
+Function GenerateSecondParent(primaryApplicant As Person, householdType As HouseholdType) As Person
+    Dim secondParent As Person
+    Dim isMarried As Boolean
+    
+    ' Set as household member and parent
+    secondParent.IsHouseholdMember = True
+    secondParent.IsParent = True
+    
+    ' Set opposite gender to primary applicant
+    secondParent.Gender = IIf(primaryApplicant.Gender = Male, Female, Male)
+    
+    ' Set age (within 10 years of primary applicant)
+    secondParent.Age = primaryApplicant.Age + Int(Rnd() * 21) - 10
+    If secondParent.Age < 18 Then secondParent.Age = 18
+    
+    ' Determine if married
+    isMarried = (householdType = TwoParentMarriedCommon Or householdType = TwoParentMarriedBlended)
+    
+    ' Set marital status
+    If isMarried Then
+        secondParent.MaritalStatus = Married
+    Else
+        secondParent.MaritalStatus = NeverMarried
+    End If
+    
+    ' For blended families, there's a chance the second parent has a different race
+    If householdType = TwoParentUnmarriedBlended Or householdType = TwoParentMarriedBlended Then
+        If Rnd() < 0.3 Then ' 30% chance of different race in blended families
+            secondParent.Race = GetRandomRace()
+        Else
+            secondParent.Race = primaryApplicant.Race
+        End If
+    Else
+        secondParent.Race = primaryApplicant.Race
+    End If
+    
+    ' Set language based on race
+    secondParent.Language = GetLanguage(secondParent.Race)
+    
+    ' Set name based on gender and race
+    secondParent.FirstName = GetFirstName(secondParent.Gender, secondParent.Race)
+    
+    ' Set last name
+    If isMarried Then
+        If secondParent.Gender = Female Then
+            ' Married woman takes husband's last name
+            secondParent.LastName = primaryApplicant.LastName
+        Else
+            ' Husband keeps his last name
+            secondParent.LastName = GetLastName(secondParent.Race)
+            ' Update wife's last name if she's the primary applicant
+            If primaryApplicant.Gender = Female Then
+                primaryApplicant.LastName = secondParent.LastName
+            End If
+        End If
+    Else
+        secondParent.LastName = GetLastName(secondParent.Race)
+    End If
+    
+    ' Set as alive
+    secondParent.IsAlive = True
+    
+    GenerateSecondParent = secondParent
+End Function
+
+' Generate a non-needy relative
+Function GenerateNonNeedyRelative() As Person
+    Dim nnr As Person
+    
+    ' Set as household member but not parent
+    nnr.IsHouseholdMember = True
+    nnr.IsParent = False
+    
+    ' Random gender
+    nnr.Gender = IIf(Rnd() < 0.5, Male, Female)
+    
+    ' Set age (25-70)
+    nnr.Age = 25 + Int(Rnd() * 46)
+    
+    ' Set race based on distribution
+    nnr.Race = GetRandomRace()
+    
+    ' Set language based on race
+    nnr.Language = GetLanguage(nnr.Race)
+    
+    ' Set name based on gender and race
+    nnr.FirstName = GetFirstName(nnr.Gender, nnr.Race)
+    nnr.LastName = GetLastName(nnr.Race)
+    
+    ' Set marital status
+    Dim randomValue As Double
+    randomValue = Rnd()
+    If randomValue < 0.25 Then
+        nnr.MaritalStatus = NeverMarried
+    ElseIf randomValue < 0.5 Then
+        nnr.MaritalStatus = Divorced
+    ElseIf randomValue < 0.75 Then
+        nnr.MaritalStatus = Widowed
+    Else
+        nnr.MaritalStatus = Married
+    End If
+    
+    ' Set as alive
+    nnr.IsAlive = True
+    
+    GenerateNonNeedyRelative = nnr
+End Function
+
+' Generate a child
+Function GenerateChild(household As Household, childIndex As Integer) As Child
+    Dim child As Child
+    Dim isSchoolAge As Boolean
+    Dim maxSchoolAgeChildren As Integer
+    Dim schoolAgeCount As Integer
+    Dim i As Integer
+    
+    ' Count existing school-age children
+    schoolAgeCount = 0
+    For i = 1 To childIndex - 1
+        If household.Children(i).BasePerson.Age >= 5 And household.Children(i).BasePerson.Age <= 13 Then
+            schoolAgeCount = schoolAgeCount + 1
+        End If
+    Next i
+    
+    ' Determine if this child should be school age (max 3)
+    maxSchoolAgeChildren = 3
+    isSchoolAge = (schoolAgeCount < maxSchoolAgeChildren) And (Rnd() < 0.7) ' 70% chance if under limit
+    
+    ' Set age
+    If isSchoolAge Then
+        child.BasePerson.Age = 5 + Int(Rnd() * 9) ' 5-13
+    Else
+        child.BasePerson.Age = Int(Rnd() * 5) ' 0-4
+    End If
+    
+    ' Set as household member
+    child.BasePerson.IsHouseholdMember = True
+    
+    ' Set gender
+    child.BasePerson.Gender = IIf(Rnd() < 0.5, Male, Female)
+    
+    ' Set race based on parents
+    Select Case household.HouseholdType
+        Case SingleMother, SingleFather
+            ' For single parents, child's race is the same as the parent
+            child.BasePerson.Race = household.PrimaryApplicant.Race
+        Case TwoParentUnmarriedCommon, TwoParentUnmarriedBlended, TwoParentMarriedCommon, TwoParentMarriedBlended
+            ' For two parent households, child's race is based on parents
+            If household.PrimaryApplicant.Race = household.SecondParent.Race Then
+                child.BasePerson.Race = household.PrimaryApplicant.Race
+            Else
+                ' Randomly choose one of the parents' races
+                child.BasePerson.Race = IIf(Rnd() < 0.5, household.PrimaryApplicant.Race, household.SecondParent.Race)
+            End If
+        Case NonNeedyRelative
+            ' For NNR households, generate parents first
+            Dim parent1 As Person
+            Dim parent2 As Person
+            
+            parent1 = GenerateSecondParent(household.NonNeedyRelative, TwoParentMarriedCommon)
+            parent2 = GenerateSecondParent(parent1, TwoParentMarriedCommon)
+            
+            ' Child's race is based on parents
+            If parent1.Race = parent2.Race Then
+                child.BasePerson.Race = parent1.Race
+            Else
+                child.BasePerson.Race = IIf(Rnd() < 0.5, parent1.Race, parent2.Race)
+            End If
+            
+            ' Set other parent info
+            child.OtherParent = parent2
+            child.OtherParentIsUnknown = False
+    End Select
+    
+    ' Set language based on race
+    child.BasePerson.Language = GetLanguage(child.BasePerson.Race)
+    
+    ' Set name based on gender and race
+    child.BasePerson.FirstName = GetFirstName(child.BasePerson.Gender, child.BasePerson.Race)
+    
+    ' Set last name based on family situation
+    Select Case household.HouseholdType
+        Case SingleMother
+            ' For single mothers, check if father is unknown
+            If Rnd() < 0.2 Then ' 20% chance father is unknown
+                child.OtherParentIsUnknown = True
+                child.BasePerson.LastName = household.PrimaryApplicant.LastName
+            Else
+                child.OtherParentIsUnknown = False
+                child.OtherParent = GenerateOtherParent(household.PrimaryApplicant, child.BasePerson, childIndex)
+                
+                ' If father is known, child takes father's last name
+                child.BasePerson.LastName = child.OtherParent.LastName
+            End If
+        Case SingleFather
+            child.OtherParentIsUnknown = False
+            child.OtherParent = GenerateOtherParent(household.PrimaryApplicant, child.BasePerson, childIndex)
+            
+            ' Child takes father's last name
+            child.BasePerson.LastName = household.PrimaryApplicant.LastName
+        Case TwoParentUnmarriedCommon, TwoParentUnmarriedBlended, TwoParentMarriedCommon, TwoParentMarriedBlended
+            ' For two parent households, child takes father's last name
+            If household.PrimaryApplicant.Gender = Male Then
+                child.BasePerson.LastName = household.PrimaryApplicant.LastName
+            Else
+                child.BasePerson.LastName = household.SecondParent.LastName
+            End If
+            
+            ' No other parent to track in two-parent households
+            child.OtherParentIsUnknown = False
+        Case NonNeedyRelative
+            ' For NNR households, child takes father's last name
+            If child.OtherParent.Gender = Male Then
+                child.BasePerson.LastName = child.OtherParent.LastName
+            Else
+                ' If we didn't set the other parent above, generate it now
+                If child.OtherParent.FirstName = "" Then
+                    child.OtherParent = GenerateOtherParent(household.NonNeedyRelative, child.BasePerson, childIndex)
+                End If
+                
+                ' Find the male parent
+                If child.OtherParent.Gender = Female Then
+                    Dim tempParent As Person
+                    tempParent = GenerateOtherParent(household.NonNeedyRelative, child.BasePerson, childIndex)
+                    If tempParent.Gender = Male Then
+                        child.BasePerson.LastName = tempParent.LastName
+                    Else
+                        child.BasePerson.LastName = child.OtherParent.LastName
+                    End If
+                Else
+                    child.BasePerson.LastName = child.OtherParent.LastName
+                End If
+            End If
+    End Select
+    
+    ' Set as alive
+    child.BasePerson.IsAlive = True
+    
+    ' Set as not parent
+    child.BasePerson.IsParent = False
+    
+    ' For single parent households, determine if other parent is the same for all children
+    If household.HouseholdType = SingleMother Or household.HouseholdType = SingleFather Then
+        If childIndex = 1 Then
+            child.OtherParentIsSameForAllChildren = (Rnd() < 0.7) ' 70% chance same parent for all children
+        Else
+            ' If first child has same parent for all, use that parent
+            If household.Children(1).OtherParentIsSameForAllChildren And Not child.OtherParentIsUnknown Then
+                child.OtherParent = household.Children(1).OtherParent
+                child.OtherParentIsSameForAllChildren = True
+            Else
+                child.OtherParentIsSameForAllChildren = False
+            End If
+        End If
+    End If
+    
+    GenerateChild = child
+End Function
+
+' Generate the other parent for a child in a single parent household
+Function GenerateOtherParent(singleParent As Person, child As Person, childIndex As Integer) As Person
+    Dim otherParent As Person
+    
+    ' Set opposite gender to single parent
+    otherParent.Gender = IIf(singleParent.Gender = Male, Female, Male)
+    
+    ' Set age (within 10 years of single parent)
+    otherParent.Age = singleParent.Age + Int(Rnd() * 21) - 10
+    If otherParent.Age < 18 Then otherParent.Age = 18
+    
+    ' Set race (70% chance same as single parent)
+    If Rnd() < 0.7 Then
+        otherParent.Race = singleParent.Race
+    Else
+        otherParent.Race = GetRandomRace()
+    End If
+    
+    ' Set language based on race
+    otherParent.Language = GetLanguage(otherParent.Race)
+    
+    ' Set name based on gender and race
+    otherParent.FirstName = GetFirstName(otherParent.Gender, otherParent.Race)
+    otherParent.LastName = GetLastName(otherParent.Race)
+    
+    ' Set marital status (never married to the single parent)
+    otherParent.MaritalStatus = NeverMarried
+    
+    ' Set if alive (90% chance alive)
+    otherParent.IsAlive = (Rnd() < 0.9)
+    
+    ' Set as parent but not household member
+    otherParent.IsParent = True
+    otherParent.IsHouseholdMember = False
+    
+    GenerateOtherParent = otherParent
+End Function
+
+' Get a random race based on distribution
+Function GetRandomRace() As Race
+    Dim randomValue As Double
+    randomValue = Rnd()
+    
+    If randomValue < WHITE_RATE Then
+        GetRandomRace = White
+    ElseIf randomValue < WHITE_RATE + HISPANIC_RATE Then
+        GetRandomRace = Hispanic
+    ElseIf randomValue < WHITE_RATE + HISPANIC_RATE + BLACK_RATE Then
+        GetRandomRace = Black
+    ElseIf randomValue < WHITE_RATE + HISPANIC_RATE + BLACK_RATE + ASIAN_RATE Then
+        GetRandomRace = Asian
+    Else
+        GetRandomRace = NativeAmerican
+    End If
+End Function
+
+' Get language based on race
+Function GetLanguage(race As Race) As String
+    Dim randomValue As Double
+    
+    Select Case race
+        Case White
+            randomValue = Rnd()
+            If randomValue < WHITE_ENGLISH_RATE Then
+                GetLanguage = "English"
+            Else
+                GetLanguage = "Spanish"
+            End If
+        Case Hispanic
+            randomValue = Rnd()
+            If randomValue < HISPANIC_SPANISH_RATE Then
+                GetLanguage = "Spanish"
+            Else
+                GetLanguage = "English"
+            End If
+        Case Else
+            GetLanguage = "English"
+    End Select
+End Function
+
+' Get a first name based on gender and race
+Function GetFirstName(gender As Gender, race As Race) As String
+    ' In a real implementation, you would have arrays of names for each gender/race combination
+    ' For simplicity, we'll use a generic approach here
+    
+    Dim maleNames() As Variant
+    Dim femaleNames() As Variant
+    Dim hispanicMaleNames() As Variant
+    Dim hispanicFemaleNames() As Variant
+    
+    ' Sample names - in a real implementation, these would be much more comprehensive
+    maleNames = Array("James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Thomas", "Christopher")
+    femaleNames = Array("Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Sarah", "Karen")
+    hispanicMaleNames = Array("Juan", "Jose", "Miguel", "Francisco", "Javier", "Carlos", "Luis", "Antonio", "Alejandro", "Manuel")
+    hispanicFemaleNames = Array("Maria", "Ana", "Sofia", "Isabella", "Camila", "Valentina", "Lucia", "Elena", "Gabriela", "Daniela")
+    
+    Select Case race
+        Case Hispanic
+            If gender = Male Then
+                GetFirstName = hispanicMaleNames(Int(Rnd() * UBound(hispanicMaleNames) + 1))
+            Else
+                GetFirstName = hispanicFemaleNames(Int(Rnd() * UBound(hispanicFemaleNames) + 1))
+            End If
+        Case Else
+            If gender = Male Then
+                GetFirstName = maleNames(Int(Rnd() * UBound(maleNames) + 1))
+            Else
+                GetFirstName = femaleNames(Int(Rnd() * UBound(femaleNames) + 1))
+            End If
+    End Select
+End Function
+
+' Get a last name based on race
+Function GetLastName(race As Race) As String
+    ' In a real implementation, you would have arrays of last names for each race
+    ' For simplicity, we'll use a generic approach here
+    
+    Dim whiteLastNames() As Variant
+    Dim hispanicLastNames() As Variant
+    Dim blackLastNames() As Variant
+    Dim asianLastNames() As Variant
+    Dim nativeAmericanLastNames() As Variant
+    
+    ' Sample last names - in a real implementation, these would be much more comprehensive
+    whiteLastNames = Array("Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez")
+    hispanicLastNames = Array("Garcia", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Perez", "Sanchez", "Ramirez", "Cruz")
+    blackLastNames = Array("Williams", "Johnson", "Smith", "Jones", "Brown", "Jackson", "Davis", "Miller", "Wilson", "Moore")
+    asianLastNames = Array("Lee", "Kim", "Wong", "Chen", "Nguyen", "Patel", "Liu", "Singh", "Wang", "Zhang")
+    nativeAmericanLastNames = Array("Yazzie", "Begay", "Benally", "Tsosie", "Etsitty", "Nez", "Clah", "Wauneka", "Chee", "Begaye")
+    
+    Select Case race
+        Case White
+            GetLastName = whiteLastNames(Int(Rnd() * UBound(whiteLastNames) + 1))
+        Case Hispanic
+            GetLastName = hispanicLastNames(Int(Rnd() * UBound(hispanicLastNames) + 1))
+        Case Black
+            GetLastName = blackLastNames(Int(Rnd() * UBound(blackLastNames) + 1))
+        Case Asian
+            GetLastName = asianLastNames(Int(Rnd() * UBound(asianLastNames) + 1))
+        Case NativeAmerican
+            GetLastName = nativeAmericanLastNames(Int(Rnd() * UBound(nativeAmericanLastNames) + 1))
+    End Select
+End Function
+
+' Get a random number with a specific average and maximum
+Function GetRandomNumberWithAverage(average As Double, max As Integer) As Integer
+    ' This is a simplified approach - in a real implementation, you might use a more sophisticated distribution
+    Dim result As Integer
+    
+    ' Start with the average
+    result = Int(average)
+    
+    ' Adjust based on random value
+    If Rnd() < 0.5 Then
+        ' 50% chance to increase
+        result = result + Int(Rnd() * (max - result + 1))
+    Else
+        ' 50% chance to decrease (but not below 1)
+        result = result - Int(Rnd() * (result - 1 + 1))
+        If result < 1 Then result = 1
+    End If
+    
+    ' Ensure we don't exceed the maximum
+    If result > max Then result = max
+    
+    GetRandomNumberWithAverage = result
+End Function
+
+' Set up worksheet headers
+Sub SetupWorksheetHeaders(ws As Worksheet)
+    With ws
+        .Cells(1, 1).Value = "Household Type"
+        .Cells(1, 2).Value = "Primary Applicant"
+        .Cells(1, 3).Value = "Gender"
+        .Cells(1, 4).Value = "Age"
+        .Cells(1, 5).Value = "Race"
+        .Cells(1, 6).Value = "Language"
+        .Cells(1, 7).Value = "Marital Status"
+        .Cells(1, 8).Value = "Second Parent"
+        .Cells(1, 9).Value = "Gender"
+        .Cells(1, 10).Value = "Age"
+        .Cells(1, 11).Value = "Race"
+        .Cells(1, 12).Value = "Language"
+        .Cells(1, 13).Value = "Children"
+        .Cells(1, 14).Value = "Gender"
+        .Cells(1, 15).Value = "Age"
+        .Cells(1, 16).Value = "Race"
+        .Cells(1, 17).Value = "Language"
+        .Cells(1, 18).Value = "Other Parent"
+        .Cells(1, 19).Value = "Other Parent Alive"
+        .Cells(1, 20).Value = "Other Parent Unknown"
+        .Cells(1, 21).Value = "Non-Needy Relative"
+        .Cells(1, 22).Value = "Custody Type"
+    End With
+End Sub
+
+' Output household data to worksheet
+Function OutputHouseholdData(ws As Worksheet, household As Household, startRow As Integer) As Integer
+    Dim row As Integer
+    Dim i As Integer
+    
+    row = startRow
+    
+    ' Output household type
+    Select Case household.HouseholdType
+        Case SingleMother
+            ws.Cells(row, 1).Value = "Single Mother"
+        Case SingleFather
+            ws.Cells(row, 1).Value = "Single Father"
+        Case TwoParentUnmarriedCommon
+            ws.Cells(row, 1).Value = "Two Parent (Unmarried, Common Children)"
+        Case TwoParentUnmarriedBlended
+            ws.Cells(row, 1).Value = "Two Parent (Unmarried, Blended)"
+        Case TwoParentMarriedCommon
+            ws.Cells(row, 1).Value = "Two Parent (Married, Common Children)"
+        Case TwoParentMarriedBlended
+            ws.Cells(row, 1).Value = "Two Parent (Married, Blended)"
+        Case NonNeedyRelative
+            ws.Cells(row, 1).Value = "Non-Needy Relative"
+    End Select
+    
+    ' Output primary applicant info
+    ws.Cells(row, 2).Value = household.PrimaryApplicant.FirstName & " " & household.PrimaryApplicant.LastName
+    ws.Cells(row, 3).Value = IIf(household.PrimaryApplicant.Gender = Male, "Male", "Female")
+    ws.Cells(row, 4).Value = household.PrimaryApplicant.Age
+    ws.Cells(row, 5).Value = GetRaceName(household.PrimaryApplicant.Race)
+    ws.Cells(row, 6).Value = household.PrimaryApplicant.Language
+    ws.Cells(row, 7).Value = GetMaritalStatusName(household.PrimaryApplicant.MaritalStatus)
+    
+    ' Output second parent info if applicable
+    If household.HouseholdType = TwoParentUnmarriedCommon Or _
+       household.HouseholdType = TwoParentUnmarriedBlended Or _
+       household.HouseholdType = TwoParentMarriedCommon Or _
+       household.HouseholdType = TwoParentMarriedBlended Then
+        ws.Cells(row, 8).Value = household.SecondParent.FirstName & " " & household.SecondParent.LastName
+        ws.Cells(row, 9).Value = IIf(household.SecondParent.Gender = Male, "Male", "Female")
+        ws.Cells(row, 10).Value = household.SecondParent.Age
+        ws.Cells(row, 11).Value = GetRaceName(household.SecondParent.Race)
+        ws.Cells(row, 12).Value = household.SecondParent.Language
+    End If
+    
+    ' Output children info
+    For i = 1 To UBound(household.Children)
+        If i > 1 Then
+            ' Create a new row for additional children
+            row = row + 1
+        End If
+        
+        ws.Cells(row, 13).Value = household.Children(i).BasePerson.FirstName & " " & household.Children(i).BasePerson.LastName
+        ws.Cells(row, 14).Value = IIf(household.Children(i).BasePerson.Gender = Male, "Male", "Female")
+        ws.Cells(row, 15).Value = household.Children(i).BasePerson.Age
+        ws.Cells(row, 16).Value = GetRaceName(household.Children(i).BasePerson.Race)
+        ws.Cells(row, 17).Value = household.Children(i).BasePerson.Language
+        
+        ' Output other parent info for single parent households
+        If household.HouseholdType = SingleMother Or household.HouseholdType = SingleFather Then
+            If household.Children(i).OtherParentIsUnknown Then
+                ws.Cells(row, 18).Value = "Unknown"
+                ws.Cells(row, 19).Value = "N/A"
+                ws.Cells(row, 20).Value = "Yes"
+            Else
+                ws.Cells(row, 18).Value = household.Children(i).OtherParent.FirstName & " " & household.Children(i).OtherParent.LastName
+                ws.Cells(row, 19).Value = IIf(household.Children(i).OtherParent.IsAlive, "Yes", "No")
+                ws.Cells(row, 20).Value = "No"
+            End If
+        End If
+    Next i
+    
+    ' Output NNR info if applicable
+    If household.HouseholdType = NonNeedyRelative Then
+        ws.Cells(row, 21).Value = household.NonNeedyRelative.FirstName & " " & household.NonNeedyRelative.LastName
+        ws.Cells(row, 22).Value = household.CustodyType
+    End If
+    
+    OutputHouseholdData = row
+End Function
+
+' Get race name from enum
+Function GetRaceName(race As Race) As String
+    Select Case race
+        Case White
+            GetRaceName = "White"
+        Case Hispanic
+            GetRaceName = "Hispanic"
+        Case Black
+            GetRaceName = "Black"
+        Case Asian
+            GetRaceName = "Asian"
+        Case NativeAmerican
+            GetRaceName = "Native American"
+    End Select
+End Function
+
+' Get marital status name from enum
+Function GetMaritalStatusName(status As MaritalStatus) As String
+    Select Case status
+        Case NeverMarried
+            GetMaritalStatusName = "Never Married"
+        Case Divorced
+            GetMaritalStatusName = "Divorced"
+        Case Widowed
+            GetMaritalStatusName = "Widowed"
+        Case Married
+            GetMaritalStatusName = "Married"
+    End Select
+End Function
+
+' Format the worksheet
+Sub FormatWorksheet(ws As Worksheet)
+    With ws
+        ' Auto-fit columns
+        .Columns.AutoFit
+        
+        ' Format header row
+        With .Rows(1)
+            .Font.Bold = True
+            .Interior.Color = RGB(200, 200, 200)
+        End With
+        
+        ' Add borders
+        With .Range(.Cells(1, 1), .Cells(.UsedRange.Rows.Count, .UsedRange.Columns.Count))
+            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+            .Borders(xlEdgeTop).LineStyle = xlContinuous
+            .Borders(xlEdgeBottom).LineStyle = xlContinuous
+            .Borders(xlEdgeRight).LineStyle = xlContinuous
+            .Borders(xlInsideHorizontal).LineStyle = xlContinuous
+            .Borders(xlInsideVertical).LineStyle = xlContinuous
+        End With
+    End With
+End Sub
+
+' Add a button to the worksheet to run the macro
+Sub AddGenerateButton()
+    Dim ws As Worksheet
+    Dim btn As Button
+    
+    Set ws = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.Count))
+    ws.Name = "Scenario Generator"
+    
+    ' Add button
+    Set btn = ws.Buttons.Add(100, 20, 150, 30)
+    btn.Caption = "Generate Scenario"
+    btn.OnAction = "GenerateChildcareBenefitScenario"
+    
+    ' Add instructions
+    ws.Range("A5").Value = "Click the button above to generate a random childcare benefit scenario."
+    ws.Range("A6").Value = "Each scenario will be created in a new worksheet with realistic household data."
+    ws.Range("A7").Value = "The scenarios follow real-world distributions for household types, races, and languages."
+    
+    ' Format instructions
+    With ws.Range("A5:A7")
+        .Font.Size = 12
+        .WrapText = True
+    End With
+    
+    ws.Columns("A").ColumnWidth = 80
+    ws.Rows("5:7").RowHeight = 25
+End Sub
+
+' Initialize the workbook
+Sub InitializeWorkbook()
+    ' Clear any existing worksheets except for one
+    Application.DisplayAlerts = False
+    
+    Do While ThisWorkbook.Worksheets.Count > 1
+        ThisWorkbook.Worksheets(1).Delete
+    Loop
+    
+    Application.DisplayAlerts = True
+    
+    ' Rename the remaining worksheet
+    ThisWorkbook.Worksheets(1).Name = "Instructions"
+    
+    ' Add instructions to the worksheet
+    With ThisWorkbook.Worksheets("Instructions")
+        .Range("A1").Value = "Childcare Benefit Scenario Generator"
+        .Range("A1").Font.Size = 16
+        .Range("A1").Font.Bold = True
+        
+        .Range("A3").Value = "This workbook generates random scenarios for childcare benefit applications."
+        .Range("A4").Value = "The scenarios include realistic household compositions based on real-world data."
+        
+        .Range("A6").Value = "To use this generator:"
+        .Range("A7").Value = "1. Run the 'AddGenerateButton' macro to add a button to a new worksheet."
+        .Range("A8").Value = "2. Click the button to generate a new scenario."
+        .Range("A9").Value = "3. Each scenario will be created in a new worksheet with detailed household information."
+        
+        .Range("A11").Value = "The scenarios include:"
+        .Range("A12").Value = "- Various household types (single parent, two parent, non-needy relative)"
+        .Range("A13").Value = "- Realistic race and ethnicity distributions"
+        .Range("A14").Value = "- Appropriate language assignments"
+        .Range("A15").Value = "- Age-appropriate family members"
+        .Range("A16").Value = "- Proper name assignments based on gender and race"
+        
+        .Columns("A").ColumnWidth = 80
+        .Rows("1").RowHeight = 30
+        .Rows("3:16").RowHeight = 20
+    End With
+    
+    ' Add the button
+    AddGenerateButton
+    
+    MsgBox "Workbook initialized successfully! Please go to the 'Scenario Generator' worksheet to begin.", vbInformation
+End Sub
