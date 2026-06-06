@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phone Center Simulator</title>
+<title>WCCC Call Center Simulator</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:system-ui,sans-serif;background:#f5f5f5;color:#222;font-size:14px}
@@ -54,7 +54,7 @@
 </style>
 </head>
 <body>
-<h1>📞 Phone Center Simulator</h1>
+<h1>WCCC Call Center Simulator</h1>
 <div class="container">
 
   <div class="card">
@@ -123,7 +123,7 @@
     </div>
   </div>
 
-  <button id="runBtn" onclick="runSimulation()">▶ Run Simulation</button>
+  <button id="runBtn" onclick="runSimulation()">Run Simulation</button>
   <div id="status"></div>
   <div class="prog-bar" style="display:none" id="progBar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
 
@@ -141,7 +141,7 @@
         <h2>Period-by-Period Call Activity</h2>
         <div style="overflow-y:auto;max-height:340px">
           <table class="dist-table" id="periodTable">
-            <thead><tr><th>Period</th><th>Expected</th><th>Answered</th><th>Abandoned</th><th>Peak Queue</th></tr></thead>
+            <thead><tr><th>Period</th><th>Expected</th><th>Answered</th><th>Abandoned</th><th>Forced Disconnect</th><th>Peak Queue</th></tr></thead>
             <tbody id="periodBody"></tbody>
           </table>
         </div>
@@ -156,8 +156,22 @@
 </div>
 
 <script>
+/*
+Just an FYI this was made by Andrew so you know it is hot garbage
+ TODO List: 
+	Expand to simulate an entire month: Select the month and year, still have AHT for calls and batch, starting batch, and expected batch for the month
+	update how batch is loaded based on day of the month
+	include function to calculate workdays so it can start the first workday of the month and proceed through the end of the month
+	update DIST_TABLE or add table for distribution by workday of the month for 17,18,19,20,21,22,or 23 day months and for workday of the week
+	calls completely unanswered will continue to call back the next buisness day keeping the original call settings but each day resetting the maxAttempts until the call is answered
+	batch rolls over each day, and batch also accumulates on non-buisness days
+	include randomized scheduled non-work time for workers, days off, partial days off etc based on real-life data for leave usage
+	Add additional data tracking:
+*/
+
   const DAY_END=32400; // 9 hours after start, start = 8am = 0, end = 5pm = 32400 seconds
   const SIM_END=DAY_END; // 32400
+  const LINE_CLOSE=30600; // phone queue closes at 430pm
   const MAX_ITER=500000;
   const MIN_STEP = 1; 		// Minimum 1 second per step. Maximum of 32400 steps per day
   const QUEUE_SIZE = 110;	// limit before calls hit forced disconnect
@@ -272,8 +286,24 @@ function randRange(a,b){return a+rand()*(b-a);}
 
 function generateMaxWaitTime()
 {
+//modified this, it was generating too low on average, rarely get average wait times above 1hr with too much abandoning
+  // Added a third random number z to have some specific bounded areas
+  // If z < .3 then generate a random maxWaitTime between 3600 and 14400
+  // If z < .5 then generate random maxWait between 300 and 3600
+  // Otherwise use the distribution based on x and y
   let x = rand();
   let y = rand();
+  // NEW MOD
+  let z = rand();
+	if (z < .3)
+	{
+		return Math.floor(randRange(3600,14400));
+	}
+	if (z < .5)
+	{
+		return Math.floor(randRange(300,3600));
+	}
+  // END MOD
   return Math.round(((Math.pow(x,4)*160)+(Math.pow(x,2)*45)+(x*30)+(Math.pow(y,2)*10))*60);
 }
 function genRandPause()
@@ -286,8 +316,19 @@ function getPeriods(weekday)
   return DIST_TABLE.filter(d=>d.weekday===weekday && d.dist>0);
 }
 
-function periodStartSec(p){return (p-1)*1800;}
-function periodEndSec(p){return p*1800;}
+function periodStartSec(p)
+{
+	return (p-1)*1800;
+}
+function periodEndSec(p)
+{
+	return (p*1800)-(p==18?0:1);
+}
+
+function getPeriod(sec)
+{
+	return Math.floor(sec/1800)+1;
+}
 
 function generateCalls(numCalls,weekday,avgHandleTime)
 {
@@ -302,21 +343,22 @@ function generateCalls(numCalls,weekday,avgHandleTime)
     for(let i=0;i<count;i++)
 	{
 		let waitTime = generateMaxWaitTime();
-    		let callStart = Math.floor(randRange(start,end));
-      calls.push({
+    	let callStart = Math.floor(randRange(start,end));
+        calls.push({
         id:callerId++,
-	callId:id++,
+	    callId:id++,
         callTime:callStart,
         maxWaitTime:waitTime,
         handleTime:Math.floor(randRange(0.5,2)*avgHandleTime),
         period:p.period,
         answered:false,
         abandoned:false,
+		disconnect:false,
         answerTime:null,
         waitTime:null,
 	maxFDs:randRange(0,16),
-	maxRecalls:randRange(0,6),
-	callBackIn:Math.floor(waitTime*(1+(1-Math.pow((14400-waitTime)/14400,2)) + (1-Math.pow((32400-callStart)/32400,2)))+30),	
+	maxRecalls:randRange(0,8),
+	callBackIn:Math.floor(waitTime*(1+(1-Math.pow((14400-waitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-callStart)/LINE_CLOSE,2)))+30),	
 	fdCallBackIn:randRange(20,60)
       });
     }
@@ -411,11 +453,11 @@ async function runSimulation()
   await new Promise(r=>setTimeout(r,10));
 
   const weekday=parseInt(document.getElementById('weekday').value);
-  const numCallers=parseInt(document.getElementById('numCalls').value)||1200;
+  const estNumCallers=parseInt(document.getElementById('numCalls').value)||1200;
   const avgCallTime=parseInt(document.getElementById('avgCallTime').value)||1920;
   const numWorkers=parseInt(document.getElementById('numWorkers').value)||100;
   const backlogCases=parseInt(document.getElementById('backlogCases').value)||5000;
-  const newBatchCases=parseInt(document.getElementById('newBatchCases').value)||500;
+  const estBatchCases=parseInt(document.getElementById('newBatchCases').value)||500;
   const avgBatchTime=parseInt(document.getElementById('avgBatchTime').value)||1620;
   const callActivePct=parseInt(document.getElementById('callActivePct').value)/100;
   const firstCaseCall=document.querySelector('input[name="firstCase"]:checked').value==='yes';
@@ -423,7 +465,8 @@ async function runSimulation()
   id=0;
   callerId=0;
   currentTime=0;
-  const numCalls = Math.floor(numCallers * (randRange(90,120)/100));
+  let numCalls = Math.floor(estNumCallers * (randRange(90,110)/100));	// Assume estimate is within +/- 10%
+  const newBatchCases = Math.floor(estBatchCases*(randRange(90,110)/100)); // Assume estimate is within +/- 10%
 
   document.getElementById('status').textContent='Generating call queue...';
   await new Promise(r=>setTimeout(r,10));
@@ -451,13 +494,14 @@ async function runSimulation()
   let maxQueueSize=0;
   let forcedDisconnects=0;
   const logs=[];
+  const uniqueCallers = new Set();
 
   // period stats
   const periods=getPeriods(weekday);
   const periodStats={};
   for(const p of periods)
   {
-    periodStats[p.period]={expected:0,answered:0,abandoned:0,peakQ:0,str:p.str};
+    periodStats[p.period]={expected:0,answered:0,abandoned:0,fd:0,peakQ:0,str:p.str};
   }
   for(const c of allCalls)
   {
@@ -490,30 +534,74 @@ async function runSimulation()
     return Math.min(next,SIM_END);
   }
 
-  iterations=0;
+  iterations=0; // this shouldn't be needed but just in case I break something
 
   while(currentTime < SIM_END && iterations < MAX_ITER)
   {
     iterations++;
 
-    // advance new calls into active queue
-    // TODO: update this if the queue is full the call is FD, enter the new call in allCalls for the recall if there will be one
+    // advance new calls into active queue if there is room
+    // If the queue is full the call is FD, enter the new call in allCalls for the recall if there will be one
     // all new call attributes should be the same aside from start time, callId, and FDattempts which should be decremented, same callerId
+	// the size of the queue is QUEUE_SIZE
     while(callQueueIdx<allCalls.length && allCalls[callQueueIdx].callTime<=currentTime)
    {
-      activeCallQueue.push(allCalls[callQueueIdx]);
-      callQueueIdx++;
+		if(activeCallQueue.length < QUEUE_SIZE)
+		{
+			activeCallQueue.push(allCalls[callQueueIdx]);
+		}
+		else
+		{	
+			const call = allCalls[callQueueIdx];
+			const newCallTime = currentTime + call.fdCallBackIn;
+			
+			// this is a forced disconnect
+			forcedDisconnects++;
+			if(periodStats[call.period]) periodStats[call.period].fd++;
+			allCalls[callQueueIdx].disconnect = true;
+			
+			if((newCallTime <= LINE_CLOSE) && (call.maxFDs > 0))
+			{
+				const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
+				const newCall = {id:callerId++,
+						callId:call.callId,
+						callTime:newCallTime,
+						maxWaitTime:call.maxWaitTime,
+						handleTime:call.handleTime,
+						period:getPeriod(newCallTime),
+						answered:false,
+						abandoned:false,
+						disconnect:false,
+						answerTime:null,
+						waitTime:null,
+						maxFDs:call.maxFDs-1,
+						maxRecalls:call.maxRecalls,
+						callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
+						fdCallBackIn:randRange(20,60)
+						};
+				if(index === -1)
+				{
+					allCalls.push(newCall);
+				}
+				else
+				{
+					allCalls.splice(index, 0, newCall);
+				}
+				numCalls++;
+			}
+		}
+		callQueueIdx++;
     }
 
-    // advance new batch into available
+    // advance new batch into available batch backlog
     while(batchQueueIdx<batchQueue.length && batchQueue[batchQueueIdx].genTime<=currentTime)
    {
       availBatch.push(batchQueue[batchQueueIdx]);
       batchQueueIdx++;
     }
 
-    // expire calls that have exceeded maxWaitTime
-    // TODO: update to insert new callback for the caller if they are going to try and call back
+    // expire calls that have exceeded maxWaitTime (abandoned calls)
+    //  insert new callback for the caller if they are going to try and call back
 	// all attributes of the call should be the same except for callId (same callerId) and callbacks decremented
     for(let i=activeCallQueue.length-1;i>=0;i--)
 	{
@@ -525,7 +613,39 @@ async function runSimulation()
         if(periodStats[c.period]) periodStats[c.period].abandoned++;
         activeCallQueue.splice(i,1);
         logs.push(`[${fmtClock(currentTime)}] Call #${c.id} abandoned after ${fmt(currentTime-c.callTime)} wait`);
-      }
+	  
+	  // Add new call if this person will call back
+	  const newCallTime = currentTime + c.callBackIn;
+	  if((newCallTime <= LINE_CLOSE) && (c.maxRecalls > 0))
+		{
+			const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
+			const newCall = {id:callerId++,
+					callId:c.callId,
+					callTime:newCallTime,
+					maxWaitTime:c.maxWaitTime,
+					handleTime:c.handleTime, // same call, same handle time
+					period:getPeriod(newCallTime),
+					answered:false,
+					abandoned:false,
+					disconnect:false,
+					answerTime:null,
+					waitTime:null,
+					maxFDs:c.maxFDs,
+					maxRecalls:c.maxRecalls-1,
+					callBackIn:Math.floor(c.maxWaitTime*(1+(1-Math.pow((14400-c.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
+					fdCallBackIn:c.fdCallbackIn
+					};
+			if(index === -1)
+			{
+				allCalls.push(newCall);
+			}
+			else
+			{
+				allCalls.splice(index, 0, newCall);
+			}
+			numCalls++;
+		}
+	  }
     }
 
     // track queue size
@@ -643,24 +763,56 @@ async function runSimulation()
 
       if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= SIM_END))
 	  {
-	// TODO update this to enter a potential callback for the handled call to allCalls, same callerId but new callId at new time
-	// all attributes will be the same except callBacks will be decremented
-        const call=activeCallQueue.shift();
-        const waitTime=currentTime-call.callTime;
-        call.answered=true;
-        call.answerTime=currentTime;
-        call.waitTime=waitTime;
-        totalWaitTime+=waitTime;
-        if(waitTime>maxWaitIncurred) maxWaitIncurred=waitTime;
-        callsAnswered++;
-        if(periodStats[call.period]) periodStats[call.period].answered++;
-        w.hasFirstCall=true;
-        w.timeInCall+=call.handleTime;
-        w.nextAvailableTime=currentTime+call.handleTime;
-        w.callCount++;
-        w.state='call';
-        logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} answered call #${call.id} (wait ${fmt(waitTime)}, handle ${fmt(call.handleTime)})`);
-        tookWork=true;
+			const call=activeCallQueue.shift();
+			const waitTime=currentTime-call.callTime;
+			uniqueCallers.add(call.callId);
+			call.answered=true;
+			call.answerTime=currentTime;
+			call.waitTime=waitTime;
+			totalWaitTime+=waitTime;
+			if(waitTime>maxWaitIncurred) maxWaitIncurred=waitTime;
+			callsAnswered++;
+			if(periodStats[call.period]) periodStats[call.period].answered++;
+			w.hasFirstCall=true;
+			w.timeInCall+=call.handleTime;
+			w.nextAvailableTime=currentTime+call.handleTime;
+			w.callCount++;
+			w.state='call';
+			logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} answered call #${call.id} (wait ${fmt(waitTime)}, handle ${fmt(call.handleTime)})`);
+			tookWork=true;
+			// If they will call back again today, set up the additional call in allCalls same callerId but new callId at new time
+			// most caller attributes will be the same except callBacks will be decremented by 2, and new call will have new handleTime
+			const newCallTime = currentTime + call.fdCallBackIn;
+			const newCallHandleTime = Math.floor(randRange(0.5,2)*avgCallTime);
+			if((newCallTime <= LINE_CLOSE) && (call.maxRecalls > 2) && (rand() < 0.05)) // Only a small number of callers should call back once their call is handled
+			{
+				const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
+				const newCall = {id:callerId++,
+						callId:call.callId,
+						callTime:newCallTime,
+						maxWaitTime:call.maxWaitTime,
+						handleTime:newCallHandleTime,
+						period:getPeriod(newCallTime),
+						answered:false,
+						abandoned:false,
+						disconnect:false,
+						answerTime:null,
+						waitTime:null,
+						maxFDs:call.maxFDs,
+						maxRecalls:Math.max(0,call.maxRecalls-2),
+						callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
+						fdCallBackIn:call.fdCallBackIn
+						};
+				if(index === -1)
+				{
+					allCalls.push(newCall);
+				}
+				else
+				{
+					allCalls.splice(index, 0, newCall);
+				}
+				numCalls++;
+			}
       } 
 	  else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= SIM_END) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
 	  {
@@ -705,7 +857,8 @@ async function runSimulation()
   }
 
   // after 5pm, disconnect remaining calls
-  for(const c of activeCallQueue){
+  for(const c of activeCallQueue)
+  {
     c.abandoned=true;
     callsAbandoned++;
     if(periodStats[c.period]) periodStats[c.period].abandoned++;
@@ -720,21 +873,25 @@ async function runSimulation()
   const avgBatchTimeWorker=workers.reduce((s,w)=>s+w.timeInBatch,0)/numWorkers;
   const avgIdleTimeWorker=workers.reduce((s,w)=>s+w.timeInIdle,0)/numWorkers;
   const avgSpeed=callsAnswered>0?Math.round(totalWaitTime/callsAnswered):0;
-  const answerRate=numCalls>0?Math.round(100*callsAnswered/numCalls):0;
+  const uniqueAnswered = uniqueCallers.size;
+  const callsToQueue = callsAnswered+callsAbandoned;
+  const answerRate=id>0?Math.round(100*uniqueAnswered/id):0;
+  const abandonRate=(callsAnswered+callsAbandoned)>0?Math.round(100*callsAbandoned/(callsAnswered+callsAbandoned)):0;
 
   const metrics=[
     {label:'Calls Answered',val:callsAnswered.toLocaleString(),cls:answerRate>=80?'good':answerRate>=60?'warn':'bad'},
-    {label:'Calls Abandoned',val:callsAbandoned.toLocaleString(),cls:callsAbandoned<numCalls*0.05?'good':callsAbandoned<numCalls*0.2?'warn':'bad'},
-    {label:'Answer Rate',val:answerRate+'%',cls:answerRate>=80?'good':answerRate>=60?'warn':'bad'},
-    {label:'Avg Speed to Answer',val:fmt(avgSpeed),cls:avgSpeed<120?'good':avgSpeed<300?'warn':'bad'},
+    {label:'Calls Abandoned',val:callsAbandoned.toLocaleString(),cls:callsAbandoned<=callsToQueue*0.05?'good':callsAbandoned<=callsToQueue*0.2?'warn':'bad'},
+    {label:'Abandon Rate',val:abandonRate+'%',cls:abandonRate<=10?'good':abandonRate>10?'warn':'bad'},
+	{label:'Clients Served Rate',val:answerRate+'%',cls:answerRate>=90?'good':answerRate>=75?'warn':'bad'},
+    {label:'Avg Speed to Answer',val:fmt(avgSpeed),cls:avgSpeed<=450?'good':avgSpeed<=900?'warn':'bad'},
     {label:'Max Wait Incurred',val:fmt(maxWaitIncurred),cls:''},
     {label:'Peak Queue Size',val:maxQueueSize.toLocaleString(),cls:''},
     {label:'Forced Disconnects',val:forcedDisconnects.toLocaleString(),cls:''},
-    {label:'Unique Callers',val:(id-1).toLocaleString(),cls:''},
+	{label:'Total Calls',val:numCalls.toLocaleString(),cls:''},
+    {label:'Unique Callers',val:id.toLocaleString(),cls:''},
     {label:'Batch Cases Worked',val:batchWorked.toLocaleString(),cls:''},
-    {label:'Batch Backlog Change',val:(newBatchCases-batchWorked).toLocaleString(),cls:''},
-    {label:'New Batch Backlog',val:(backlogCases+newBatchCases-batchWorked).toLocaleString(),cls:''},
-    {label:'Simulation Steps',val:iterations.toLocaleString(),cls:''},
+    {label:'Batch Backlog Change',val:(newBatchCases-batchWorked).toLocaleString(),cls:''}
+    //,{label:'New Batch Backlog',val:(backlogCases+newBatchCases-batchWorked).toLocaleString(),cls:''}
   ];
 
   const mg=document.getElementById('metricsGrid');
@@ -765,6 +922,7 @@ async function runSimulation()
       <td>${p.expected}</td>
       <td>${p.answered}</td>
       <td>${p.abandoned}</td>
+	  <td>${p.fd}</td>
       <td>${p.peakQ}</td>
     </tr>`).join('');
 
