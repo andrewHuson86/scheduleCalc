@@ -72,11 +72,11 @@
       </div>
       <div>
         <label>Expected Callers (total for day)</label>
-        <input type="number" id="numCalls" value="1200" min="1">
+        <input type="number" id="numCalls" value="980" min="1">
       </div>
       <div>
         <label>Avg Call Handle Time (seconds)</label>
-        <input type="number" id="avgCallTime" value="1920" min="1">
+        <input type="number" id="avgCallTime" value="2273" min="1">
       </div>
     </div>
   </div>
@@ -86,15 +86,15 @@
     <div class="grid g3">
       <div>
         <label>Current Backlogged Cases</label>
-        <input type="number" id="backlogCases" value="5000" min="0">
+        <input type="number" id="backlogCases" value="2000" min="0">
       </div>
       <div>
         <label>New Batch Cases Expected Today</label>
-        <input type="number" id="newBatchCases" value="500" min="0">
+        <input type="number" id="newBatchCases" value="620" min="0">
       </div>
       <div>
         <label>Avg Batch Handle Time (seconds)</label>
-        <input type="number" id="avgBatchTime" value="1620" min="1">
+        <input type="number" id="avgBatchTime" value="1627" min="1">
       </div>
     </div>
   </div>
@@ -104,20 +104,20 @@
     <div class="grid g3">
       <div>
         <label>Number of Workers</label>
-        <input type="number" id="numWorkers" value="130" min="1">
+        <input type="number" id="numWorkers" value="118" min="1">
       </div>
       <div>
         <label>Call Active % (0–100)</label>
         <div class="row" style="margin-top:4px">
-          <input type="range" id="callActivePct" min="0" max="100" value="90" step="1">
-          <span class="val" id="callActivePctVal">70%</span>
+          <input type="range" id="callActivePct" min="0" max="100" value="100" step="1">
+          <span class="val" id="callActivePctVal">100%</span>
         </div>
       </div>
       <div>
         <label>First Case Call</label>
         <div class="radio-group" style="margin-top:8px">
-          <label><input type="radio" name="firstCase" value="yes" checked> Yes</label>
-          <label><input type="radio" name="firstCase" value="no"> No</label>
+          <label><input type="radio" name="firstCase" value="yes"> Yes</label>
+          <label><input type="radio" name="firstCase" value="no" checked> No</label>
         </div>
       </div>
     </div>
@@ -286,25 +286,25 @@ function randRange(a,b){return a+rand()*(b-a);}
 
 function generateMaxWaitTime()
 {
-//modified this, it was generating too low on average, rarely get average wait times above 1hr with too much abandoning
-  // Added a third random number z to have some specific bounded areas
-  // If z < .3 then generate a random maxWaitTime between 3600 and 14400
-  // If z < .5 then generate random maxWait between 300 and 3600
-  // Otherwise use the distribution based on x and y
+  /* 	modified this, it was generating too low on average, rarely get average wait times above 1hr with too much abandoning
+		even though it is based on the normal distribution we see
+		Added chance to put in specific wait group range
+  */
   let x = rand();
   let y = rand();
-  // NEW MOD
   let z = rand();
-	if (z < .3)
+  // NEW MOD
+  let r = rand();
+	if (r < .25)
 	{
 		return Math.floor(randRange(3600,14400));
 	}
-	if (z < .5)
+	if (r < .5)
 	{
-		return Math.floor(randRange(300,3600));
+		return Math.floor(randRange(1800,10800));
 	}
   // END MOD
-  return Math.round(((Math.pow(x,4)*160)+(Math.pow(x,2)*45)+(x*30)+(Math.pow(y,2)*10))*60);
+  return Math.round(((Math.pow(z,4)*160)+(Math.pow(x,2)*45)+(x*30)+(Math.pow(y,2)*10))*60);
 }
 function genRandPause()
 {
@@ -465,8 +465,13 @@ async function runSimulation()
   id=0;
   callerId=0;
   currentTime=0;
+ // Changing this, the estimated number will be used as the actual number.
+ /*
   let numCalls = Math.floor(estNumCallers * (randRange(90,110)/100));	// Assume estimate is within +/- 10%
   const newBatchCases = Math.floor(estBatchCases*(randRange(90,110)/100)); // Assume estimate is within +/- 10%
+ */ 
+  let numCalls = estNumCallers;
+  const newBatchCases = estBatchCases;
 
   document.getElementById('status').textContent='Generating call queue...';
   await new Promise(r=>setTimeout(r,10));
@@ -884,13 +889,13 @@ async function runSimulation()
     {label:'Abandon Rate',val:abandonRate+'%',cls:abandonRate<=10?'good':abandonRate>10?'warn':'bad'},
 	{label:'Clients Served Rate',val:answerRate+'%',cls:answerRate>=90?'good':answerRate>=75?'warn':'bad'},
     {label:'Avg Speed to Answer',val:fmt(avgSpeed),cls:avgSpeed<=450?'good':avgSpeed<=900?'warn':'bad'},
-    {label:'Max Wait Incurred',val:fmt(maxWaitIncurred),cls:''},
-    {label:'Peak Queue Size',val:maxQueueSize.toLocaleString(),cls:''},
-    {label:'Forced Disconnects',val:forcedDisconnects.toLocaleString(),cls:''},
+    {label:'Max Wait Incurred',val:fmt(maxWaitIncurred),cls:maxWaitIncurred>=3600?'bad':maxWaitIncurred>=1800?'warn':'good'},
+    {label:'Peak Queue Size',val:maxQueueSize.toLocaleString(),cls:maxQueueSize>100?'bad':maxQueueSize>90?'warn':'good'},
+    {label:'Forced Disconnects',val:forcedDisconnects.toLocaleString(),cls:forcedDisconnects>0?'bad':'good'},
 	{label:'Total Calls',val:numCalls.toLocaleString(),cls:''},
     {label:'Unique Callers',val:id.toLocaleString(),cls:''},
     {label:'Batch Cases Worked',val:batchWorked.toLocaleString(),cls:''},
-    {label:'Batch Backlog Change',val:(newBatchCases-batchWorked).toLocaleString(),cls:''}
+    {label:'Batch Backlog Change',val:(newBatchCases-batchWorked).toLocaleString(),cls:batchWorked < newBatchCases?'bad':batchWorked===0?'':'good'}
     //,{label:'New Batch Backlog',val:(backlogCases+newBatchCases-batchWorked).toLocaleString(),cls:''}
   ];
 
