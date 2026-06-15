@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Center Simulation & Export Tool</title>
+    
+    <!-- 
+       Including SheetJS (xlsx) library for robust Excel export. 
+       This is the industry standard for client-side Excel generation.
+    -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        .controls { margin-bottom: 20px; }
+        button { padding: 10px 20px; margin-right: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-csv { background-color: #28a745; color: white; }
+        .btn-excel { background-color: #217346; color: white; } /* Excel Green */
+        .btn-sim { background-color: #007bff; color: white; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Call Center Workforce Simulation</h1>
+    
+    <div class="controls">
+        <button class="btn-sim" onclick="runSimulation()">Generate New Data</button>
+        <button class="btn-csv" onclick="exportToCSV()">Export to CSV</button>
+        <button class="btn-excel" onclick="exportToExcel()">Export to Excel (.xlsx)</button>
+    </div>
+
+    <div id="status">Click "Generate New Data" to start.</div>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Time Slot</th>
+                <th>Incoming Calls</th>
+                <th>Agents Staffed</th>
+                <th>Avg Handle Time (min)</th>
+                <th>Service Level %</th>
+                <th>Abandoned Calls</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data rows will appear here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Global variable to hold simulation data
+    let simulationData = [];
+
+    /**
+     * SIMULATION LOGIC
+     * Generates dummy call center metrics for a 24-hour period.
+     */
+    function runSimulation() {
+        simulationData = [];
+        const tbody = document.querySelector("#dataTable tbody");
+        tbody.innerHTML = ""; // Clear table
+
+        for (let hour = 8; hour < 18; hour++) {
+            // Determine time label (e.g., 08:00 - 09:00)
+            const timeLabel = `${hour.toString().padStart(2, '0')}:00 - ${(hour+1).toString().padStart(2, '0')}:00`;
+            let baseCalls = Math.floor(Math.random() * 50) + 100;
+            // Simulate other metrics based on volume
+            let aht = (Math.random() * 6 + 26).toFixed(2);
+			let agents = Math.max(Math.random()*baseCalls/(60/aht), Math.ceil(baseCalls / 2.5));
+			let abandoned = Math.max(0, Math.floor(baseCalls * (Math.random() * 0.15))); // 0-15% abandonment
+			let answered = Math.min(Math.floor((agents*(60/aht))),baseCalls-abandoned-Math.floor((Math.pow(Math.random()*0.8,2)*baseCalls)));
+            let serviceLevel = Math.floor((answered/baseCalls).toFixed(2)*100);
+
+            const row = {
+                "Time Slot": timeLabel,
+                "Incoming Calls": baseCalls,
+                "Agents Staffed": agents,
+                "Avg Handle Time (min)": parseFloat(aht),
+                "Service Level %": serviceLevel,
+                "Abandoned Calls": abandoned
+            };
+
+            simulationData.push(row);
+        }
+
+        renderTable(simulationData);
+        document.getElementById("status").innerText = "Simulation generated successfully!";
+    }
+
+    /*
+     * Renders the array of objects to the HTML table
+     */
+    function renderTable(data) 
+	{
+        const tbody = document.querySelector("#dataTable tbody");
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row["Time Slot"]}</td>
+                <td>${row["Incoming Calls"]}</td>
+                <td>${row["Agents Staffed"]}</td>
+                <td>${row["Avg Handle Time (min)"]}</td>
+                <td>${row["Service Level %"]}%</td>
+                <td>${row["Abandoned Calls"]}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    /*
+     * Native JavaScript implementation (no external libraries required).
+     */
+    function exportToCSV() 
+	{
+        if (simulationData.length === 0) {
+            alert("Please generate data first.");
+            return;
+        }
+
+        // 1. Extract headers
+        const headers = Object.keys(simulationData[0]);
+        // 2. Map data to CSV string format
+        // We handle potential commas inside data by wrapping values in quotes
+        const csvRows = [];
+        // Add header row
+        csvRows.push(headers.join(','));
+        // Add data rows
+        for (const row of simulationData) 
+		{
+            const values = headers.map(header => {
+                const escaped = ('' + row[header]).replace(/"/g, '\\"');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+        // 3. Create Blob and Download Link
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'call_center_projection.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    /*
+     * Uses the SheetJS library (loaded in head) to create a true .xlsx file.
+     */
+    function exportToExcel() 
+	{
+        if (simulationData.length === 0) {
+            alert("Please generate data first.");
+            return;
+        }
+        // 1. Create a new Workbook
+        const wb = XLSX.utils.book_new();
+        // 2. Convert our JSON data to a Worksheet
+        const ws = XLSX.utils.json_to_sheet(simulationData);
+        // 3. Append Worksheet to Workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Projections");
+        // 4. Trigger Download
+        XLSX.writeFile(wb, "call_center_projection.xlsx");
+    }
+
+    // Run simulation on load so the table isn't empty
+    runSimulation();
+
+</script>
+
+</body>
+</html>
