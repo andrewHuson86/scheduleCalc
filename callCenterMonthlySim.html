@@ -59,8 +59,28 @@
 
   <div class="card">
     <h2>Projection Information</h2>
-	<p>Data starting: <span id="headerDate">6/1/2026</span></p>
+
     <div class="grid g3">
+    <div><label>Months Starting:</label>
+        <select id="startMonth">
+             <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+	        <option value="6">June</option>
+	        <option value="7">July</option>
+	        <option value="8">August</option>
+	        <option value="9">September</option>
+	        <option value="10">October</option>
+	        <option value="11">November</option>
+	        <option value="12">December</option>
+        </select>
+    </div>
+
+    <div><label>Year Starting:</label>
+        <select id="startYear"></select></div>
+    <div><p>Data starting: <span id="headerDate">6/1/2026</span></p></div>
       <div>
         <label>Months to Project</label>
         <select id="simMonths">
@@ -141,11 +161,30 @@
       </div>
       <div>
         <label for = "caseloadSlider">Projected Annual Caseload Growth: </label>
-	<div class="row" style="margin-top:4px">
-        <input type="range" id="caseloadSlider" min="-10" max="10" step="1" value="0">
-	<span class="val" id="percentDisplay">0%</span>
-	</div>
+	       <div class="row" style="margin-top:4px">
+            <input type="range" id="caseloadSlider" min="-10" max="10" step="1" value="0">
+	        <span class="val" id="percentDisplay">0%</span>
+	        </div>
       </div>
+
+      <div></div>
+
+       <div>
+        <label for = "reappSlider">Reapplication Rate: </label>
+	       <div class="row" style="margin-top:4px">
+            <input type="range" id="reappSlider" min="0" max="100" step="1" value="55">
+	        <span class="val" id="reappPercentDisplay">55%</span>
+	        </div>
+      </div>
+
+       <div>
+        <label for = "approvalSlider">Approval Rate: </label>
+	       <div class="row" style="margin-top:4px">
+            <input type="range" id="approvalSlider" min="0" max="100" step="1" value="75">
+	        <span class="val" id="approvalPercentDisplay">75%</span>
+	        </div>
+      </div>
+
      </div>
   </div>
 
@@ -182,13 +221,13 @@
 </div>
 
 <script>
+// Just an FYI this was made by Andrew so you know it is hot garbage
 /*
-Just an FYI this was made by Andrew so you know it is hot garbage
  TODO List: 
 	Expand to simulate an entire month: Select the month and year, still have AHT for calls and batch, starting batch, and expected batch for the month
 	update how batch is loaded based on day of the month
 	include function to calculate workdays so it can start the first workday of the month and proceed through the end of the month
-	update DIST_TABLE or add table for distribution by workday of the month for 17,18,19,20,21,22,or 23 day months and for workday of the week
+     add tables for distribution by workday of the month for 17,18,19,20,21,22,or 23 day months and for workday of the week
 	calls completely unanswered will continue to call back the next buisness day keeping the original call settings but each day resetting the maxAttempts until the call is answered
 	batch rolls over each day, and batch also accumulates on non-buisness days
 	include randomized scheduled non-work time for workers, days off, partial days off etc based on real-life data for leave usage
@@ -199,25 +238,58 @@ Just an FYI this was made by Andrew so you know it is hot garbage
   const SIM_END=DAY_END; // 32400
 
   const LINE_CLOSE=30600; // phone queue closes at 430pm
-  const MAX_ITER=500000;
+  const MAX_ITER=500000; // max iterations for a single day
   const MIN_STEP = 1; 		// Minimum 1 second per step. Maximum of 32400 steps per day
   const QUEUE_SIZE = 110;	// limit before calls hit forced disconnect
+
   const slider = document.getElementById('caseloadSlider');
+  const reappSlider = document.getElementById('reappSlider');
+  const approvalSlider = document.getElementById('approvalSlider');
+  
   const monSelector = document.getElementById('simMonths');
   const callActPerc = document.getElementById('callActivePct');
   const percentDisplay = document.getElementById('percentDisplay');
+  const reappPercentDisplay = document.getElementById('reappPercentDisplay');
+  const approvalPercentDisplay = document.getElementById('approvalPercentDisplay');
+  const startMonthSelect = document.getElementById('startMonth');
+  const startYearSelect = document.getElementById('startYear');
+
   const today = new Date();
   const firstOfMonth = new Date(today.getFullYear(), today.getMonth(),1);
   const displayDate = `${firstOfMonth.getDate() + 1}/${firstOfMonth.getDate()}/${firstOfMonth.getFullYear()}}`;
+
+  let startMonth = new Date().getMonth() + 1;
+  let startYear = new Date().getFullYear();
+
+  startMonthSelect.value = startMonth; // default selection is current month
+
+  // initialize start year options and selection
+  for (let yr = startYear - 1; yr <= startYear + 1; yr++) 
+  {
+    const option = document.createElement('option');
+        option.value = yr;
+           option.textContent = yr;
+           startYearSelect.appendChild(option);
+  }
+  startYearSelect.value = startYear;
+
   let simMonths = parseInt(document.getElementById('simMonths').value)-1||0;
+  // updateThis simDate must be based on selected month and year
   let simDate = new Date(today.getFullYear(), today.getMonth(),1);
   let simEndDate = getLastDate(addMonths(simDate, simMonths));
-  let caseloadMultipler = 1;
+ 
+
+  let caseloadMultipler = 1.0;
+  let reappMult = 1.0;
+  let approvalMult = 1.0;
+
   let currentTime = 0;
   let callerId = 0;
   let id=0;
   let iterations=0;
+  let totalIterations = 0;
   let batchId=0;
+  let carryCalls = 0; // this is used to add calls to the next workdays call queue for unanswered calls and 25% of holiday calls
 
   let workDayis = true;
   let overTimeDayis = true;
@@ -226,7 +298,81 @@ Just an FYI this was made by Andrew so you know it is hot garbage
   let curr_day_end = DAY_END; // can be DAY_END + 3600 for OT end
 
 
-const DIST_TABLE = Object.freeze([
+  const PERC_MONTH_DIST_TABLE = Object.freeze([
+{percOfMonth:0.0,batchDistMult:1.09299,callDistMult:1.23562},
+{percOfMonth:0.1,batchDistMult:1.06011,callDistMult:1.23206},
+{percOfMonth:0.2,batchDistMult:1.02535,callDistMult:0.98222},
+{percOfMonth:0.3,batchDistMult:1.01479,callDistMult:1.02224},
+{percOfMonth:0.4,batchDistMult:0.98486,callDistMult:0.90843},
+{percOfMonth:0.5,batchDistMult:0.96189,callDistMult:0.87529},
+{percOfMonth:0.6,batchDistMult:0.98073,callDistMult:0.85961},
+{percOfMonth:0.7,batchDistMult:0.99414,callDistMult:0.79078},
+{percOfMonth:0.8,batchDistMult:0.95183,callDistMult:1.02295},
+{percOfMonth:0.9,batchDistMult:1.01464,callDistMult:1.07401},
+{percOfMonth:1.0,batchDistMult:1.02389,callDistMult:1.07753}
+  ]);
+
+  const WEEKDAY_DIST_TABLE = Object.freeze([
+{Weekday:1,callMult:1.14819,batchMult:1.00658},
+{Weekday:2,callMult:1.04435,batchMult:1.12201},
+{Weekday:3,callMult:0.97072,batchMult:0.99888},
+{Weekday:4,callMult:0.92083,batchMult:0.94394},
+{Weekday:5,callMult:0.91592,batchMult:0.92859}
+ ]);
+
+ // Used to store data that varies by month, example use:
+ // MONTHLY_DIST_TABLE.filter(e=>e.Month === 12)[0].ExistingAppDistMult
+
+ const MONTHLY_DIST_TABLE = Object.freeze([
+ {Month:1,ExistingAppDistMult:0.13501,ExistingPendDistMult:0.16813,ExistingSSPSDistMult:0.03771,ExistingOtherDistMult:0.65915,UniqueCallersPerDayPerCase:0.02138,wrkdayBatchCaseMult:0.01045,wkendBatchCaseMult:0.00243,specialSSPSCaseMult:0.03120,annualAppDist:0.08637},
+{Month:2,ExistingAppDistMult:0.12235,ExistingPendDistMult:0.16383,ExistingSSPSDistMult:0.03457,ExistingOtherDistMult:0.67924,UniqueCallersPerDayPerCase:0.01934,wrkdayBatchCaseMult:0.01016,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03123,annualAppDist:0.07537},
+{Month:3,ExistingAppDistMult:0.12238,ExistingPendDistMult:0.16671,ExistingSSPSDistMult:0.03497,ExistingOtherDistMult:0.67594,UniqueCallersPerDayPerCase:0.02060,wrkdayBatchCaseMult:0.01019,wkendBatchCaseMult:0.00248,specialSSPSCaseMult:0.03374,annualAppDist:0.07807},
+{Month:4,ExistingAppDistMult:0.10787,ExistingPendDistMult:0.15189,ExistingSSPSDistMult:0.02854,ExistingOtherDistMult:0.71170,UniqueCallersPerDayPerCase:0.01718,wrkdayBatchCaseMult:0.01167,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03491,annualAppDist:0.07490},
+{Month:5,ExistingAppDistMult:0.10287,ExistingPendDistMult:0.14525,ExistingSSPSDistMult:0.02188,ExistingOtherDistMult:0.72999,UniqueCallersPerDayPerCase:0.02134,wrkdayBatchCaseMult:0.01411,wkendBatchCaseMult:0.00313,specialSSPSCaseMult:0.03546,annualAppDist:0.05721},
+{Month:6,ExistingAppDistMult:0.12076,ExistingPendDistMult:0.17132,ExistingSSPSDistMult:0.01816,ExistingOtherDistMult:0.68976,UniqueCallersPerDayPerCase:0.02935,wrkdayBatchCaseMult:0.01314,wkendBatchCaseMult:0.00321,specialSSPSCaseMult:0.09807,annualAppDist:0.06799},
+{Month:7,ExistingAppDistMult:0.12785,ExistingPendDistMult:0.14110,ExistingSSPSDistMult:0.02512,ExistingOtherDistMult:0.70594,UniqueCallersPerDayPerCase:0.02555,wrkdayBatchCaseMult:0.01290,wkendBatchCaseMult:0.00276,specialSSPSCaseMult:0.04457,annualAppDist:0.09790},
+{Month:8,ExistingAppDistMult:0.12096,ExistingPendDistMult:0.11412,ExistingSSPSDistMult:0.01883,ExistingOtherDistMult:0.74609,UniqueCallersPerDayPerCase:0.02985,wrkdayBatchCaseMult:0.01672,wkendBatchCaseMult:0.00295,specialSSPSCaseMult:0.21991,annualAppDist:0.11269},
+{Month:9,ExistingAppDistMult:0.15007,ExistingPendDistMult:0.16451,ExistingSSPSDistMult:0.03769,ExistingOtherDistMult:0.64774,UniqueCallersPerDayPerCase:0.03381,wrkdayBatchCaseMult:0.01315,wkendBatchCaseMult:0.00288,specialSSPSCaseMult:0.03532,annualAppDist:0.11705},
+{Month:10,ExistingAppDistMult:0.11214,ExistingPendDistMult:0.15029,ExistingSSPSDistMult:0.04554,ExistingOtherDistMult:0.69203,UniqueCallersPerDayPerCase:0.02358,wrkdayBatchCaseMult:0.01230,wkendBatchCaseMult:0.00255,specialSSPSCaseMult:0.03938,annualAppDist:0.08115},
+{Month:11,ExistingAppDistMult:0.11883,ExistingPendDistMult:0.16557,ExistingSSPSDistMult:0.03119,ExistingOtherDistMult:0.68441,UniqueCallersPerDayPerCase:0.01991,wrkdayBatchCaseMult:0.01107,wkendBatchCaseMult:0.00225,specialSSPSCaseMult:0.03495,annualAppDist:0.08210},
+{Month:12,ExistingAppDistMult:0.11329,ExistingPendDistMult:0.17860,ExistingSSPSDistMult:0.03191,ExistingOtherDistMult:0.67621,UniqueCallersPerDayPerCase:0.01763,wrkdayBatchCaseMult:0.00939,wkendBatchCaseMult:0.00212,specialSSPSCaseMult:0.03029,annualAppDist:0.06919}
+ ]);
+
+  const DAY_DIST_TABLE = Object.freeze([
+{Day:1,SSPSvBatch:0.68537,AppsOfBatch:0.48323},
+{Day:2,SSPSvBatch:0.81109,AppsOfBatch:0.48902},
+{Day:3,SSPSvBatch:0.72185,AppsOfBatch:0.45644},
+{Day:4,SSPSvBatch:0.78070,AppsOfBatch:0.43404},
+{Day:5,SSPSvBatch:0.66689,AppsOfBatch:0.45416},
+{Day:6,SSPSvBatch:0.48055,AppsOfBatch:0.41203},
+{Day:7,SSPSvBatch:0.46412,AppsOfBatch:0.39744},
+{Day:8,SSPSvBatch:0.56490,AppsOfBatch:0.41163},
+{Day:9,SSPSvBatch:0.46717,AppsOfBatch:0.43952},
+{Day:10,SSPSvBatch:0.45840,AppsOfBatch:0.41943},
+{Day:11,SSPSvBatch:0.52941,AppsOfBatch:0.41849},
+{Day:12,SSPSvBatch:0.48449,AppsOfBatch:0.41325},
+{Day:13,SSPSvBatch:0.46345,AppsOfBatch:0.40624},
+{Day:14,SSPSvBatch:0.49891,AppsOfBatch:0.41860},
+{Day:15,SSPSvBatch:0.47319,AppsOfBatch:0.43678},
+{Day:16,SSPSvBatch:0.47217,AppsOfBatch:0.44909},
+{Day:17,SSPSvBatch:0.62084,AppsOfBatch:0.41998},
+{Day:18,SSPSvBatch:0.58800,AppsOfBatch:0.45233},
+{Day:19,SSPSvBatch:0.48350,AppsOfBatch:0.43607},
+{Day:20,SSPSvBatch:0.42053,AppsOfBatch:0.43576},
+{Day:21,SSPSvBatch:0.42391,AppsOfBatch:0.40653},
+{Day:22,SSPSvBatch:0.42370,AppsOfBatch:0.42411},
+{Day:23,SSPSvBatch:0.47747,AppsOfBatch:0.44040},
+{Day:24,SSPSvBatch:0.51799,AppsOfBatch:0.38946},
+{Day:25,SSPSvBatch:0.58548,AppsOfBatch:0.44208},
+{Day:26,SSPSvBatch:0.51194,AppsOfBatch:0.46296},
+{Day:27,SSPSvBatch:0.52423,AppsOfBatch:0.45658},
+{Day:28,SSPSvBatch:0.57882,AppsOfBatch:0.45952},
+{Day:29,SSPSvBatch:0.51916,AppsOfBatch:0.46196},
+{Day:30,SSPSvBatch:0.80019,AppsOfBatch:0.49954},
+{Day:31,SSPSvBatch:0.88370,AppsOfBatch:0.50214},
+  ]);
+
+const PER_DIST_TABLE = Object.freeze([
   {weekday:1,period:1,str:"8:00am-8:30am",dist:0.0953},
   {weekday:1,period:2,str:"8:30am-9:00am",dist:0.0653},
   {weekday:1,period:3,str:"9:00am-9:30am",dist:0.0708},
@@ -328,12 +474,47 @@ function updateSlider()
 	const percent = parseInt(slider.value,10);
 	const parameter = 1 + (percent / 100);
 	percentDisplay.textContent = `${percent}%`;
-	//parameterDisplay.textContent = parameter.toFixed(2);
 	caseLoadMultiplier = parameter;
+}
+function updateReappSlider()
+{
+	const percent = parseInt(reappSlider.value,10);
+	const parameter = 1 + (percent / 100);
+	reappPercentDisplay.textContent = `${percent}%`;
+	reappMult = parameter;
+}
+function updateApprovalSlider()
+{
+	const percent = parseInt(approvalSlider.value,10);
+	const parameter = 1 + (percent / 100);
+	approvalPercentDisplay.textContent = `${percent}%`;
+	approvalMult = parameter;
+}
+
+
+function updateSliders()
+{
+    updateSlider();
+    updateReappSlider();
+    updateApprovalSlider();
+}
+
+function updateStartDate()
+{
+    simDate = new Date(startYear, startMonth-1,1);
+    simEndDate = getLastDate(addMonths(simDate, simMonths));
+    document.getElementById('headerDate').textContent = `${simDate.getMonth() + 1}/${simDate.getDate()}/${simDate.getFullYear()}`;
 }
 
 slider.addEventListener('input', updateSlider);
-updateSlider();
+reappSlider.addEventListener('input', updateReappSlider);
+approvalSlider.addEventListener('input', updateApprovalSlider);
+
+updateSliders();
+
+startMonthSelect.addEventListener('change', function () { startMonth = Number(this.value); updateStartDate();});
+startYearSelect.addEventListener('change', function () {startYear = Number(this.value); updateStartDate();});
+
 monSelector.addEventListener('change',function(){simMonths = parseInt(this.value)-1;  simEndDate = getLastDate(addMonths(simDate, simMonths)); });
 callActPerc.addEventListener('input',function(){callActPerc.textContent=this.value+'%';});
 
@@ -360,6 +541,16 @@ function addMonths(date, months)
 function getLastDate(date)
 {
 	return new Date(date.getFullYear(), date.getMonth() +1, 0);
+}
+
+// returns between 0 and 1 in increments of .1 for percentage through the month, used for multiplier tables
+function monthPercentage(date)
+{
+    const d = new Date(date);
+    const day = d.getDate()-1;
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+
+    return Math.round((day / (daysInMonth-1)) * 10) / 10;
 }
 
 function rand()
@@ -435,7 +626,7 @@ function genRandPause()
 
 function getPeriods(weekday)
 {
-  return DIST_TABLE.filter(d=>d.weekday===weekday && d.dist>0);
+  return PER_DIST_TABLE.filter(d=>d.weekday===weekday && d.dist>0);
 }
 
 function periodStartSec(p)
@@ -608,6 +799,11 @@ function getWeekday(date)
 {
 	const day = date.getDay();
 	return day === 0?7:day; //  1 = Monday 7 = Sunday
+}
+
+function isWeekday(date)
+{
+    return getWeekday(date) < 6;
 }
 
 function isWorkday(date)
@@ -807,7 +1003,7 @@ function generateDateList()
 		phonesMult:workdayIs?getPhoneMult(curMon, thisDayOf, getWeekday(iDate), iDate):0.0,
 		isWorkDay:workdayIs,
 		isOTDay:overTimeDayIs,
-		workerMult:isWorkDay?Math.floor(randRange(75,100)):overTimeDayIs?Math.floor(randRange(10,40)):0)/100, /* TODO create a function for this that is better */
+		workerMult:(isWorkDay?Math.floor(randRange(75,100)):overTimeDayIs?Math.floor(randRange(10,40)):0)/100, /* TODO create a function for this that is better */
 		backlogStart:0,
 		backlogEnd:0,
 		casesCompleted:0,
@@ -908,7 +1104,8 @@ async function runSimulation()
 	// Only generate workers if this is a workday or an overtimeDay
 	
   let allCalls=generateCalls(numCalls,weekday,avgCallTime);
-  	// TODO: modify generateBatch, this should only add cases to the current backlog, the existing backlog must be generated prior to simulation
+
+ // TODO: modify generateBatch, this should only add cases to the current backlog, the existing backlog must be generated prior to simulation
   let batchQueue=generateBatch(backlogCases,newBatchCases,avgBatchTime, batchQueue);
 
   let workers=assignWorkerSchedules(numWorkers);
@@ -1288,11 +1485,12 @@ async function runSimulation()
 
     currentTime=nextT;
 
+        // TODO modify this, need to take into account the days of the simultation period and which day we are on, also need to track cumulative steps
     if(iterations%5000===0)
 	{
       const pct=Math.min(95,10+85*(currentTime/SIM_END));
       document.getElementById('progFill').style.width=pct+'%';
-      document.getElementById('status').textContent=`Simulating... ${fmtClock(currentTime)} (${iterations.toLocaleString()} steps)`;
+      document.getElementById('status').textContent=`Simulating... ${fmtClock(currentTime)} (${totalIterations.toLocaleString()} steps)`;
       await new Promise(r=>setTimeout(r,0));
     }
   }
@@ -1304,6 +1502,12 @@ async function runSimulation()
     callsAbandoned++;
     if(periodStats[c.period]) periodStats[c.period].abandoned++;
   }
+
+  totalIterations += interations;
+
+  // move on to the next day if the next day is less than the simulation end
+
+
 
   document.getElementById('progFill').style.width='100%';
   document.getElementById('status').textContent=`Simulation complete. ${iterations.toLocaleString()} steps processed.`;
