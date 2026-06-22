@@ -64,18 +64,18 @@
       <div>
         <label>Months to Project</label>
         <select id="simMonths">
-          <option value="1" selected>1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-	<option value="6">6</option>
-	<option value="7">7</option>
-	<option value="8">8</option>
-	<option value="9">9</option>
-	<option value="10">10</option>
-	<option value="11">11</option>
-	<option value="12">12</option>
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+	        <option value="6">6</option>
+	        <option value="7">7</option>
+	        <option value="8">8</option>
+	        <option value="9">9</option>
+	        <option value="10">10</option>
+	        <option value="11">11</option>
+	        <option value="12">12</option>
         </select>
       </div>
 
@@ -217,6 +217,7 @@ Just an FYI this was made by Andrew so you know it is hot garbage
   let callerId = 0;
   let id=0;
   let iterations=0;
+  let batchId=0;
 
   let workDayis = true;
   let overTimeDayis = true;
@@ -426,6 +427,7 @@ function generateMaxWaitTime()
   // END MOD
   return Math.round(((Math.pow(z,4)*160)+(Math.pow(x,2)*45)+(x*30)+(Math.pow(y,2)*10))*60);
 }
+
 function genRandPause()
 {
 	return randRange(1,121)-1;
@@ -528,13 +530,13 @@ function generateCalls(numCalls,weekday,avgHandleTime)
   return calls;
 }
 
-function generateBatch(backlog,newCases,avgBatchTime)
+function generateBatch(backlog = 0,newCases,avgBatchTime, batchQueue=[])
 {
-  const cases=[];
-  let id=0;
+  const cases=batchQueue;
+ 
   for(let i=0;i<backlog;i++)
   {
-    cases.push({id:id++,genTime:0,handleTime:generateBatchHandleTime(avgBatchTime),worked:false});
+    cases.push({id:batchId++,genTime:0,handleTime:generateBatchHandleTime(avgBatchTime),worked:false});
   }
   const perPeriod=Math.ceil(newCases/18);
   for(let p=1;p<=18;p++)
@@ -544,7 +546,7 @@ function generateBatch(backlog,newCases,avgBatchTime)
     const cnt=(p<18)?perPeriod:Math.max(0,newCases-perPeriod*17);
     for(let i=0;i<cnt;i++)
     {
-      cases.push({id:id++,genTime:Math.floor(randRange(start,end)),handleTime:generateBatchHandleTime(avgBatchTime),worked:false});
+      cases.push({id:batchId++,genTime:Math.floor(randRange(start,end)),handleTime:generateBatchHandleTime(avgBatchTime),worked:false});
     }
   }
   cases.sort((a,b)=>a.genTime-b.genTime);
@@ -843,13 +845,31 @@ async function runSimulation()
 // each day the call queue is cleared out (all calls remaining are abandoned) but those calls should generate an additional call the following workday based on
 // callback attempts remaining for that caller
 
-  const weekday = getWeekday(simDate); // parseInt(document.getElementById('weekday').value);
-  const estNumCallers = parseInt(document.getElementById('numCalls').value)||1200;
-  const avgCallTime = parseInt(document.getElementById('avgCallTime').value)||1920;
+// this all need to be within a loop that runs the entire simulation day by day, rolling data over to the next day
+
+  const weekday = getWeekday(simDate);
+  const estNumCallers = parseInt(document.getElementById('numCalls').value)||1200; // TODO modify this, this is done by date
+
+// TODO: modify this, this will be within range based on average handle time reported and modified throughout the year
+  const avgCallTime = parseInt(document.getElementById('avgCallTime').value)||1920; 
+
+// TODO: modify this, this will be generated each day based on the total number of workers reported and within a specific range
+// depending on whether it is a normal workday, a day before/after holday, day of the week, and/or overtimeday
   const numWorkers = parseInt(document.getElementById('numWorkers').value)||100;
+
+//TODO: modify this. This starts as the value reported, but each day is based on the end of the day backlog of the previous day
   const backlogCases = parseInt(document.getElementById('backlogCases').value)||5000;
+
+// TODO: modify this, this is based on each date, current active cases, day of the month, and month
+// TODO: Batch will have types based on normal distribution of assignment types in batch
+// TODO: Batch Prioritization set up so that prioritization is weighted by type and age of assignment to mimic current missions
+
   const estBatchCases = parseInt(document.getElementById('newBatchCases').value)||500;
+// TODO: handle time for each individual type will be based on the average reported and factored by type
+// AHT will be modified to be within a small range of the reported average each day varying by month
   const avgBatchTime = parseInt(document.getElementById('avgBatchTime').value)||1620;
+
+// These remain constant throughout the simulation, they can't be modified by day.
   const callActivePct = parseInt(document.getElementById('callActivePct').value)/100;
   const firstCaseCall = document.querySelector('input[name="firstCase"]:checked').value==='yes';
   const overtimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value==='yes';
@@ -884,9 +904,14 @@ async function runSimulation()
   document.getElementById('status').textContent='Generating call queue...';
   await new Promise(r=>setTimeout(r,10));
 
-  const allCalls=generateCalls(numCalls,weekday,avgCallTime);
-  const batchQueue=generateBatch(backlogCases,newBatchCases,avgBatchTime);
-  const workers=assignWorkerSchedules(numWorkers);
+	// TODO: update this, only generate calls if this is a workday
+	// Only generate workers if this is a workday or an overtimeDay
+	
+  let allCalls=generateCalls(numCalls,weekday,avgCallTime);
+  	// TODO: modify generateBatch, this should only add cases to the current backlog, the existing backlog must be generated prior to simulation
+  let batchQueue=generateBatch(backlogCases,newBatchCases,avgBatchTime, batchQueue);
+
+  let workers=assignWorkerSchedules(numWorkers);
 
   document.getElementById('progFill').style.width='10%';
   document.getElementById('status').textContent='Running simulation...';
