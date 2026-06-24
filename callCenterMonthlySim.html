@@ -107,6 +107,14 @@
         </div>
       </div>
 
+      <div>
+        <label>Batch Prioritization Logic?</label>
+        <div class="radio-group" style="margin-top:8px">
+          <label><input type="radio" name="batchLogicEnabled" value="yes" checked> Yes</label>
+          <label><input type="radio" name="batchLogicEnabled" value="no"> No</label>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -277,11 +285,6 @@
   // updateThis simDate must be based on selected month and year
   let simDate = new Date(today.getFullYear(), today.getMonth(),1);
   let simEndDate = getLastDate(addMonths(simDate, simMonths));
- 
-
-  let caseloadMultipler = 1.0;
-  let reappMult = 1.0;
-  let approvalMult = 1.0;
 
   let currentTime = 0;
   let callerId = 0;
@@ -289,13 +292,46 @@
   let iterations=0;
   let totalIterations = 0;
   let batchId=0;
-  let carryCalls = 0; // this is used to add calls to the next workdays call queue for unanswered calls and 25% of holiday calls
 
-  let workDayis = true;
-  let overTimeDayis = true;
 
-  let curr_day_start  = 0; //  can be -3600 for OT start
-  let curr_day_end = DAY_END; // can be DAY_END + 3600 for OT end
+  // These remain constant throughout the simulation run, they can't be modified by day, but can be changed on sequential runs between resets or after resets
+  let callActivePct = parseInt(document.getElementById('callActivePct').value)/100;
+  let firstCaseCall = document.querySelector('input[name="firstCase"]:checked').value==='yes';
+  let overtimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value==='yes';
+  let batchLogicEnabled = document.querySelector('input[name="batchLogicEnabled"]:checked').value==='yes';
+
+  document.querySelectorAll('input[name="overTimeEnabled"]').forEach(radio => { 
+    radio.addEventListener('change', () => 
+        { overTimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value === 'yes'; }); 
+  });
+
+    document.querySelectorAll('input[name="firstCaseCall"]').forEach(radio => { 
+    radio.addEventListener('change', () => 
+        { firstCaseCall = document.querySelector('input[name="firstCaseCall"]:checked').value === 'yes'; }); 
+  });
+
+    document.querySelectorAll('input[name="batchLogicEnabled"]').forEach(radio => { 
+    radio.addEventListener('change', () => 
+        { batchLogicEnabled = document.querySelector('input[name="batchLogicEnabled"]:checked').value === 'yes'; }); 
+  });
+
+
+    // simulation state
+  const activeCallQueue=[]; // calls that have arrived and are waiting
+  let callQueueIdx=0; // pointer into allCalls
+  let batchQueueIdx=0; // pointer into batchQueue
+  const availBatch=[]; // batch cases available
+
+  // metrics
+  let callsAnswered=0;
+  let callsAbandoned=0;
+  let batchWorked=0;
+  let totalWaitTime=0;
+  let maxWaitIncurred=0;
+  let maxQueueSize=0;
+  let forcedDisconnects=0;
+  const logs=[];
+  const uniqueCallers = new Set();
 
 
   const PERC_MONTH_DIST_TABLE = Object.freeze([
@@ -317,7 +353,9 @@
 {Weekday:2,callMult:1.04435,batchMult:1.12201},
 {Weekday:3,callMult:0.97072,batchMult:0.99888},
 {Weekday:4,callMult:0.92083,batchMult:0.94394},
-{Weekday:5,callMult:0.91592,batchMult:0.92859}
+{Weekday:5,callMult:0.91592,batchMult:0.92859},
+{Weekday:6,callMult:0.00000,batchMult:1.0},
+{Weekday:7,callMult:0.00000,batchMult:1.0}
  ]);
 
  // Used to store data that varies by month, example use:
@@ -721,26 +759,69 @@ function generateCalls(numCalls,weekday,avgHandleTime)
   return calls;
 }
 
-function generateBatch(backlog = 0,newCases,avgBatchTime, batchQueue=[])
+// TODO: modify batch, must include type, priority (calculated), and receivedDate
+function generateBatch(backlog = 0,newCases,avgBatchTime, batchQueue=[], simDate)
 {
   const cases=batchQueue;
- 
-  for(let i=0;i<backlog;i++)
+  const batchTypes = [{type:"App"},{type:"SSPS"},{type:"Other"}];
+  if(backlog > 0)
   {
-    cases.push({id:batchId++,genTime:0,handleTime:generateBatchHandleTime(avgBatchTime),worked:false});
+     const existingBatchTypes = [{type:"App"},{type:"Pend"},{type:"SSPS"},{type:"Other"}];
+     // Get number of each type, then generate for that type dispersed through backlog based on current batch data
+     for(let j = 0; j < existingBatchTypes.Count; j++)
+     {
+        const typeCount = backlog; // TODO: update this, should be based on this type distribution expected based on backlog data  
+          for(let i=0; i < typeCount; i++)
+          {
+            // TODO update this, need to use Existing data from MONTHLY_DIST_TABLE along with distribution Data
+            // first must determine the type, then 
+            batchId++;
+            let handleMult = .5; // TODO modify this
+            let daysOld = 1; // TODO update this
+
+            cases.push({
+            id:batchId,
+            genTime:-99999,
+            genDate:new Date(advanceDate(simDate, 0-daysOld)),
+            handleTime:generateBatchHandleTime(avgBatchTime) * handleMult * (randRange(900,1100)/1000),
+            worked:false
+            daysToWork:0,
+            priority:0,
+            type:existingBatchTypes[j].type
+            });
+          }
+      }
   }
-  const perPeriod=Math.ceil(newCases/18);
-  for(let p=1;p<=18;p++)
+
+  // TODO update this, get number of each type based on newCases and date etc
+  // Then create number of that type distributed through periods
+
+  let newTypeCases = newCases; // TODO update this!
+  let perPeriod=Math.ceil(newTypeCases/18);
+
+  for(let p=1; p <= 18; p++)
   {
     const start=periodStartSec(p);
     const end=periodEndSec(p);
     const cnt=(p<18)?perPeriod:Math.max(0,newCases-perPeriod*17);
     for(let i=0;i<cnt;i++)
     {
-      cases.push({id:batchId++,genTime:Math.floor(randRange(start,end)),handleTime:generateBatchHandleTime(avgBatchTime),worked:false});
+      cases.push({
+      id:batchId++,
+      genTime:Math.floor(randRange(start,end)),
+      genDate: new Date(simDate),
+      handleTime:generateBatchHandleTime(avgBatchTime),
+      worked:false
+      daysToWork:0,
+      priority:0,
+      type:null,
+      });
     }
   }
-  cases.sort((a,b)=>a.genTime-b.genTime);
+  if(batchLogicEnabled)
+  {
+    cases.sort((a,b)=> if(a.priority !== b.priority) { return b.priority - a.priority; } if(a.genDate !== b.genDate) { return new Date(a.genDate) - new Date(b.genDate); } return a.genTime-b.genTime);
+  }
   return cases;
 }
 
@@ -954,17 +1035,28 @@ function isHoliday(date)
     return returnVal;
 }
 
-// TODO write these!
-// need table for multipliers based on month and day of month
-// need table for multiplier based on weekday
-
-function getBatchMult(curMon, thisDayOf, weekday, dt)
+function getBatchMult(dt)
 {
-	return .5;
+	let result = PERC_MONTH_DIST_TABLE.filter(e => e.percOfMonth === monthPercentage(simDate))[0].batchDistMult;
+    result *= WEEKDAY_DIST_TABLE.filter(e => e.Weekday === getWeekday(dt))[0].batchMult;
+    
+    if (isWeekday(dt))
+    {
+        result *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()-1)[0].wrkdayBatchCaseMult;
+    }
+    else
+    {
+        result *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()-1)[0].wkendBatchCaseMult;
+    }
+	return result;
 }
-function getPhoneMult(curMon, thisDayOf, weekday, dt)
+
+function getPhoneMult(dt)
 {
-	return .5;
+       let result = WEEKDAY_DIST_TABLE.filter(e => e.Weekday === getWeekday(dt))[0].callMult;
+        result *= PERC_MONTH_DIST_TABLE.filter(e => e.percOfMonth === monthPercentage(simDate))[0].callDistMult;
+        result *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()-1)[0].UniqueCallersPerDayPerCase;
+	return result;
 }
 
 // TODO: finish this!
@@ -975,6 +1067,7 @@ function generateDateList()
 	let thisDayOf = 0;
 	let thisWorkdayOf = 0;
 	let curMon = iDate.getMonth();
+    let simDateID = 0;
 
 	while(iDate <= simEndDate)
 	{
@@ -990,20 +1083,22 @@ function generateDateList()
 		}
 		const workdayIs = isWorkday(iDate);
 		const overTimeDayIs = ((!workDayIs) && (getWeekday(iDate)===6) && overtimeEnabled && (!isHoliday(advanceDate(iDate,-1))));
-		const thisDay_start  = ((workDayis)&&(overtimeEnabled))?-3600:0;
-		const thisDay_end = DAY_END+((workDayis)&&(overtimeEnabled))?3600:0;
+		const thisDay_start  = ((workDayIs)&&(overtimeEnabled))?-3600:0;
+		const thisDay_end = DAY_END+((workDayIs)&&(overtimeEnabled))?3600:0;
 		if(workdayIs)
 		{
 			thisWorkdayOf++;
 		}
+        simDateID++;
 
 		myDates.push({
+        id:simDateID,
 		dt: new Date(iDate),
-		batchMult:getBatchMult(curMon, thisDayOf, getWeekday(iDate), iDate),
-		phonesMult:workdayIs?getPhoneMult(curMon, thisDayOf, getWeekday(iDate), iDate):0.0,
+		batchMult:getBatchMult(iDate),
+		phonesMult:getPhoneMult(iDate),
 		isWorkDay:workdayIs,
 		isOTDay:overTimeDayIs,
-		workerMult:(isWorkDay?Math.floor(randRange(75,100)):overTimeDayIs?Math.floor(randRange(10,40)):0)/100, /* TODO create a function for this that is better */
+		workerMult:(workdayIs?Math.floor(randRange(75,100)):overTimeDayIs?Math.floor(randRange(10,40)):0)/100, /* TODO create a function for this that is better */
 		backlogStart:0,
 		backlogEnd:0,
 		casesCompleted:0,
@@ -1014,9 +1109,10 @@ function generateDateList()
 		});
 	iDate = advanceDate(iDate, 1);
 	}
+    return myDates;
 }
 
-async function runSimulation()
+function runSimulation()
 {
   const btn=document.getElementById('runBtn');
   btn.disabled=true;
@@ -1024,9 +1120,7 @@ async function runSimulation()
   document.getElementById('progBar').style.display='block';
   document.getElementById('progFill').style.width='0%';
   document.getElementById('resultsSection').style.display='none';
-
-  await new Promise(r=>setTimeout(r,100));
-
+ 
 // TODO update this! 
 // update estNumCallers
 // update numWorkers - calculate based on weekday value and overtime
@@ -1041,474 +1135,412 @@ async function runSimulation()
 // each day the call queue is cleared out (all calls remaining are abandoned) but those calls should generate an additional call the following workday based on
 // callback attempts remaining for that caller
 
-// this all need to be within a loop that runs the entire simulation day by day, rolling data over to the next day
-
-  const weekday = getWeekday(simDate);
-  const estNumCallers = parseInt(document.getElementById('numCalls').value)||1200; // TODO modify this, this is done by date
-
-// TODO: modify this, this will be within range based on average handle time reported and modified throughout the year
-  const avgCallTime = parseInt(document.getElementById('avgCallTime').value)||1920; 
-
-// TODO: modify this, this will be generated each day based on the total number of workers reported and within a specific range
-// depending on whether it is a normal workday, a day before/after holday, day of the week, and/or overtimeday
-  const numWorkers = parseInt(document.getElementById('numWorkers').value)||100;
-
-//TODO: modify this. This starts as the value reported, but each day is based on the end of the day backlog of the previous day
-  const backlogCases = parseInt(document.getElementById('backlogCases').value)||5000;
-
-// TODO: modify this, this is based on each date, current active cases, day of the month, and month
-// TODO: Batch will have types based on normal distribution of assignment types in batch
-// TODO: Batch Prioritization set up so that prioritization is weighted by type and age of assignment to mimic current missions
-
-  const estBatchCases = parseInt(document.getElementById('newBatchCases').value)||500;
-// TODO: handle time for each individual type will be based on the average reported and factored by type
-// AHT will be modified to be within a small range of the reported average each day varying by month
-  const avgBatchTime = parseInt(document.getElementById('avgBatchTime').value)||1620;
-
-// These remain constant throughout the simulation, they can't be modified by day.
-  const callActivePct = parseInt(document.getElementById('callActivePct').value)/100;
-  const firstCaseCall = document.querySelector('input[name="firstCase"]:checked').value==='yes';
-  const overtimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value==='yes';
 
   const myDates = generateDateList();
   // iterate through myDates and run simulation for each day updating stats for each day
+  const startingCaseLoad = parseInt(document.getElementById('currentCaseload').value)||0;
+  let currentCaseLoad = startingCaseLoad;
+  let simDay = 1; // used for myDates.id
+  const maxSimDays = Math.floor(Math.abs(simEndDate - simDate) / 86400000)+1;
 
-  workDayis = isWorkday(simDate);
-  overTimeDayis = ((!workDayIs) && (getWeekday(date)===6) && overtimeEnabled && (!isHoliday(advanceDate(simDate,-1))));
+  const simAvgCallTime = parseInt(document.getElementById('avgCallTime').value)||2273; 
+  const simAvgBatchTime = parseInt(document.getElementById('avgBatchTime').value)||1627;
+  const simNumWorkers = parseInt(document.getElementById('numWorkers').value)||100;
+  const simBacklogCases = parseInt(document.getElementById('backlogCases').value)||0;
+  let backlogCases = simBacklogCases;
+  let carryCalls = 0; // this is used to add calls to the next workdays call queue for unanswered calls and 20% of weekday holiday calls
 
-  let curr_day_start  = ((workDayis)&&(overtimeEnabled))?-3600:0; //  can be -3600 for OT start
-  let curr_day_end = DAY_END+((workDayis)&&(overtimeEnabled))?3600:0; // can be DAY_END + 3600 for OT end
-
-
-  // if it is a workday, load calls into the calls queue for the day, otherwise only load batch into the batch queue
-  // if it is a workday or an overtimeDay then load workers into the workers list
-  // simulate the day, then increment the day and if we are still within the simulation range continue the simulation resetting specific variables for the next day
-  // otherwise display all the report information
-
-
-  id=0;
-  callerId=0;
-  currentTime=0;
- // Changing this, the estimated number will be used as the actual number.
- /*
-  let numCalls = Math.floor(estNumCallers * (randRange(90,110)/100));	// Assume estimate is within +/- 10%
-  const newBatchCases = Math.floor(estBatchCases*(randRange(90,110)/100)); // Assume estimate is within +/- 10%
- */ 
-  let numCalls = estNumCallers;
-  const newBatchCases = estBatchCases;
-
-  document.getElementById('status').textContent='Generating call queue...';
-  await new Promise(r=>setTimeout(r,10));
-
-	// TODO: update this, only generate calls if this is a workday
-	// Only generate workers if this is a workday or an overtimeDay
-	
-  let allCalls=generateCalls(numCalls,weekday,avgCallTime);
-
- // TODO: modify generateBatch, this should only add cases to the current backlog, the existing backlog must be generated prior to simulation
-  let batchQueue=generateBatch(backlogCases,newBatchCases,avgBatchTime, batchQueue);
-
-  let workers=assignWorkerSchedules(numWorkers);
+// this all need to be within a loop that runs the entire simulation day by day, rolling data over to the next day
 
   document.getElementById('progFill').style.width='10%';
   document.getElementById('status').textContent='Running simulation...';
-  await new Promise(r=>setTimeout(r,10));
 
-  // simulation state
-  const activeCallQueue=[]; // calls that have arrived and are waiting
-  let callQueueIdx=0; // pointer into allCalls
-  let batchQueueIdx=0; // pointer into batchQueue
-  const availBatch=[]; // batch cases available (genTime<=currentTime)
+ while(simDate < simEndDate)
+ {
+          const weekday = getWeekday(simDate);
+          const workDayIs = isWorkday(simDate);
+          const overTimeDayIs = ((!workDayIs) && (getWeekday(date)===6) && overtimeEnabled && (!isHoliday(advanceDate(simDate,-1))));
 
-  // metrics
-  let callsAnswered=0;
-  let callsAbandoned=0;
-  let batchWorked=0;
-  let totalWaitTime=0;
-  let maxWaitIncurred=0;
-  let maxQueueSize=0;
-  let forcedDisconnects=0;
-  const logs=[];
-  const uniqueCallers = new Set();
+          let curr_day_start  = ((workDayIs)&&(overtimeEnabled))?-3600:0; //  can be -3600 for OT start
+          let curr_day_end = DAY_END+((workDayIs)&&(overtimeEnabled))?3600:0; // can be DAY_END + 3600 for OT end
 
-  // period stats
-  const periods=getPeriods(weekday);
-  const periodStats={};
-  for(const p of periods)
-  {
-    periodStats[p.period]={expected:0,answered:0,abandoned:0,fd:0,peakQ:0,str:p.str};
-  }
-  for(const c of allCalls)
-  {
-    if(periodStats[c.period]) periodStats[c.period].expected++;
-  }
+          let estNumCallers = 0;
+          if (workDayIs) // only get calls on workdays
+          {
+            estNumCallers = Math.round(myDates.filter(e=>e.id === simDay)[0].phonesMult * currentCaseLoad) + carryCalls;
+            carryCalls = 0; // reset to 0 once they have been added to calls
+          }
+          else if (isWeekday(simDate) && isHoliday(simDate)) // if it is a normal weekday but a holiday, 20% of normal calls this day will be added to next workdays number
+          {
+            carryCalls +=  Math.round(myDates.filter(e=>e.id === simDay)[0].phonesMult * .02 * currentCaseLoad);
+          }
+          const avgCallTime = (randRange(900,1100)/1000) * simAvgCallTime;
+          const numWorkers = math.floor(myDates.Filter(e=>e.id === simDay)[0].workerMult * simNumWorkers);
+          const estBatchCases = Math.round(myDates.filter(e=>e.id === simDay)[0].batchMult * currentCaseLoad);
+          const avgBatchTime = (randRange(900,1100)/1000) * simAvgBatchTime;
 
 
-  function getNextEventTime()
-  {
-    let next=Infinity;
-    // next call arrival
-    if(callQueueIdx<allCalls.length && allCalls[callQueueIdx].callTime > currentTime) next=Math.min(next,allCalls[callQueueIdx].callTime);
-    // next batch availability
-    if(batchQueueIdx<batchQueue.length && batchQueue[batchQueueIdx].genTime > currentTime) next=Math.min(next,batchQueue[batchQueueIdx].genTime);
-    // next worker available
-    for(const w of workers)
-	{
-      if(w.nextAvailableTime > currentTime) next=Math.min(next,w.nextAvailableTime);
-      // if(w.onBreak && w.breakEndTime>currentTime) next=Math.min(next,w.breakEndTime);
-      if(!w.break1Done && w.break1Sched>currentTime) next=Math.min(next,w.break1Sched);
-      if(!w.lunchDone && w.lunchSched>currentTime) next=Math.min(next,w.lunchSched);
-      if(!w.break2Done && w.break2Sched>currentTime) next=Math.min(next,w.break2Sched);
-    }
-    // next call expiry in active queue
-    for(const c of activeCallQueue)
-	{
-      next=Math.min(next,c.callTime+c.maxWaitTime);
-    }
-    if(next===Infinity || next===currentTime) next=currentTime+MIN_STEP;
-    return Math.min(next,SIM_END);
-  }
+          // if it is a workday, load calls into the calls queue for the day, otherwise only load batch into the batch queue
+          // if it is a workday or an overtimeDay then load workers into the workers list
+          // simulate the day, then increment the day and if we are still within the simulation range continue the simulation resetting specific variables for the next day
+          // otherwise display all the report information
 
-  // Process one day at a time until the end of the projection period is reached.
-  
+          id=0;
+          callerId=0;
+          currentTime=0;
 
-  iterations=0; // max steps per day, shouldn't be needed but just in case
-
-  while(currentTime < SIM_END && iterations < MAX_ITER)
-  {
-    iterations++;
-
-    // advance new calls into active queue if there is room
-    // If the queue is full the call is FD, enter the new call in allCalls for the recall if there will be one
-    // all new call attributes should be the same aside from start time, callId, and FDattempts which should be decremented, same callerId
-	// the size of the queue is QUEUE_SIZE
-    while(callQueueIdx<allCalls.length && allCalls[callQueueIdx].callTime<=currentTime)
-   {
-		if(activeCallQueue.length < QUEUE_SIZE)
-		{
-			activeCallQueue.push(allCalls[callQueueIdx]);
-		}
-		else
-		{	
-			const call = allCalls[callQueueIdx];
-			const newCallTime = currentTime + call.fdCallBackIn;
-			
-			// this is a forced disconnect
-			forcedDisconnects++;
-			if(periodStats[call.period]) periodStats[call.period].fd++;
-			allCalls[callQueueIdx].disconnect = true;
-			
-			if((newCallTime <= LINE_CLOSE) && (call.maxFDs > 0))
-			{
-				const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
-				const newCall = {id:callerId++,
-						callId:call.callId,
-						callTime:newCallTime,
-						maxWaitTime:call.maxWaitTime,
-						handleTime:call.handleTime,
-						period:getPeriod(newCallTime),
-						answered:false,
-						abandoned:false,
-						disconnect:false,
-						answerTime:null,
-						waitTime:null,
-						maxFDs:call.maxFDs-1,
-						maxRecalls:call.maxRecalls,
-						callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
-						fdCallBackIn:Math.floor(randRange(20,60))
-						};
-				if(index === -1)
-				{
-					allCalls.push(newCall);
-				}
-				else
-				{
-					allCalls.splice(index, 0, newCall);
-				}
-				numCalls++;
-			}
-		}
-		callQueueIdx++;
-    }
-
-    // advance new batch into available batch backlog
-    while(batchQueueIdx<batchQueue.length && batchQueue[batchQueueIdx].genTime<=currentTime)
-   {
-      availBatch.push(batchQueue[batchQueueIdx]);
-      batchQueueIdx++;
-    }
-
-    // expire calls that have exceeded maxWaitTime (abandoned calls)
-    //  insert new callback for the caller if they are going to try and call back
-	// all attributes of the call should be the same except for callId (same callerId) and callbacks decremented
-    for(let i=activeCallQueue.length-1;i>=0;i--)
-	{
-      const c=activeCallQueue[i];
-      if(currentTime>=c.callTime+c.maxWaitTime)
-	  {
-        c.abandoned=true;
-        callsAbandoned++;
-        if(periodStats[c.period]) periodStats[c.period].abandoned++;
-        activeCallQueue.splice(i,1);
-        logs.push(`[${fmtClock(currentTime)}] Call #${c.id} abandoned after ${fmt(currentTime-c.callTime)} wait`);
-	  
-	  // Add new call if this person will call back
-	  const newCallTime = currentTime + c.callBackIn;
-	  if((newCallTime <= LINE_CLOSE) && (c.maxRecalls > 0))
-		{
-			const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
-			const newCall = {id:callerId++,
-					callId:c.callId,
-					callTime:newCallTime,
-					maxWaitTime:c.maxWaitTime,
-					handleTime:c.handleTime, // same call, same handle time
-					period:getPeriod(newCallTime),
-					answered:false,
-					abandoned:false,
-					disconnect:false,
-					answerTime:null,
-					waitTime:null,
-					maxFDs:c.maxFDs,
-					maxRecalls:c.maxRecalls-1,
-					callBackIn:Math.floor(c.maxWaitTime*(1+(1-Math.pow((14400-c.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
-					fdCallBackIn:c.fdCallbackIn
-					};
-			if(index === -1)
-			{
-				allCalls.push(newCall);
-			}
-			else
-			{
-				allCalls.splice(index, 0, newCall);
-			}
-			numCalls++;
-		}
-	  }
-    }
-
-    // track queue size
-    if(activeCallQueue.length>maxQueueSize) maxQueueSize=activeCallQueue.length;
+          let numCalls = Math.floor(estNumCallers * (randRange(900,1100)/1000));	// Assume estimate is within +/- 10%
+          let newBatchCases = Math.floor(estBatchCases*(randRange(900,1100)/1000)); // Assume estimate is within +/- 10%
 	
-    for(const p of periods)
-	{
-      if(periodStats[p.period] && activeCallQueue.length>periodStats[p.period].peakQ)
-	  {
-        // only count calls for this period
-        const pStart=periodStartSec(p.period);
-        const pEnd=periodEndSec(p.period);
-        if(currentTime>=pStart && currentTime<pEnd)
-		{
-          periodStats[p.period].peakQ=activeCallQueue.length;
-        }
-      }
-    }
+          let allCalls=generateCalls(numCalls,weekday,avgCallTime);
 
-    // process workers
-    // sort by nextAvailableTime so earliest available goes first
-    const sortedWorkers=[...workers].sort((a,b)=>a.nextAvailableTime-b.nextAvailableTime);
+         // TODO: modify generateBatch, this should only add cases to the current backlog, the existing backlog must be generated prior to simulation
+          let batchQueue=generateBatch(backlogCases,newBatchCases,avgBatchTime, batchQueue, simDate);
+          backlogCases = 0; // only used for generation of initial backlog
 
-    for(const w of sortedWorkers)
-	{
-      if(w.onBreak)
-	  {
-        if(currentTime>=w.breakEndTime)
-		{
-          w.onBreak=false;
-          w.nextAvailableTime=currentTime;
-          logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} returned from break/lunch`);
-        }
-        continue;
-      }
-      if(w.nextAvailableTime>currentTime) 
-	{
-		continue;
-	}
+          let workers=assignWorkerSchedules(numWorkers);
 
-	// potential short pause between activities
-	// if already paused only slight chance of continuing pause
-	if(!w.onPause)
-	{
-		if(rand() < 0.75)
-		{
-			w.OnPause = true;
-			w.state = 'idle';
-			w.nextAvailableTime+=genRandPause();
-			w.timeInIdle+=w.nextAvailableTime-currentTime;
-		}
-	}
-	else // they are on pause
-	{
-		if(rand() < 0.3) // continue pause
-		{
-			w.nextAvailableTime+=genRandPause();
-			w.timeInIdle+=w.nextAvailableTime-currentTime;
-		}
-		else
-		{
-			w.OnPause = false;
-		}
-	}
+          // periods
+          const periods=getPeriods(weekday);
 
-      if(w.nextAvailableTime>currentTime) 
-	  {
-		continue;
-	  }
+
+          // Process one day at a time until the end of the projection period is reached.
+          iterations=0; // max steps per day, shouldn't be needed but just in case
+
+          while(currentTime < SIM_END && iterations < MAX_ITER)
+          {
+                iterations++;
+                totalIterations++;
+
+                // advance new calls into active queue if there is room
+                // If the queue is full the call is FD, enter the new call in allCalls for the recall if there will be one
+                // all new call attributes should be the same aside from start time, callId, and FDattempts which should be decremented, same callerId
+	            // the size of the queue is QUEUE_SIZE
+                while(callQueueIdx<allCalls.length && allCalls[callQueueIdx].callTime<=currentTime)
+               {
+		            if(activeCallQueue.length < QUEUE_SIZE)
+		            {
+			            activeCallQueue.push(allCalls[callQueueIdx]);
+		            }
+		            else
+		            {	
+			            const call = allCalls[callQueueIdx];
+			            const newCallTime = currentTime + call.fdCallBackIn;
+			
+			            // this is a forced disconnect
+			            forcedDisconnects++;
+			            allCalls[callQueueIdx].disconnect = true;
+			
+			            if((newCallTime <= LINE_CLOSE) && (call.maxFDs > 0))
+			            {
+				            const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
+				            const newCall = {id:callerId++,
+						            callId:call.callId,
+						            callTime:newCallTime,
+						            maxWaitTime:call.maxWaitTime,
+						            handleTime:call.handleTime,
+						            period:getPeriod(newCallTime),
+						            answered:false,
+						            abandoned:false,
+						            disconnect:false,
+						            answerTime:null,
+						            waitTime:null,
+						            maxFDs:call.maxFDs-1,
+						            maxRecalls:call.maxRecalls,
+						            callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
+						            fdCallBackIn:Math.floor(randRange(20,60))
+						            };
+				            if(index === -1)
+				            {
+					            allCalls.push(newCall);
+				            }
+				            else
+				            {
+					            allCalls.splice(index, 0, newCall);
+				            }
+				            numCalls++;
+			            }
+		            }
+		            callQueueIdx++;
+                }
+
+                // advance new batch into available batch backlog TODO! Modify this?
+                while(batchQueueIdx<batchQueue.length && batchQueue[batchQueueIdx].genTime<=currentTime)
+               {
+                  availBatch.push(batchQueue[batchQueueIdx]);
+                  batchQueueIdx++;
+                }
+
+                // expire calls that have exceeded maxWaitTime (abandoned calls)
+                //  insert new callback for the caller if they are going to try and call back
+	            // all attributes of the call should be the same except for callId (same callerId) and callbacks decremented
+                for(let i=activeCallQueue.length-1;i>=0;i--)
+	            {
+                  const c=activeCallQueue[i];
+                  if(currentTime>=c.callTime+c.maxWaitTime)
+	              {
+                    c.abandoned=true;
+                    callsAbandoned++;
+                    activeCallQueue.splice(i,1);
+                    logs.push(`[${fmtClock(currentTime)}] Call #${c.id} abandoned after ${fmt(currentTime-c.callTime)} wait`);
 	  
-      // check if due for break/lunch before pulling a case
-      let tookBreak = false;
+	              // Add new call if this person will call back
+	              const newCallTime = currentTime + c.callBackIn;
+	              if((newCallTime <= LINE_CLOSE) && (c.maxRecalls > 0))
+		            {
+			            const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
+			            const newCall = {id:callerId++,
+					            callId:c.callId,
+					            callTime:newCallTime,
+					            maxWaitTime:c.maxWaitTime,
+					            handleTime:c.handleTime, // same call, same handle time
+					            period:getPeriod(newCallTime),
+					            answered:false,
+					            abandoned:false,
+					            disconnect:false,
+					            answerTime:null,
+					            waitTime:null,
+					            maxFDs:c.maxFDs,
+					            maxRecalls:c.maxRecalls-1,
+					            callBackIn:Math.floor(c.maxWaitTime*(1+(1-Math.pow((14400-c.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
+					            fdCallBackIn:c.fdCallbackIn
+					            };
+			            if(index === -1)
+			            {
+				            allCalls.push(newCall);
+			            }
+			            else
+			            {
+				            allCalls.splice(index, 0, newCall);
+			            }
+			            numCalls++;
+		            }
+	              }
+                  else if ((c.maxRecalls > 0) && (rand() < .5))
+                  {
+                    carryCalls++; // they will call back tomorrow
+                  }
+                }
 
-      if(!w.break1Done && (currentTime >= (w.break1Sched-900)))
-	  {
-        w.break1Done=true;
-        w.onBreak=true;
-        w.breakEndTime=currentTime+900+genRandPause();
-        w.nextAvailableTime=w.breakEndTime;
-        w.state='break';
-        logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} started break 1 (sched ${fmtClock(w.break1Sched)})`);
-        tookBreak=true;
-      } 
-	  else if(!w.lunchDone && currentTime>=(w.lunchSched-900))
-	  {
-        w.lunchDone=true;
-        w.onBreak=true;
-        w.breakEndTime=currentTime+3600+genRandPause();
-        w.nextAvailableTime=w.breakEndTime;
-        w.state='lunch';
-        logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} started lunch (sched ${fmtClock(w.lunchSched)})`);
-        tookBreak=true;
-      } 
-	  else if(!w.break2Done && currentTime>=(w.break2Sched-900))
-	  {
-        w.break2Done=true;
-        w.onBreak=true;
-        w.breakEndTime=currentTime+900+genRandPause();
-        w.nextAvailableTime=w.breakEndTime;
-        w.state='break';
-        logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} started break 2 (sched ${fmtClock(w.break2Sched)})`);
-        tookBreak=true;
-      }
+                // track queue size
+                if(activeCallQueue.length>maxQueueSize) maxQueueSize=activeCallQueue.length;
+	
 
-      if(tookBreak) 
-	  {
-		continue;
-	  }
 
-      // attempt to take work
-      let tookWork=false;
+                // process workers
+                // sort by nextAvailableTime so earliest available goes first
+                const sortedWorkers=[...workers].sort((a,b)=>a.nextAvailableTime-b.nextAvailableTime);
 
-      // first case call logic
-      const wantsCall=((firstCaseCall && !w.hasFirstCall) || (rand()<=callActivePct));
+                for(const w of sortedWorkers)
+	            {
+                  if(w.onBreak)
+	              {
+                    if(currentTime>=w.breakEndTime)
+		            {
+                      w.onBreak=false;
+                      w.nextAvailableTime=currentTime;
+                      logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} returned from break/lunch`);
+                    }
+                    continue;
+                  }
+                  if(w.nextAvailableTime>currentTime) 
+	            {
+		            continue;
+	            }
 
-      if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= SIM_END))
-	  {
-			const call=activeCallQueue.shift();
-			const waitTime=currentTime-call.callTime;
-			uniqueCallers.add(call.callId);
-			call.answered=true;
-			call.answerTime=currentTime;
-			call.waitTime=waitTime;
-			totalWaitTime+=waitTime;
-			if(waitTime>maxWaitIncurred) maxWaitIncurred=waitTime;
-			callsAnswered++;
-			if(periodStats[call.period]) periodStats[call.period].answered++;
-			w.hasFirstCall=true;
-			w.timeInCall+=call.handleTime;
-			w.nextAvailableTime=currentTime+call.handleTime;
-			w.callCount++;
-			w.state='call';
-			logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} answered call #${call.id} (wait ${fmt(waitTime)}, handle ${fmt(call.handleTime)})`);
-			tookWork=true;
-			// If they will call back again today, set up the additional call in allCalls same callerId but new callId at new time
-			// most caller attributes will be the same except callBacks will be decremented by 2, and new call will have new handleTime
-			const newCallTime = currentTime + call.fdCallBackIn;
-			const newCallHandleTime = generatePhoneHandleTime(avgCallTime);
-			if((newCallTime <= LINE_CLOSE) && (call.maxRecalls > 2) && (rand() < 0.05)) // Only a small number of callers should call back once their call is handled
-			{
-				const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
-				const newCall = {id:callerId++,
-						callId:call.callId,
-						callTime:newCallTime,
-						maxWaitTime:call.maxWaitTime,
-						handleTime:newCallHandleTime,
-						period:getPeriod(newCallTime),
-						answered:false,
-						abandoned:false,
-						disconnect:false,
-						answerTime:null,
-						waitTime:null,
-						maxFDs:call.maxFDs,
-						maxRecalls:Math.max(0,call.maxRecalls-2),
-						callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
-						fdCallBackIn:call.fdCallBackIn
-						};
-				if(index === -1)
-				{
-					allCalls.push(newCall);
-				}
-				else
-				{
-					allCalls.splice(index, 0, newCall);
-				}
-				numCalls++;
-			}
-      } 
-	  else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= SIM_END) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
-	  {
-        const bc=availBatch.shift();
-        bc.worked=true;
-        batchWorked++;
-        w.timeInBatch+=bc.handleTime;
-        w.nextAvailableTime=currentTime+bc.handleTime;
-        w.batchCount++;
-        w.state='batch';
-        logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} took batch case #${bc.id} (handle ${fmt(bc.handleTime)})`);
-        tookWork=true;
-      }
+	            // potential short pause between activities
+	            // if already paused only slight chance of continuing pause
+	            if(!w.onPause)
+	            {
+		            if(rand() < 0.75)
+		            {
+			            w.OnPause = true;
+			            w.state = 'idle';
+			            w.nextAvailableTime+=genRandPause();
+			            w.timeInIdle+=w.nextAvailableTime-currentTime;
+		            }
+	            }
+	            else // they are on pause
+	            {
+		            if(rand() < 0.3) // continue pause
+		            {
+			            w.nextAvailableTime+=genRandPause();
+			            w.timeInIdle+=w.nextAvailableTime-currentTime;
+		            }
+		            else
+		            {
+			            w.OnPause = false;
+		            }
+	            }
 
-      if(!tookWork)
-	  {
-        // worker is idle - track idle time until next step
-        w.state='idle';
-      }
-    }
+                  if(w.nextAvailableTime>currentTime) 
+	              {
+		            continue;
+	              }
+	  
+                  // check if due for break/lunch before pulling a case
+                  let tookBreak = false;
 
-    // track idle time for this step
-    const nextT=getNextEventTime();
-    const stepDur=nextT-currentTime;
-    for(const w of workers)
-	{
-      if(!w.onBreak && w.nextAvailableTime<=currentTime && w.state==='idle')
-	  {
-        w.timeInIdle+=stepDur;
-      }
-    }
+                  if(!w.break1Done && (currentTime >= (w.break1Sched-900)))
+	              {
+                    w.break1Done=true;
+                    w.onBreak=true;
+                    w.breakEndTime=currentTime+900+genRandPause();
+                    w.nextAvailableTime=w.breakEndTime;
+                    w.state='break';
+                    logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} started break 1 (sched ${fmtClock(w.break1Sched)})`);
+                    tookBreak=true;
+                  } 
+	              else if(!w.lunchDone && currentTime>=(w.lunchSched-900))
+	              {
+                    w.lunchDone=true;
+                    w.onBreak=true;
+                    w.breakEndTime=currentTime+3600+genRandPause();
+                    w.nextAvailableTime=w.breakEndTime;
+                    w.state='lunch';
+                    logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} started lunch (sched ${fmtClock(w.lunchSched)})`);
+                    tookBreak=true;
+                  } 
+	              else if(!w.break2Done && currentTime>=(w.break2Sched-900))
+	              {
+                    w.break2Done=true;
+                    w.onBreak=true;
+                    w.breakEndTime=currentTime+900+genRandPause();
+                    w.nextAvailableTime=w.breakEndTime;
+                    w.state='break';
+                    logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} started break 2 (sched ${fmtClock(w.break2Sched)})`);
+                    tookBreak=true;
+                  }
 
-    currentTime=nextT;
+                  if(tookBreak) 
+	              {
+		            continue;
+	              }
 
-        // TODO modify this, need to take into account the days of the simultation period and which day we are on, also need to track cumulative steps
-    if(iterations%5000===0)
-	{
-      const pct=Math.min(95,10+85*(currentTime/SIM_END));
-      document.getElementById('progFill').style.width=pct+'%';
-      document.getElementById('status').textContent=`Simulating... ${fmtClock(currentTime)} (${totalIterations.toLocaleString()} steps)`;
-      await new Promise(r=>setTimeout(r,0));
-    }
+                  // attempt to take work
+                  let tookWork=false;
+
+                  // first case call logic
+                  const wantsCall=((firstCaseCall && !w.hasFirstCall) || (rand()<=callActivePct));
+
+                  if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= SIM_END))
+	              {
+			            const call=activeCallQueue.shift();
+			            const waitTime=currentTime-call.callTime;
+			            uniqueCallers.add(call.callId);
+			            call.answered=true;
+			            call.answerTime=currentTime;
+			            call.waitTime=waitTime;
+			            totalWaitTime+=waitTime;
+			            if(waitTime>maxWaitIncurred) maxWaitIncurred=waitTime;
+			            callsAnswered++;
+			            w.hasFirstCall=true;
+			            w.timeInCall+=call.handleTime;
+			            w.nextAvailableTime=currentTime+call.handleTime;
+			            w.callCount++;
+			            w.state='call';
+			            logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} answered call #${call.id} (wait ${fmt(waitTime)}, handle ${fmt(call.handleTime)})`);
+			            tookWork=true;
+			            // If they will call back again today, set up the additional call in allCalls same callerId but new callId at new time
+			            // most caller attributes will be the same except callBacks will be decremented by 2, and new call will have new handleTime
+			            const newCallTime = currentTime + call.fdCallBackIn;
+			            const newCallHandleTime = generatePhoneHandleTime(avgCallTime);
+			            if((newCallTime <= LINE_CLOSE) && (call.maxRecalls > 2) && (rand() < 0.05)) // Only a small number of callers should call back once their call is handled
+			            {
+				            const index = allCalls.findIndex(e => !(e.answered || e.abandoned || e.disconnect) && e.callTime > newCallTime);
+				            const newCall = {id:callerId++,
+						            callId:call.callId,
+						            callTime:newCallTime,
+						            maxWaitTime:call.maxWaitTime,
+						            handleTime:newCallHandleTime,
+						            period:getPeriod(newCallTime),
+						            answered:false,
+						            abandoned:false,
+						            disconnect:false,
+						            answerTime:null,
+						            waitTime:null,
+						            maxFDs:call.maxFDs,
+						            maxRecalls:Math.max(0,call.maxRecalls-2),
+						            callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
+						            fdCallBackIn:call.fdCallBackIn
+						            };
+				            if(index === -1)
+				            {
+					            allCalls.push(newCall);
+				            }
+				            else
+				            {
+					            allCalls.splice(index, 0, newCall);
+				            }
+				            numCalls++;
+			            }
+                  } 
+	              else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= SIM_END) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
+	              {
+                    const bc=availBatch.shift();
+                    bc.worked=true;
+                    batchWorked++;
+                    w.timeInBatch+=bc.handleTime;
+                    w.nextAvailableTime=currentTime+bc.handleTime;
+                    w.batchCount++;
+                    w.state='batch';
+                    logs.push(`[${fmtClock(currentTime)}] Worker ${w.id} took batch case #${bc.id} (handle ${fmt(bc.handleTime)})`);
+                    tookWork=true;
+                  }
+
+                  if(!tookWork)
+	              {
+                    // worker is idle - track idle time until next step
+                    w.state='idle';
+                  }
+                }
+
+                // track idle time for this step
+                const nextT=getNextEventTime();
+                const stepDur=nextT-currentTime;
+                for(const w of workers)
+	            {
+                  if(!w.onBreak && w.nextAvailableTime<=currentTime && w.state==='idle')
+	              {
+                    w.timeInIdle+=stepDur;
+                  }
+                }
+
+                currentTime=nextT;
+
+                if(totalIterations%5000===0)
+	            {
+                  const pct=Math.min(95,10+85*((currentTime+((simDay-1)*SIM_END))/(maxSimDays*SIM_END)));
+                  document.getElementById('progFill').style.width=pct+'%';
+                  document.getElementById('status').textContent=`Simulating... ${fmtClock(currentTime)} (${totalIterations.toLocaleString()} steps)`;
+                }
+          }
+
+          // after 5pm, disconnect remaining calls
+          for(const c of activeCallQueue)
+          {
+            c.abandoned=true;
+            callsAbandoned++;
+            if(rand() <= 0.5) // Half will call back tomorrow
+            {
+                carryCalls++;
+            }
+          }
+          // TODO: Recalculate prioriziation levels and re-sort current batch queue if batch prioritizing is turned on
+          if(batchLogicEnabled)
+          {
+            // here
+          }
+
+          simDate = advanceDate(simDate, 1);
+          simDay++;
   }
 
-  // after 5pm, disconnect remaining calls
-  for(const c of activeCallQueue)
-  {
-    c.abandoned=true;
-    callsAbandoned++;
-    if(periodStats[c.period]) periodStats[c.period].abandoned++;
-  }
-
-  totalIterations += interations;
-
-  // move on to the next day if the next day is less than the simulation end
-
-
-
+  // Here the simulation run is complete, get table ready for all data and ready for export data, or continue running with modified parameters.
+  // TODO: at this point the data from the current run should be added to the data table, buttons to export to excel should become visible, and certain inputs should be locked with the option to
+  // continue running (potentially with some options changed or modified) or to reset the Simulator
+  // Data should be daily data points for the run, need to update this part
+  
   document.getElementById('progFill').style.width='100%';
   document.getElementById('status').textContent=`Simulation complete. ${iterations.toLocaleString()} steps processed.`;
 
@@ -1559,18 +1591,6 @@ async function runSimulation()
       </tbody>
     </table>`;
 
-  const pb=document.getElementById('periodBody');
-  const periodRows=Object.values(periodStats).sort((a,b)=>a.period-b.period);
-  pb.innerHTML=periodRows.map(p=>`
-    <tr>
-      <td>${p.str}</td>
-      <td>${p.expected}</td>
-      <td>${p.answered}</td>
-      <td>${p.abandoned}</td>
-	  <td>${p.fd}</td>
-      <td>${p.peakQ}</td>
-    </tr>`).join('');
-
   const lb=document.getElementById('logBox');
   const lastLogs=logs.slice(-5000);
   lb.innerHTML=lastLogs.map(l=>`<div>${l}</div>`).join('');
@@ -1579,6 +1599,35 @@ async function runSimulation()
   document.getElementById('resultsSection').style.display='block';
   btn.disabled=false;
 }
+
+  function getNextEventTime()
+  {
+    let next=Infinity;
+    // next call arrival
+    if(callQueueIdx<allCalls.length && allCalls[callQueueIdx].callTime > currentTime) next=Math.min(next,allCalls[callQueueIdx].callTime);
+    // next batch availability
+    if(batchQueueIdx<batchQueue.length && batchQueue[batchQueueIdx].genTime > currentTime) next=Math.min(next,batchQueue[batchQueueIdx].genTime);
+    // next worker available
+    for(const w of workers)
+	{
+      if(w.nextAvailableTime > currentTime) next=Math.min(next,w.nextAvailableTime);
+      // if(w.onBreak && w.breakEndTime>currentTime) next=Math.min(next,w.breakEndTime);
+      if(!w.break1Done && w.break1Sched>currentTime) next=Math.min(next,w.break1Sched);
+      if(!w.lunchDone && w.lunchSched>currentTime) next=Math.min(next,w.lunchSched);
+      if(!w.break2Done && w.break2Sched>currentTime) next=Math.min(next,w.break2Sched);
+    }
+    // next call expiry in active queue
+    for(const c of activeCallQueue)
+	{
+      next=Math.min(next,c.callTime+c.maxWaitTime);
+    }
+    if(next===Infinity || next===currentTime) next=currentTime+MIN_STEP;
+    return Math.min(next,SIM_END);
+  }
+
+
+
+
 </script>
 </body>
 </html>
