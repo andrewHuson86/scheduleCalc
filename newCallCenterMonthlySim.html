@@ -208,7 +208,6 @@
 <script>
 // Just an FYI this was made by Andrew so you know it is hot garbage
 /*
-Just an FYI this was made by Andrew so you know it is hot garbage
  TODO List: 
 	Add additional data tracking:
 	Add export to csv/excel functions
@@ -344,19 +343,22 @@ Just an FYI this was made by Andrew so you know it is hot garbage
 ]);
 
  const MONTHLY_DIST_TABLE = Object.freeze([
-{Month:1,ExistingAppDistMult:0.13501,ExistingPendDistMult:0.16813,UniqueCallersPerDayPerCase:0.02138,wrkdayBatchCaseMult:0.01045,wkendBatchCaseMult:0.00243,specialSSPSCaseMult:0.03120,annualAppDist:0.08637},
-{Month:2,ExistingAppDistMult:0.12235,ExistingPendDistMult:0.16383,UniqueCallersPerDayPerCase:0.01934,wrkdayBatchCaseMult:0.01016,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03123,annualAppDist:0.07537},
-{Month:3,ExistingAppDistMult:0.12238,ExistingPendDistMult:0.16671,UniqueCallersPerDayPerCase:0.02060,wrkdayBatchCaseMult:0.01019,wkendBatchCaseMult:0.00248,specialSSPSCaseMult:0.03374,annualAppDist:0.07807},
-{Month:4,ExistingAppDistMult:0.10787,ExistingPendDistMult:0.15189,UniqueCallersPerDayPerCase:0.01718,wrkdayBatchCaseMult:0.01167,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03491,annualAppDist:0.07490},
-{Month:5,ExistingAppDistMult:0.10287,ExistingPendDistMult:0.14525,UniqueCallersPerDayPerCase:0.02134,wrkdayBatchCaseMult:0.01411,wkendBatchCaseMult:0.00313,specialSSPSCaseMult:0.03546,annualAppDist:0.05721},
-{Month:6,ExistingAppDistMult:0.12076,ExistingPendDistMult:0.17132,UniqueCallersPerDayPerCase:0.02935,wrkdayBatchCaseMult:0.01314,wkendBatchCaseMult:0.00321,specialSSPSCaseMult:0.09807,annualAppDist:0.06799},
-{Month:7,ExistingAppDistMult:0.12785,ExistingPendDistMult:0.14110,UniqueCallersPerDayPerCase:0.02555,wrkdayBatchCaseMult:0.01290,wkendBatchCaseMult:0.00276,specialSSPSCaseMult:0.04457,annualAppDist:0.09790},
-{Month:8,ExistingAppDistMult:0.12096,ExistingPendDistMult:0.11412,UniqueCallersPerDayPerCase:0.02985,wrkdayBatchCaseMult:0.01672,wkendBatchCaseMult:0.00295,specialSSPSCaseMult:0.21991,annualAppDist:0.11269},
-{Month:9,ExistingAppDistMult:0.15007,ExistingPendDistMult:0.16451,UniqueCallersPerDayPerCase:0.03381,wrkdayBatchCaseMult:0.01315,wkendBatchCaseMult:0.00288,specialSSPSCaseMult:0.03532,annualAppDist:0.11705},
-{Month:10,ExistingAppDistMult:0.11214,ExistingPendDistMult:0.15029,UniqueCallersPerDayPerCase:0.02358,wrkdayBatchCaseMult:0.01230,wkendBatchCaseMult:0.00255,specialSSPSCaseMult:0.03938,annualAppDist:0.08115},
-{Month:11,ExistingAppDistMult:0.11883,ExistingPendDistMult:0.16557,UniqueCallersPerDayPerCase:0.01991,wrkdayBatchCaseMult:0.01107,wkendBatchCaseMult:0.00225,specialSSPSCaseMult:0.03495,annualAppDist:0.08210},
-{Month:12,ExistingAppDistMult:0.11329,ExistingPendDistMult:0.17860,UniqueCallersPerDayPerCase:0.01763,wrkdayBatchCaseMult:0.00939,wkendBatchCaseMult:0.00212,specialSSPSCaseMult:0.03029,annualAppDist:0.06919}
+{Month:1,ExistingAppDistMult:0.13501,ExistingPendDistMult:0.16813,UniqueCallersPerDayPerCase:0.01732,wrkdayBatchCaseMult:0.01045,wkendBatchCaseMult:0.00243,specialSSPSCaseMult:0.03120,annualAppDist:0.08637},
+{Month:2,ExistingAppDistMult:0.12235,ExistingPendDistMult:0.16383,UniqueCallersPerDayPerCase:0.01567,wrkdayBatchCaseMult:0.01016,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03123,annualAppDist:0.07537},
+{Month:3,ExistingAppDistMult:0.12238,ExistingPendDistMult:0.16671,UniqueCallersPerDayPerCase:0.01669,wrkdayBatchCaseMult:0.01019,wkendBatchCaseMult:0.00248,specialSSPSCaseMult:0.03374,annualAppDist:0.07807},
+{Month:4,ExistingAppDistMult:0.10787,ExistingPendDistMult:0.15189,UniqueCallersPerDayPerCase:0.01392,wrkdayBatchCaseMult:0.01167,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03491,annualAppDist:0.07490},
+{Month:5,ExistingAppDistMult:0.10287,ExistingPendDistMult:0.14525,UniqueCallersPerDayPerCase:0.01729,wrkdayBatchCaseMult:0.01411,wkendBatchCaseMult:0.00313,specialSSPSCaseMult:0.03546,annualAppDist:0.05721},
+{Month:6,ExistingAppDistMult:0.12076,ExistingPendDistMult:0.17132,UniqueCallersPerDayPerCase:0.02377,wrkdayBatchCaseMult:0.01314,wkendBatchCaseMult:0.00321,specialSSPSCaseMult:0.09807,annualAppDist:0.06799},
+{Month:7,ExistingAppDistMult:0.12785,ExistingPendDistMult:0.14110,UniqueCallersPerDayPerCase:0.02070,wrkdayBatchCaseMult:0.01290,wkendBatchCaseMult:0.00276,specialSSPSCaseMult:0.04457,annualAppDist:0.09790},
+{Month:8,ExistingAppDistMult:0.12096,ExistingPendDistMult:0.11412,UniqueCallersPerDayPerCase:0.02418,wrkdayBatchCaseMult:0.01672,wkendBatchCaseMult:0.00295,specialSSPSCaseMult:0.21991,annualAppDist:0.11269},
+{Month:9,ExistingAppDistMult:0.15007,ExistingPendDistMult:0.16451,UniqueCallersPerDayPerCase:0.03739,wrkdayBatchCaseMult:0.01315,wkendBatchCaseMult:0.00288,specialSSPSCaseMult:0.03532,annualAppDist:0.11705},
+{Month:10,ExistingAppDistMult:0.11214,ExistingPendDistMult:0.15029,UniqueCallersPerDayPerCase:0.01910,wrkdayBatchCaseMult:0.01230,wkendBatchCaseMult:0.00255,specialSSPSCaseMult:0.03938,annualAppDist:0.08115},
+{Month:11,ExistingAppDistMult:0.11883,ExistingPendDistMult:0.16557,UniqueCallersPerDayPerCase:0.01613,wrkdayBatchCaseMult:0.01107,wkendBatchCaseMult:0.00225,specialSSPSCaseMult:0.03495,annualAppDist:0.08210},
+{Month:12,ExistingAppDistMult:0.11329,ExistingPendDistMult:0.17860,UniqueCallersPerDayPerCase:0.01428,wrkdayBatchCaseMult:0.00939,wkendBatchCaseMult:0.00212,specialSSPSCaseMult:0.03029,annualAppDist:0.06919}
  ]);
+
+  // Fast lookup maps (built once, replacing repeated .filter() in hot paths)
+  // Populated after all tables are declared (see bottom of table section)
 
   const DAY_DIST_TABLE = Object.freeze([
 {Day:1,SSPSvBatch:0.07742,AppsOfBatch:0.11649},
@@ -488,6 +490,21 @@ const PER_DIST_TABLE = Object.freeze([
   {weekday:5,period:17,str:"4:00pm-4:30pm",dist:0.0319},
   {weekday:5,period:18,str:"4:30pm-5:00pm",dist:0.0000},
 ]);
+
+  // Fast O(1) lookups — built once from the frozen tables above
+  const BATCH_DATA_MAP = Object.fromEntries(BATCH_DATA_TABLE.map(e => [e.type, e]));
+  const MONTHLY_DIST_MAP = Object.fromEntries(MONTHLY_DIST_TABLE.map(e => [e.Month, e]));
+  const WEEKDAY_DIST_MAP = Object.fromEntries(WEEKDAY_DIST_TABLE.map(e => [e.Weekday, e]));
+  const PERC_MONTH_MAP = Object.fromEntries(PERC_MONTH_DIST_TABLE.map(e => [e.percOfMonth, e]));
+  const DAY_DIST_MAP = Object.fromEntries(DAY_DIST_TABLE.map(e => [e.Day, e]));
+  // PER_DIST keyed by weekday → only non-zero dist entries (pre-filtered)
+  const PER_DIST_MAP = {};
+  for (const e of PER_DIST_TABLE) {
+    if (e.dist > 0) {
+      if (!PER_DIST_MAP[e.weekday]) PER_DIST_MAP[e.weekday] = [];
+      PER_DIST_MAP[e.weekday].push(e);
+    }
+  }
 
 function updateSlider()
 {
@@ -659,12 +676,12 @@ function generateMaxWaitTime()
 
 function genRandPause()
 {
-	return math.floor(randRange(1,121)-1);
+	return Math.floor(randRange(0,120));
 }
 
 function getPeriods(weekday)
 {
-  return PER_DIST_TABLE.filter(d=>d.weekday===weekday && d.dist>0);
+  return PER_DIST_MAP[weekday] || [];
 }
 
 function periodStartSec(p)
@@ -774,16 +791,17 @@ function createAssn(type, readyDate, avgBatchTime)
 {
 // if the readyDate is a workday, generate randomly throughout the day otherwise genTime is 0 (start of day)
   const myTime = Math.floor(isWorkday(readyDate)?randRange(0,DAY_END-1):0);
+  const batchRow = BATCH_DATA_MAP[type];
   
   const myCase = {
       id:batchId++,
 	  type:type,
       genTime:myTime,
       genDate: new Date(readyDate),
-      handleTime:generateBatchHandleTime(Math.round(avgBatchTime * BATCH_DATA_TABLE.filter(e => e.type === type)[0].AHTMult * (randRange(900,1100)/1000))),
+      handleTime:generateBatchHandleTime(Math.round(avgBatchTime * batchRow.AHTMult * (randRange(900,1100)/1000))),
       worked:false,
       daysToWork:0,
-      priAddend:BATCH_DATA_TABLE.filter(e => e.type === type)[0].priority,
+      priAddend:batchRow.priority,
 	  get priority() {daysBetween(this.genDate, simDate) + this.priAddend}
       };
 	return myCase;
@@ -801,8 +819,8 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
 	let createdCases = 0;
 	let daysBack = 1;
 	
-	let maxApps = batchLogicEnabled?Math.round(backlog * (randRange(900,1100)/1000) * MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth() + 1)[0].ExistingAppDistMult):backlog;
-	let maxPends = batchLogicEnabled?Math.round(backlog * (randRange(900,1100)/1000) * MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth() + 1)[0].ExistingPendDistMult):backlog;
+	let maxApps = batchLogicEnabled?Math.round(backlog * (randRange(900,1100)/1000) * MONTHLY_DIST_MAP[simDate.getMonth() + 1].ExistingAppDistMult):backlog;
+	let maxPends = batchLogicEnabled?Math.round(backlog * (randRange(900,1100)/1000) * MONTHLY_DIST_MAP[simDate.getMonth() + 1].ExistingPendDistMult):backlog;
 	
 	// For simplicity, assume caseload has been constant, won't affect it too much
 	while (createdCases < backlog)
@@ -814,7 +832,7 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
 		let ageMult = oldBatchMult(daysBack, expectDays);
 		
 		dailyAssns = Math.min(remain, Math.round(dailyAssns*ageMult)); // assns from this day are the total original * multiplier by age or remaining, whichever is lower
-		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_TABLE.filter(e => e.type === "SSPS")[0].MaxRatToExp):ageMult;
+		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_MAP["SSPS"].maxRatToExp):ageMult;
 		let numSSPS = Math.min(dailyAssns, Math.round(getSSPSCases(backlogDate, currentCaseLoad) * ageMult * (randRange(900,1100)/1000))); // create SSPS assignments from that date
 			for(let i =0; i < numSSPS; i++)
 			{
@@ -822,7 +840,7 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
 				dailyAssns--;
 				createdCases++;
 			}
-		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_TABLE.filter(e => e.type === "Pend")[0].MaxRatToExp):ageMult;
+		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_MAP["Pend"].maxRatToExp):ageMult;
 		let numPends = Math.min(maxPends, dailyAssns, Math.round(getPendCases(backlogDate, currentCaseLoad) * ageMult * (randRange(900,1100)/1000))); // create Pending Case assignments from that date
 		for(let i =0; i < numPends; i++)
 			{
@@ -831,7 +849,7 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
 				maxPends--;
 				createdCases++;
 			}
-		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_TABLE.filter(e => e.type === "App")[0].MaxRatToExp):ageMult;
+		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_MAP["App"].maxRatToExp):ageMult;
 		let numApps = Math.min(maxApps, dailyAssns, Math.round(getAppCases(backlogDate, currentCaseLoad) * ageMult * (randRange(900,1100)/1000))); // create new App assignments from that date
 		for(let i =0; i < numApps; i++)
 			{
@@ -841,7 +859,7 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
 				createdCases++;
 				uninitiatedApps++;
 			}
-		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_TABLE.filter(e => e.type === "Other")[0].MaxRatToExp):ageMult;
+		ageMult = batchLogicEnabled?oldBatchMult(daysBack, expectDays*BATCH_DATA_MAP["Other"].maxRatToExp):ageMult;
 		let numOther = Math.max(dailyAssns,0);
 		for(let i =0; i < numOther; i++) // create generic Other assignments from that date
 			{
@@ -854,7 +872,7 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
   }
 
   BATCH_DATA_TABLE.filter(t => t.newType).forEach(a => {
-		const dayMult = simDate.getDate()===3?a.specialSSPSCaseMult:isWeekday(simDate)?a.weekdaySplit:a.workDaySplit;
+		const dayMult = simDate.getDate()===3?a.specialSSPSCaseMult:isWeekday(simDate)?a.weekdaySplit:a.weekendSplit;
 		const assignmentCount = Math.round(newCases * dayMult);
 
 		for (let i = 0; i < assignmentCount; i++) 
@@ -1095,16 +1113,16 @@ function isHoliday(date)
 
 function getBatchMult(dt)
 {
-	let result = PERC_MONTH_DIST_TABLE.filter(e => e.percOfMonth === monthPercentage(simDate))[0].batchDistMult;
-    result *= WEEKDAY_DIST_TABLE.filter(e => e.Weekday === getWeekday(dt))[0].batchMult;
+	let result = PERC_MONTH_MAP[monthPercentage(simDate)].batchDistMult;
+    result *= WEEKDAY_DIST_MAP[getWeekday(dt)].batchMult;
     
     if (isWeekday(dt))
     {
-        result *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()+1)[0].wrkdayBatchCaseMult;
+        result *= MONTHLY_DIST_MAP[simDate.getMonth()+1].wrkdayBatchCaseMult;
     }
     else
     {
-        result *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()+1)[0].wkendBatchCaseMult;
+        result *= MONTHLY_DIST_MAP[simDate.getMonth()+1].wkendBatchCaseMult;
     }
 	return result;
 }
@@ -1120,19 +1138,20 @@ function getAppCases(dt, caseLoad, newCases = false)
 	let todayApps = caseLoad;
 	if(newCases)
 	{
-		let expectedAdditionalApps = Math.round(caseLoad * (1-caseLoadMultiplier) * MONTHLY_DIST_TABLE.filter(e => e.Month === dt.getMonth()+1)[0].annualAppDist); // change in approved cases expected this month
-		let expiringCases = Math.round(caseLoad * MONTHLY_DIST_TABLE.filter(e => e.Month === dt.getMonth()+1)[0].annualAppDist); // number of cases set to expire this month
+		const monthData = MONTHLY_DIST_MAP[dt.getMonth()+1];
+		let expectedAdditionalApps = Math.round(caseLoad * (1-caseLoadMultiplier) * monthData.annualAppDist);
+		let expiringCases = Math.round(caseLoad * monthData.annualAppDist);
 		let expectedReapps = Math.round(expiringCases * reappMult);
-		let expectedReapproved = Math.round(expectedReapps * reAppApprovalRate); // number of reapplications expected to be approved
-		let newlyApproved = expectedAdditionalApps + (expiringCases - expectedReapproved); // total newly approved apps expected to result in expected change
-		let requiredNewApps = Math.round(newlyApproved/appApprovalRate); // number of new apps required to end in newlyApproved
+		let expectedReapproved = Math.round(expectedReapps * reAppApprovalRate);
+		let newlyApproved = expectedAdditionalApps + (expiringCases - expectedReapproved);
+		let requiredNewApps = Math.round(newlyApproved/appApprovalRate);
 		let dailyAverage = Math.round(requiredNewApps/daysInMonth(dt));
-		todayApps = Math.round((randRange(900,1100)/1000) * dailyAverage * PERC_MONTH_DIST_TABLE.filter(e => e.percOfMonth === monthPercentage(dt))[0].batchDistMult);
+		todayApps = Math.round((randRange(900,1100)/1000) * dailyAverage * PERC_MONTH_MAP[monthPercentage(dt)].batchDistMult);
 	}
 	else
 	{
 		myMult = getBatchMult(dt);
-		myMult *= DAY_DIST_TABLE.filter(e => e.Day === dt.getDate())[0].AppsOfBatch;
+		myMult *= DAY_DIST_MAP[dt.getDate()].AppsOfBatch;
 		myMult *= caseLoadMultiplier * (randRange(900,1100)/1000);
 	}
 	
@@ -1140,19 +1159,18 @@ function getAppCases(dt, caseLoad, newCases = false)
 }
 function getSSPSCases(dt, caseLoad)
 {
-	// if it is the 3rd of the month use the Special attributes, otherwise use the normal SSPS attributes
 	let myMult = 1.0;
 	if (dt.getDate() === 3)
 	{
-		myMult *= PERC_MONTH_DIST_TABLE.filter(e => e.percOfMonth === monthPercentage(simDate))[0].batchDistMult;
-		myMult *= WEEKDAY_DIST_TABLE.filter(e => e.Weekday === getWeekday(dt))[0].batchMult;
-		myMult *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()+1)[0].specialSSPSCaseMult;
+		myMult *= PERC_MONTH_MAP[monthPercentage(simDate)].batchDistMult;
+		myMult *= WEEKDAY_DIST_MAP[getWeekday(dt)].batchMult;
+		myMult *= MONTHLY_DIST_MAP[simDate.getMonth()+1].specialSSPSCaseMult;
 	}
 	else
 	{
 		myMult = getBatchMult(dt);
 	}
-	myMult *= DAY_DIST_TABLE.filter(e => e.Day === dt.getDate())[0].SSPSvBatch;
+	myMult *= DAY_DIST_MAP[dt.getDate()].SSPSvBatch;
 	
 	return Math.round(myMult * caseLoad * (randRange(900,1100)/1000));
 }
@@ -1160,8 +1178,7 @@ function getSSPSCases(dt, caseLoad)
 // Only used for existing batch
 function getPendCases(dt, caseLoad)
 {
-// getAppCases for the same date and caseLoad then multiply by expPendRatio and divide by expAppRatio for the month
-	let myRecord = MONTHLY_DIST_TABLE.filter(e => e.Month === dt.getMonth()+1)[0];
+	let myRecord = MONTHLY_DIST_MAP[dt.getMonth()+1];
 	return Math.round(getAppCases(dt, caseLoad, false) * (myRecord.ExistingPendDistMult / myRecord.ExistingAppDistMult) * (randRange(900,1100)/1000));
 }
 function getOtherCases(dt, caseLoad)
@@ -1182,16 +1199,12 @@ return addend + Math.round(myMult * caseLoad);
 
 function getPhoneMult(dt)
 {
-       let result = WEEKDAY_DIST_TABLE.filter(e => e.Weekday === getWeekday(dt))[0].callMult;
-        result *= PERC_MONTH_DIST_TABLE.filter(e => e.percOfMonth === monthPercentage(simDate))[0].callDistMult;
-        result *= MONTHLY_DIST_TABLE.filter(e => e.Month === simDate.getMonth()+1)[0].UniqueCallersPerDayPerCase;
-		// special case, if the date is december 24th multiply result by .45
-		if(dt.getDate() == 24)
+       let result = WEEKDAY_DIST_MAP[getWeekday(dt)].callMult;
+        result *= PERC_MONTH_MAP[monthPercentage(simDate)].callDistMult;
+        result *= MONTHLY_DIST_MAP[simDate.getMonth()+1].UniqueCallersPerDayPerCase;
+		if(dt.getDate() == 24 && dt.getMonth() === 12)
 		{
-			if(dt.getMonth() === 12)
-			{
-				result = Math.round(.45 * result);
-			}
+			result = Math.round(.45 * result);
 		}
 	return result;
 }
@@ -1275,7 +1288,7 @@ function processApp(appCase)
 	appCase.worked = true;
 	uninitiatedApps--;
 	let myApprovalRate = 0;
-	let myMonthData = MONTHLY_DIST_TABLE.filter(e => e.Month = simDate.getMonth()+1)[0];
+	let myMonthData = MONTHLY_DIST_MAP[simDate.getMonth()+1];
 	
 	const index = availBatch.indexOf(appCase);
 	if (index !== -1) 
@@ -1330,14 +1343,16 @@ function processPend(pendCase)
 
 function runSimulation()
 {
+  /*
   const btn=document.getElementById('runBtn');
   btn.disabled=true;
   document.getElementById('status').textContent='Initializing simulation...';
   document.getElementById('progBar').style.display='block';
   document.getElementById('progFill').style.width='0%';
   document.getElementById('resultsSection').style.display='none';
+  */
  
-// TODO: finished all tracking for daily/monthly data
+// TODO: finish all tracking for daily/monthly data
 
   const myDates = generateDateList();
   // iterate through myDates and run simulation for each day updating stats for each day
@@ -1424,7 +1439,7 @@ function runSimulation()
           }
           else if (isWeekday(simDate) && isHoliday(simDate)) // if it is a normal weekday but a holiday, 20% of normal calls this day will be added to next workdays number
           {
-            carryCalls +=  Math.round(myDay.phonesMult * 0.2 * currentCaseLoad);
+            carryCalls +=  Math.round(myDay.phonesMult * 0.1 * currentCaseLoad);
           }
 		 
           // if it is a workday, load calls into the calls queue for the day, otherwise only load batch into the batch queue
@@ -1491,7 +1506,7 @@ function runSimulation()
 						            waitTime:null,
 						            maxFDs:call.maxFDs-1,
 						            maxRecalls:call.maxRecalls,
-						            callBackIn:Math.floor((call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2))))+30),	
+						            callBackIn:Math.floor(call.maxWaitTime*(1+(1-Math.pow((14400-call.maxWaitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-currentTime)/LINE_CLOSE,2)))+30),	
 						            fdCallBackIn:Math.floor(randRange(20,60))
 						            };
 				            if(index === -1)
@@ -1580,7 +1595,7 @@ function runSimulation()
 			            }
 			            myDay.numCalls++;
 		            }
-					else if ((c.maxRecalls > 0) && (rand() < .5)) // they won't call back today but might tomorrow 50%
+					else if ((c.maxRecalls > 0) && (rand() < .2)) // they won't call back today but might tomorrow
 					{
 						carryCalls++; // they will call back tomorrow
 					}
@@ -1806,10 +1821,12 @@ function runSimulation()
 
                 if(totalIterations%5000===0)
 	            {
-                  const pct=Math.min(95,10+85*((currentTime+((simDay-1)*SIM_END))/(maxSimDays*SIM_END)));
-                  document.getElementById('progFill').style.width=pct+'%';
+                  console.log(5 + 95*((currentTime+((simDay-1)*SIM_END))/(maxSimDays*SIM_END)));
+                  /*
+				  document.getElementById('progFill').style.width=pct+'%';
                   document.getElementById('status').textContent=`Simulating... ${fmtClock(currentTime)} (${totalIterations.toLocaleString()} steps)`;
-                }
+                */
+				}
           }
 
           // after 5pm, disconnect remaining calls  
@@ -1817,7 +1834,7 @@ function runSimulation()
           {
             c.abandoned=true;
             myDay.callsAbandoned++;
-            if(rand() <= 0.5) // Half will call back tomorrow
+            if(rand() <= 0.3) // Some will call back tomorrow
             {
                 carryCalls++;
             }
@@ -1845,9 +1862,10 @@ function runSimulation()
   // continue running (potentially with some options changed or modified) or to reset the Simulator
   // Data should be daily data points for the run, need to update this part
   
+  /*
   document.getElementById('progFill').style.width='100%';
   document.getElementById('status').textContent=`Simulation complete. ${iterations.toLocaleString()} steps processed.`;
-
+*/
   // render results
   renderTable(myDates);
   
@@ -1877,7 +1895,7 @@ function runSimulation()
       next=Math.min(next,c.callTime+c.maxWaitTime);
     }
     if(next===Infinity || next===currentTime) next=currentTime+MIN_STEP;
-    return Math.ceil(Math.min(next,SIM_END));
+    return Math.min(Math.ceil(next), SIM_END);
   }
 
 // TODO: make this better.
