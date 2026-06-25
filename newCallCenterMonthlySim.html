@@ -292,7 +292,7 @@
 
 
     // simulation state
-  const activeCallQueue=[]; // calls that have arrived and are waiting
+  let activeCallQueue=[]; // calls that have arrived and are waiting
   let callQueueIdx=0; // pointer into allCalls
   let batchQueueIdx=0; // pointer into batchQueue
   const availBatch=[]; // batch cases available
@@ -306,7 +306,6 @@
   let caseLoadMultiplier = 0;
   let inRun = false;
 
-  const uniqueCallers = new Set();
   let currentCaseLoad = 0;
   let actualCaseLoad = 0;
   let uninitiatedApps = 0;
@@ -1380,8 +1379,9 @@ function runSimulation()
   document.getElementById('status').textContent='Running simulation...';
 
   inRun = true;
- while(simDate < simEndDate)
+ while(simDate <= new Date(simEndDate))
  {
+		  const uniqueCallers = new Set();
           let myDay = myDates.filter(e=>e.id === simDay)[0]; 
           const weekday = getWeekday(simDate);
           const workDayIs = isWorkday(simDate);
@@ -1461,9 +1461,6 @@ function runSimulation()
 		  
 		  // Get all the starting metrics for the day
 		  myDay.backlogStart = availBatch.length;
-		  myDay.oldestBatch = daysBetween(availBatch.filter(e => !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
-		  myDay.uninitiatedApps = uninitiatedApps;
-		  myDay.oldestApp = daysBetween(availBatch.filter(e => e.type === "App" && !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
 		  myDay.numWorkers = numWorkers;
 		  myDay.caseLoadStart = actualCaseLoad;
 		  
@@ -1834,19 +1831,23 @@ function runSimulation()
           {
             c.abandoned=true;
             myDay.callsAbandoned++;
-            if(rand() <= 0.3) // Some will call back tomorrow
+            if(rand() <= 0.3) // Some will call back the next day
             {
                 carryCalls++;
             }
           }
+		  activeCallQueue = [];
 		 
 		// End of day stats
 		myDay.backlogEnd = availBatch.length;
 		myDay.approvedCases = actualCaseLoad;
 		myDay.totalWorkerTime = workers.reduce((s,w)=>s+w.timeInCall+w.timeInBatch+w.timeInIdle,0);
-		myDay.avgCallTimeWorker = workers.reduce((s,w)=>s+w.timeInCall,0)/myDay.numWorkers;
-		myDay.avgBatchTimeWorker = workers.reduce((s,w)=>s+w.timeInBatch,0)/myDay.numWorkers;
-		myDay.avgIdleTimeWorker = workers.reduce((s,w)=>s+w.timeInIdle,0)/myDay.numWorkers;
+		if(myDay.numWorkers > 0)
+		{
+			myDay.avgCallTimeWorker = workers.reduce((s,w)=>s+w.timeInCall,0)/myDay.numWorkers;
+			myDay.avgBatchTimeWorker = workers.reduce((s,w)=>s+w.timeInBatch,0)/myDay.numWorkers;
+			myDay.avgIdleTimeWorker = workers.reduce((s,w)=>s+w.timeInIdle,0)/myDay.numWorkers;
+		}
 		myDay.avgSpeed=myDay.callsAnswered > 0?Math.round(myDay.totalWaitTime/myDay.callsAnswered):0;
 		myDay.uniqueAnswered = uniqueCallers.size; // ?
 		myDay.callsToQueue = myDay.callsAnswered + myDay.callsAbandoned;
@@ -1870,7 +1871,7 @@ function runSimulation()
   renderTable(myDates);
   
 
-  btn.disabled=false;
+  //btn.disabled=false;
 }
 
   function getNextEventTime()
