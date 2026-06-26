@@ -209,9 +209,10 @@
 // Just an FYI this was made by Andrew so you know it is hot garbage
 /*
  TODO List: 
-	Add additional data tracking:
-	Add export to csv/excel functions
+	Add additional data tracking?
+	Add export excel function?
 	Add ability to continue projecting or reset simulation
+	Consider limiting to 1 month at a time, even that takes forever.... Can't imagine more than one month.
 */
 
   const DAY_END=32400; // 9 hours after start, start = 8am = 0, end = 5pm = 32400 seconds
@@ -227,6 +228,7 @@
   
   const monSelector = document.getElementById('simMonths');
   const callActPerc = document.getElementById('callActivePct');
+  const callActDisplay = document.getElementById('callActivePctVal');
   const percentDisplay = document.getElementById('percentDisplay');
   const reappPercentDisplay = document.getElementById('reappPercentDisplay');
   const approvalPercentDisplay = document.getElementById('approvalPercentDisplay');
@@ -241,6 +243,10 @@
   let simAvgBatchTime = 1627;
   let simNumWorkers = 100;
   let simBacklogCases = 0;
+  let callActPct  = 1.0;
+  
+  let backlogCases = 0;
+  let carryCalls = 0;
 
   let startMonth = new Date().getMonth() + 1;
   let startYear = new Date().getFullYear();
@@ -261,7 +267,7 @@
   // updateThis simDate must be based on selected month and year
   let simDate = new Date(today.getFullYear(), today.getMonth(),1);
   let simEndDate = getLastDate(addMonths(simDate, simMonths));
-
+  let simDateID = 0;
   let currentTime = 0;
   let callerId = 0;
   let id=0;
@@ -305,6 +311,8 @@
   let appApproval = 0;
   let caseLoadMultiplier = 0;
   let inRun = false;
+  let simulationData = []; // continue to add data to this during consecutive runs unless simultation is reset
+  let simDay= 1;
 
   let currentCaseLoad = 0;
   let actualCaseLoad = 0;
@@ -554,7 +562,7 @@ startMonthSelect.addEventListener('change', function () { startMonth = Number(th
 startYearSelect.addEventListener('change', function () {startYear = Number(this.value); updateStartDate();});
 
 monSelector.addEventListener('change',function(){simMonths = parseInt(this.value)-1;  simEndDate = getLastDate(addMonths(simDate, simMonths)); });
-callActPerc.addEventListener('input',function(){callActPerc.textContent=this.value+'%';});
+callActPerc.addEventListener('input',function(){callActDisplay.textContent=this.value+'%'; callActPct = (this.value)/100; });
 
 // start of real functions
 
@@ -659,7 +667,7 @@ function generateMaxWaitTime()
   let x = rand();
   let y = rand();
   let z = rand();
-  // NEW MOD
+  /*// NEW MOD
   let r = rand();
 	if (r < .25)
 	{
@@ -669,7 +677,7 @@ function generateMaxWaitTime()
 	{
 		return Math.floor(randRange(1800,10800));
 	}
-  // END MOD
+  // END MOD */
   return Math.round(((Math.pow(z,4)*160)+(Math.pow(x,2)*45)+(x*30)+(Math.pow(y,2)*10))*60);
 }
 
@@ -765,10 +773,10 @@ function generateCalls(numCalls,weekday,avgHandleTime)
 		disconnect:false,
         answerTime:null,
         waitTime:null,
-	maxFDs:Math.floor(randRange(0,16)),
-	maxRecalls:Math.floor(randRange(0,8)),
-	callBackIn:Math.floor(waitTime*(1+(1-Math.pow((14400-waitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-callStart)/LINE_CLOSE,2)))+30),	
-	fdCallBackIn:Math.floor(randRange(20,60))
+		maxFDs:Math.floor(1 + (16 * Math.pow(rand(), 3))), // this needs to be weighted distribution up to 16 but most commonly under 4
+		maxRecalls:Math.floor(6 * Math.pow(rand(), 4)), // this needs to be weighted distribution up to 6 but most commonly 1 or 0
+		callBackIn:Math.floor(waitTime*(1+(1-Math.pow((14400-waitTime)/14400,2)) + (1-Math.pow((LINE_CLOSE-callStart)/LINE_CLOSE,2)))+30),	
+		fdCallBackIn:Math.floor(randRange(20,300))
       });
     }
   }
@@ -1215,7 +1223,7 @@ function generateDateList()
 	let thisDayOf = 0;
 	let thisWorkdayOf = 0;
 	let curMon = iDate.getMonth();
-    let simDateID = 0;
+
 
 	while(iDate <= simEndDate)
 	{
@@ -1361,26 +1369,37 @@ function runSimulation()
 	currentCaseLoad = startingCaseLoad; // currentCaseLoad will incorporate unworked applications that are expected to be approved
 	actualCaseLoad = startingCaseLoad; // actualCaseLoad is the actual current cases approved
 	uninitiatedApps = 0;
+	simulationData = [];
+	batchQueue = [];
+	simBacklogCases = parseInt(document.getElementById('backlogCases').value)||0;
+	backlogCases = simBacklogCases;
+	carryCalls = 0;  // this is used to add calls to the next workdays call queue for % if unanswered calls and % of weekday holiday calls
+	simDay = 1;
+	simDateID = 0;
+	
   }
-  let simDay = 1; // used for myDates.id
   const maxSimDays = Math.floor(Math.abs(simEndDate - simDate) / 86400000)+1;
 
+// these can be changed between pieces of consecutive runs
   simAvgCallTime = parseInt(document.getElementById('avgCallTime').value)||2273; 
   simAvgBatchTime = parseInt(document.getElementById('avgBatchTime').value)||1627;
   simNumWorkers = parseInt(document.getElementById('numWorkers').value)||100;
-  simBacklogCases = parseInt(document.getElementById('backlogCases').value)||0;
-  
-  let backlogCases = simBacklogCases;
-  let carryCalls = 0; // this is used to add calls to the next workdays call queue for unanswered calls and 20% of weekday holiday calls
+  callActivePct = parseInt(document.getElementById('callActivePct').value)/100;
+  firstCaseCall = document.querySelector('input[name="firstCase"]:checked').value==='yes';
+  overtimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value==='yes';
+  batchLogicEnabled = document.querySelector('input[name="batchLogicEnabled"]:checked').value==='yes';
+ 
 
 // this all need to be within a loop that runs the entire simulation day by day, rolling data over to the next day
 
+  /*
   document.getElementById('progFill').style.width='10%';
   document.getElementById('status').textContent='Running simulation...';
+  */
 
   inRun = true;
- while(simDate <= new Date(simEndDate))
- {
+   while(simDate <= new Date(simEndDate))
+   {
 		  const uniqueCallers = new Set();
           let myDay = myDates.filter(e=>e.id === simDay)[0]; 
           const weekday = getWeekday(simDate);
@@ -1398,7 +1417,7 @@ function runSimulation()
 			batchQueue = generateBatch(backlogCases,0,avgBatchTime, batchQueue, simDate);
 			backlogCases = 0;
 			// advance new batch into available batch backlog
-            while(batchQueueIdx < batchQueue.length && new Date(batchQueue[batchQueueIdx].genDate) <= new Date(simDate) && batchQueue[batchQueueIdx].genTime<=currentTime)
+            while((batchQueueIdx < batchQueue.length) && (new Date(batchQueue[batchQueueIdx].genDate) <= new Date(simDate)) && (((new Date(batchQueue[batchQueueIdx].genDate) < new Date(simDate))?-28800:batchQueue[batchQueueIdx].genTime)<=currentTime))
             {
 				availBatch.push(batchQueue[batchQueueIdx]);
 				batchQueueIdx++;
@@ -1463,9 +1482,14 @@ function runSimulation()
 		  myDay.backlogStart = availBatch.length;
 		  myDay.numWorkers = numWorkers;
 		  myDay.caseLoadStart = actualCaseLoad;
+		  myDay.numCalls = numCalls;
+		  myDay.oldestBatch = daysBetween(availBatch.filter(e => !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
+		  myDay.uninitiatedApps = uninitiatedApps;
+		  myDay.oldestApp = daysBetween(availBatch.filter(e => e.type === "App" && !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
 		  
-          while(currentTime < SIM_END && iterations < MAX_ITER)
-          {
+		  
+        while(currentTime < SIM_END && iterations < MAX_ITER && numWorkers > 0)
+        {
                 iterations++;
                 totalIterations++;
                 // advance new calls into active queue if there is room
@@ -1527,27 +1551,18 @@ function runSimulation()
 				}
 
                 // advance new batch into available batch backlog
-                while(batchQueueIdx < batchQueue.length && new Date(batchQueue[batchQueueIdx].genDate) <= new Date(simDate) && batchQueue[batchQueueIdx].genTime<=currentTime)
+                while((batchQueueIdx < batchQueue.length) && (new Date(batchQueue[batchQueueIdx].genDate) <= new Date(simDate)) && (((new Date(batchQueue[batchQueueIdx].genDate) < new Date(simDate))?-28800:batchQueue[batchQueueIdx].genTime)<=currentTime))
                {
                   availBatch.push(batchQueue[batchQueueIdx]);
                   batchQueueIdx++;
                 }
-				// Available batch needs to be sorted using prioritization if batchLogic is Enabled, otherwise will be oldest first
-				availBatch.sort((a,b)=> {
-				if((a.priority !== b.priority) && batchLogicEnabled) 
+				// Remove all processed items, all unworked cases should remain in availBatch, anything not ready yet should stay in batchQueue
+				if (batchQueueIdx > 0) 
 				{
-					return b.priority - a.priority;
-				} 
-				if(a.genDate !== b.genDate) 
-				{
-					return new Date(a.genDate) - new Date(b.genDate);
+					batchQueue.splice(0, batchQueueIdx);
+					batchQueueIdx = 0;
+					// Only resort batch based on priority once per day, otherwise simulation is super slow
 				}
-				if(a.genTime !== b.genTime) 
-				{
-					return a.genTime-b.genTime;
-				} 
-				return a.id-b.id
-				});
 
                 // expire calls that have exceeded maxWaitTime (abandoned calls)
                 //  insert new callback for the caller if they are going to try and call back
@@ -1608,94 +1623,92 @@ function runSimulation()
 
                 for(const w of sortedWorkers)
 	            {
-                  if(w.onBreak)
-	              {
-                    if(currentTime>=w.breakEndTime)
-		            {
-                      w.onBreak=false;
-                      w.nextAvailableTime=currentTime;
-                    }
-                    continue;
-                  }
-                  if(w.nextAvailableTime>currentTime) 
-	            {
-		            continue;
-	            }
+					if(w.onBreak)
+					{
+						if(currentTime >= w.breakEndTime)
+						{
+						  w.onBreak=false;
+						  w.nextAvailableTime=currentTime;
+						}
+						continue;
+					}
+					if(w.nextAvailableTime > currentTime) 
+					{
+						continue;
+					}
 
-	            // potential short pause between activities
-	            // if already paused only slight chance of continuing pause
-	            if(!w.onPause)
-	            {
-		            if(rand() < 0.75)
-		            {
-			            w.OnPause = true;
-			            w.state = 'idle';
-			            w.nextAvailableTime+=genRandPause();
-			            w.timeInIdle+=w.nextAvailableTime-currentTime;
-		            }
-	            }
-	            else // they are on pause
-	            {
-		            if(rand() < 0.3) // continue pause
-		            {
-			            w.nextAvailableTime+=genRandPause();
-			            w.timeInIdle+=w.nextAvailableTime-currentTime;
-		            }
-		            else
-		            {
-			            w.OnPause = false;
-		            }
-	            }
-
-                  if(w.nextAvailableTime>currentTime) 
-	              {
-		            continue;
-	              }
+					// potential short pause between activities
+					// if already paused only slight chance of continuing pause
+					if(!w.onPause)
+					{
+						if(rand() < 0.75)
+						{
+							w.OnPause = true;
+							w.state = 'idle';
+							w.nextAvailableTime+=genRandPause();
+							w.timeInIdle+=w.nextAvailableTime-currentTime;
+						}
+					}
+					else // they are on pause
+					{
+						if(rand() < 0.3) // continue pause
+						{
+							w.nextAvailableTime+=genRandPause();
+							w.timeInIdle+=w.nextAvailableTime-currentTime;
+						}
+						else
+						{
+							w.OnPause = false;
+						}
+					}
+					if(w.nextAvailableTime>currentTime) 
+					{
+						continue;
+					}
 	  
-                  // check if due for break/lunch before pulling a case
-                  let tookBreak = false;
+					// check if due for break/lunch before pulling a case
+					let tookBreak = false;
 
-                  if(!w.break1Done && (currentTime >= (w.break1Sched-900)))
-	              {
-                    w.break1Done=true;
-                    w.onBreak=true;
-                    w.breakEndTime=currentTime+900+genRandPause();
-                    w.nextAvailableTime=w.breakEndTime;
-                    w.state='break';
-                    tookBreak=true;
-                  } 
-	              else if(!w.lunchDone && currentTime>=(w.lunchSched-900))
-	              {
-                    w.lunchDone=true;
-                    w.onBreak=true;
-                    w.breakEndTime=currentTime+3600+genRandPause();
-                    w.nextAvailableTime=w.breakEndTime;
-                    w.state='lunch';
-                    tookBreak=true;
-                  } 
-	              else if(!w.break2Done && currentTime>=(w.break2Sched-900))
-	              {
-                    w.break2Done=true;
-                    w.onBreak=true;
-                    w.breakEndTime=currentTime+900+genRandPause();
-                    w.nextAvailableTime=w.breakEndTime;
-                    w.state='break';
-                    tookBreak=true;
-                  }
+					if(!w.break1Done && (currentTime >= (w.break1Sched-900)))
+					{
+						w.break1Done=true;
+						w.onBreak=true;
+						w.breakEndTime=currentTime+900+genRandPause();
+						w.nextAvailableTime=w.breakEndTime;
+						w.state='break';
+						tookBreak=true;
+					} 
+					else if(!w.lunchDone && currentTime>=(w.lunchSched-900))
+					{
+						w.lunchDone=true;
+						w.onBreak=true;
+						w.breakEndTime=currentTime+3600+genRandPause();
+						w.nextAvailableTime=w.breakEndTime;
+						w.state='lunch';
+						tookBreak=true;
+					} 
+					else if(!w.break2Done && currentTime>=(w.break2Sched-900))
+					{
+						w.break2Done=true;
+						w.onBreak=true;
+						w.breakEndTime=currentTime+900+genRandPause();
+						w.nextAvailableTime=w.breakEndTime;
+						w.state='break';
+						tookBreak=true;
+					}
+					if(tookBreak) 
+					{
+						continue;
+					}
 
-                  if(tookBreak) 
-	              {
-		            continue;
-	              }
+					// attempt to take work
+					let tookWork=false;
 
-                  // attempt to take work
-                  let tookWork=false;
+					// first case call logic
+					const wantsCall=((firstCaseCall && !w.hasFirstCall) || (rand()<=callActivePct));
 
-                  // first case call logic
-                  const wantsCall=((firstCaseCall && !w.hasFirstCall) || (rand()<=callActivePct));
-
-                  if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= SIM_END))
-	              {
+					if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= SIM_END))
+					{
 					// ~30% of calls are for batch received, the batch case is worked during the call
 					// random chance per call to remove one random ready to work case from batch.
 					// the handle time of the call will be the max of the original call handle time or the selected batch case handle time.
@@ -1774,69 +1787,63 @@ function runSimulation()
 				            }
 				            myDay.numCalls++;
 			            }
-                  } 
-	              else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= SIM_END) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
-	              {
-                    const bc=availBatch.shift();
-					if(bc.type === "App")
+					} 
+					else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= SIM_END) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
 					{
-						processApp(bc);
+						const bc=availBatch.shift();
+						if(bc.type === "App")
+						{
+							processApp(bc);
+						}
+						else if(bc.type === "Pend")
+						{
+							processPend(bc);
+						}
+						bc.daysToWork = daysBetween(bc.genDate, simDate);
+						bc.worked=true;
+						myDay.batchWorked++;
+						w.timeInBatch+=bc.handleTime;
+						w.nextAvailableTime=currentTime+bc.handleTime;
+						w.batchCount++;
+						w.state='batch';
+						tookWork=true;
 					}
-					else if(bc.type === "Pend")
+					if(!tookWork)
 					{
-						processPend(bc);
+						// worker is idle - track idle time until next step
+						w.state='idle';
 					}
-					bc.daysToWork = daysBetween(bc.genDate, simDate);
-                    bc.worked=true;
-                    myDay.batchWorked++;
-                    w.timeInBatch+=bc.handleTime;
-                    w.nextAvailableTime=currentTime+bc.handleTime;
-                    w.batchCount++;
-                    w.state='batch';
-                    tookWork=true;
-                  }
-
-                  if(!tookWork)
-	              {
-                    // worker is idle - track idle time until next step
-                    w.state='idle';
-                  }
                 }
-
                 // track idle time for this step
                 const nextT=getNextEventTime();
                 const stepDur=nextT-currentTime;
                 for(const w of workers)
 	            {
-                  if(!w.onBreak && w.nextAvailableTime<=currentTime && w.state==='idle')
-	              {
-                    w.timeInIdle+=stepDur;
-                  }
+					if(!w.onBreak && w.nextAvailableTime <= currentTime && w.state==='idle')
+					{
+						w.timeInIdle+=stepDur;
+					}
                 }
 
                 currentTime=nextT;
-
-                if(totalIterations%5000===0)
+				
+                if(totalIterations%5000===0) // This is just to know it is still working...
 	            {
-                  console.log(5 + 95*((currentTime+((simDay-1)*SIM_END))/(maxSimDays*SIM_END)));
-                  /*
-				  document.getElementById('progFill').style.width=pct+'%';
-                  document.getElementById('status').textContent=`Simulating... ${fmtClock(currentTime)} (${totalIterations.toLocaleString()} steps)`;
-                */
+					console.log(5 + 95*((currentTime+((simDay-1)*SIM_END))/(maxSimDays*SIM_END)));
 				}
-          }
+        }
 
-          // after 5pm, disconnect remaining calls  
-          for(const c of activeCallQueue)
-          {
+        // after 5pm, disconnect remaining calls  
+        for(const c of activeCallQueue)
+        {
             c.abandoned=true;
             myDay.callsAbandoned++;
             if(rand() <= 0.3) // Some will call back the next day
             {
                 carryCalls++;
             }
-          }
-		  activeCallQueue = [];
+        }
+		activeCallQueue = [];
 		 
 		// End of day stats
 		myDay.backlogEnd = availBatch.length;
@@ -1859,19 +1866,17 @@ function runSimulation()
   }
 
   // Here the simulation run is complete, get table ready for all data and ready for export data, or continue running with modified parameters.
-  // TODO: at this point the data from the current run should be added to the data table, buttons to export to excel should become visible, and certain inputs should be locked with the option to
-  // continue running (potentially with some options changed or modified) or to reset the Simulator
-  // Data should be daily data points for the run, need to update this part
   
-  /*
-  document.getElementById('progFill').style.width='100%';
-  document.getElementById('status').textContent=`Simulation complete. ${iterations.toLocaleString()} steps processed.`;
-*/
+
+	simulationData.push(...myDates); // addData to current simulationData
   // render results
   renderTable(myDates);
   
-
-  //btn.disabled=false;
+  // TODO: modify this, need buttons to appear to continue simulation, export data, or reset and to hide the run simulation button
+  // disable controls for backlogged cases, current approved cases, start Month, and start year
+  // if resetting, set inRun = false and enable all controls, clear simulationData and hide the continue and reset buttons, show the run simulation button
+  // if continuing, leaces inRun as true and calls runSimulation again
+  // export data calls exportToCSV which exports the entire run data to a CSV file
 }
 
   function getNextEventTime()
@@ -1935,6 +1940,38 @@ function renderTable(data)
     document.getElementById("resultsTable").innerHTML = html;
 	document.getElementById('resultsSection').style.display = 'block';
 }
+
+function exportToCSV() 
+{
+    if (simulationData.length === 0) 
+	{
+        alert("Please generate data first.");
+        return;
+    }
+    const headers = Object.keys(simulationData[0]);
+    const csvRows = [];
+    // Add header row
+    csvRows.push(headers.join(','));
+    // Add data rows
+    for (const row of simulationData) 
+	{
+        const values = headers.map(header => {
+			const escaped = ('' + row[header]).replace(/"/g, '\\"');
+			return `"${escaped}"`;
+			});
+        csvRows.push(values.join(','));
+    }
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'call_center_projections.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 
 </script>
 </body>
