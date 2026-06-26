@@ -24,7 +24,7 @@
   .radio-group{display:flex;gap:8px}
   .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#222;margin:0;font-weight:400}
   .radio-group input[type=radio]{width:auto}
-  button.Btns{width:25%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+  button.Btns{width:20%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
   button.Btns:hover{background:#1d4ed8}
   button.Btns:disabled{background:#93c5fd;cursor:not-allowed}
   #status{text-align:center;font-size:13px;color:#555;margin-top:8px;min-height:20px}
@@ -197,6 +197,7 @@
  <div>
   <button class = "Btns" id="runBtn" onclick="runSimulation()">Begin Simulation</button>
   <button class = "Btns" id="contBtn" onclick="runSimulation()">Continue</button>
+  <button class = "Btns" id="expBtn" onclick="exportToCSV()">Export to CSV</button>
   <button class = "Btns" id="resetBtn" onclick="resetSimulation()">Reset Simulation</button>
   </div>
 
@@ -1357,21 +1358,26 @@ function processPend(pendCase)
 
 const runbtn=document.getElementById('runBtn');
 const conbtn=document.getElementById('contBtn');
+const expbtn=document.getElementById('expBtn');
 const restbtn=document.getElementById('resetBtn');
 runbtn.disabled=false;
 conbtn.disabled=true;
+expbtn.disabled=true;
 restbtn.disabled=true; // set visibility?
 
 function resetSimulation()
 {
 	// TODO: Re-enable all the controls
-	// TODO: clear the results section
 	
 	runbtn.disabled=false;
 	conbtn.disabled=true;
+	expbtn.disabled=true;
 	restbtn.disabled=true;
+	simulationData = [];
 	inRun = false;
-
+	
+	document.getElementById("resultsTable").innerHTML = '';
+	document.getElementById('resultsSection').style.display = 'block';
 }
 
 function runSimulation()
@@ -1385,8 +1391,11 @@ function runSimulation()
   const startingCaseLoad = parseInt(document.getElementById('currentCaseload').value)||0;
   if(!inRun)
   {
+	// TODO: disable some of the controls
+	
 	runbtn.disabled=true;
 	conbtn.disabled=false;
+	expbtn.disabled=true;
 	restbtn.disabled=false;
 	
 	simDate = new Date(startYear, startMonth-1,1);
@@ -1908,17 +1917,11 @@ function runSimulation()
   }
 
   // Here the simulation run is complete, get table ready for all data and ready for export data, or continue running with modified parameters.
-  
-
 	simulationData.push(...myDates); // addData to current simulationData
-  // render results
-  renderTable(myDates);
-  
-  // TODO: modify this, need buttons to appear to continue simulation, export data, or reset and to hide the run simulation button
-  // disable controls for backlogged cases, current approved cases, start Month, and start year
-  // if resetting, set inRun = false and enable all controls, clear simulationData and hide the continue and reset buttons, show the run simulation button
-  // if continuing, leaces inRun as true and calls runSimulation again
-  // export data calls exportToCSV which exports the entire run data to a CSV file
+	// render results
+	renderTable(myDates);
+	expbtn.disabled=false; // Enable the export data button
+	document.getElementById('headerDate').textContent = `${simDate.getMonth() + 1}/${simDate.getDate()}/${simDate.getFullYear()}`; // Update the display date for continued run.
 }
 
   function getNextEventTime(day_end)
