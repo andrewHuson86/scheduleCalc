@@ -24,9 +24,9 @@
   .radio-group{display:flex;gap:8px}
   .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#222;margin:0;font-weight:400}
   .radio-group input[type=radio]{width:auto}
-  button#runBtn{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
-  button#runBtn:hover{background:#1d4ed8}
-  button#runBtn:disabled{background:#93c5fd;cursor:not-allowed}
+  button.Btns{width:25%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+  button.Btns:hover{background:#1d4ed8}
+  button.Btns:disabled{background:#93c5fd;cursor:not-allowed}
   #status{text-align:center;font-size:13px;color:#555;margin-top:8px;min-height:20px}
   .results{display:none}
   .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
@@ -122,7 +122,7 @@
     <div class="grid g3">
       <div>
         <label>Backlogged Cases</label>
-        <input type="number" id="backlogCases" value="2000" min="0">
+        <input type="number" id="backlogCases" value="8100" min="0">
       </div>
       <div>
         <label>Avg Batch Handle Time (seconds)</label>
@@ -140,7 +140,7 @@
     <div class="grid g3">
       <div>
         <label>Number of Workers</label>
-        <input type="number" id="numWorkers" value="118" min="1">
+        <input type="number" id="numWorkers" value="132" min="1">
       </div>
       <div>
         <label>Call Active % (0–100)</label>
@@ -194,10 +194,11 @@
 
      </div>
   </div>
-
-  <button id="runBtn" onclick="runSimulation()">Run Simulation</button>
-  <div id="status"></div>
-  <div class="prog-bar" style="display:none" id="progBar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+ <div>
+  <button class = "Btns" id="runBtn" onclick="runSimulation()">Begin Simulation</button>
+  <button class = "Btns" id="contBtn" onclick="runSimulation()">Continue</button>
+  <button class = "Btns" id="resetBtn" onclick="resetSimulation()">Reset Simulation</button>
+  </div>
 
   <div class="results" id="resultsSection">
     <div class="section-title">Simulation Results</div>
@@ -283,7 +284,7 @@
 
   document.querySelectorAll('input[name="overTimeEnabled"]').forEach(radio => { 
     radio.addEventListener('change', () => 
-        { overTimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value === 'yes'; }); 
+        { overtimeEnabled = document.querySelector('input[name="overTimeEnabled"]:checked').value === 'yes'; }); 
   });
 
     document.querySelectorAll('input[name="firstCaseCall"]').forEach(radio => { 
@@ -343,9 +344,9 @@
  ]);
  
  const BATCH_DATA_TABLE = Object.freeze([
-{type: "App", newType: true, weekdaySplit:0.17547, weekendSplit: 0.35911, specialSplit: 0.06450, AHTMult:1.48892, priority:96, maxRatToExp:1.75067},
-{type: "SSPS", newType: true, weekdaySplit:0.31244, weekendSplit: 0.43370, specialSplit: 0.85000, AHTMult:0.67706, priority:97, maxRatToExp:26.25582},
-{type: "Other", newType: true, weekdaySplit:0.51210, weekendSplit: 0.20719, specialSplit: 0.08550, AHTMult:0.77010, priority:1, maxRatToExp:58.80000},
+{type: "App", newType: true, weekdaySplit:0.17547, weekendSplit: 0.35911, specialSplit: 0.05450, AHTMult:1.48892, priority:96, maxRatToExp:1.75067},
+{type: "SSPS", newType: true, weekdaySplit:0.31244, weekendSplit: 0.43370, specialSplit: 0.87000, AHTMult:0.67706, priority:97, maxRatToExp:26.25582},
+{type: "Other", newType: true, weekdaySplit:0.51210, weekendSplit: 0.20719, specialSplit: 0.07550, AHTMult:0.77010, priority:1, maxRatToExp:58.80000},
 {type: "Pend", newType: false, weekdaySplit:0.00000, weekendSplit: 0.00000, specialSplit: 0.00000, AHTMult:1.10711, priority:91, maxRatToExp:2.18218}
 ]);
 
@@ -355,7 +356,7 @@
 {Month:3,ExistingAppDistMult:0.12238,ExistingPendDistMult:0.16671,UniqueCallersPerDayPerCase:0.01669,wrkdayBatchCaseMult:0.01019,wkendBatchCaseMult:0.00248,specialSSPSCaseMult:0.03374,annualAppDist:0.07807},
 {Month:4,ExistingAppDistMult:0.10787,ExistingPendDistMult:0.15189,UniqueCallersPerDayPerCase:0.01392,wrkdayBatchCaseMult:0.01167,wkendBatchCaseMult:0.00244,specialSSPSCaseMult:0.03491,annualAppDist:0.07490},
 {Month:5,ExistingAppDistMult:0.10287,ExistingPendDistMult:0.14525,UniqueCallersPerDayPerCase:0.01729,wrkdayBatchCaseMult:0.01411,wkendBatchCaseMult:0.00313,specialSSPSCaseMult:0.03546,annualAppDist:0.05721},
-{Month:6,ExistingAppDistMult:0.12076,ExistingPendDistMult:0.17132,UniqueCallersPerDayPerCase:0.02377,wrkdayBatchCaseMult:0.01314,wkendBatchCaseMult:0.00321,specialSSPSCaseMult:0.09807,annualAppDist:0.06799},
+{Month:6,ExistingAppDistMult:0.12076,ExistingPendDistMult:0.17132,UniqueCallersPerDayPerCase:0.02377,wrkdayBatchCaseMult:0.01314,wkendBatchCaseMult:0.00321,specialSSPSCaseMult:0.12076,annualAppDist:0.06799},
 {Month:7,ExistingAppDistMult:0.12785,ExistingPendDistMult:0.14110,UniqueCallersPerDayPerCase:0.02070,wrkdayBatchCaseMult:0.01290,wkendBatchCaseMult:0.00276,specialSSPSCaseMult:0.04457,annualAppDist:0.09790},
 {Month:8,ExistingAppDistMult:0.12096,ExistingPendDistMult:0.11412,UniqueCallersPerDayPerCase:0.02418,wrkdayBatchCaseMult:0.01672,wkendBatchCaseMult:0.00295,specialSSPSCaseMult:0.21991,annualAppDist:0.11269},
 {Month:9,ExistingAppDistMult:0.15007,ExistingPendDistMult:0.16451,UniqueCallersPerDayPerCase:0.03739,wrkdayBatchCaseMult:0.01315,wkendBatchCaseMult:0.00288,specialSSPSCaseMult:0.03532,annualAppDist:0.11705},
@@ -370,7 +371,7 @@
   const DAY_DIST_TABLE = Object.freeze([
 {Day:1,SSPSvBatch:0.07742,AppsOfBatch:0.11649},
 {Day:2,SSPSvBatch:0.08789,AppsOfBatch:0.14515},
-{Day:3,SSPSvBatch:0.71937,AppsOfBatch:0.05661},
+{Day:3,SSPSvBatch:0.72937,AppsOfBatch:0.04661},
 {Day:4,SSPSvBatch:0.06435,AppsOfBatch:0.11840},
 {Day:5,SSPSvBatch:0.06055,AppsOfBatch:0.13582},
 {Day:6,SSPSvBatch:0.05634,AppsOfBatch:0.14180},
@@ -877,9 +878,9 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
 		daysBack++;
 	}
   }
-
+// TODO: This doesn't work correctly
   BATCH_DATA_TABLE.filter(t => t.newType).forEach(a => {
-		const dayMult = simDate.getDate()===3?a.specialSSPSCaseMult:isWeekday(simDate)?a.weekdaySplit:a.weekendSplit;
+		const dayMult = ((simDate.getDate()===3)?a.specialSplit:(isWeekday(simDate)?a.weekdaySplit:a.weekendSplit));
 		const assignmentCount = Math.round(newCases * dayMult);
 
 		for (let i = 0; i < assignmentCount; i++) 
@@ -908,11 +909,11 @@ function generateBatch(backlog = 0,newCases,avgBatchTime, currQueue, simDate)
   return cases;
 }
 
-function assignWorkerSchedules(numWorkers)
+function assignWorkerSchedules(numWorkers, workdayOvertime, otWorkers)
 {
   const dayWorkers=[];
   const breakGroups=[4500, 5400, 6300, 7200, 8100]; // 9:15a -> 10:15a break start times
-  for(let i=0;i<numWorkers;i++)
+  for(let i=0;i < numWorkers;i++)
   {
     const b1Start=breakGroups[i%breakGroups.length];
     const lunchStart=b1Start+8100; // lunch 2.25 hours after break 1: 11:30a-12:30p
@@ -935,7 +936,9 @@ function assignWorkerSchedules(numWorkers)
       timeInBatch:0,
       timeInIdle:0,
       callCount:0,
-      batchCount:0
+      batchCount:0,
+	  startTime:(0 - (((workdayOvertime) && (i < otWorkers))?3600:0)),
+	  endTime:(DAY_END + (((workdayOvertime) && (i < otWorkers))?3600:0))
     });
   }
   return dayWorkers;
@@ -1237,10 +1240,10 @@ function generateDateList()
 			thisDayOf = 1;
 			thisWorkdayOf = 0;
 		}
-		const workDayIs = isWorkday(iDate);
-		const overTimeDayIs = ((!workDayIs) && (getWeekday(iDate)===6) && overtimeEnabled && (!isHoliday(advanceDate(iDate,-1))));
-		const thisDay_start  = ((workDayIs)&&(overtimeEnabled))?-3600:0;
-		const thisDay_end = DAY_END+((workDayIs)&&(overtimeEnabled))?3600:0;
+		let workDayIs = isWorkday(iDate);
+		let overTimeDayIs = ((!workDayIs) && (getWeekday(iDate)===6) && overtimeEnabled && (!isHoliday(advanceDate(iDate,-1))));
+		let thisDay_start  = ((workDayIs)&&(overtimeEnabled))?-3600:0;
+		let thisDay_end = (DAY_END + (((workDayIs)&&(overtimeEnabled))?3600:0));
 		if(workDayIs)
 		{
 			thisWorkdayOf++;
@@ -1254,7 +1257,11 @@ function generateDateList()
 		phonesMult:getPhoneMult(iDate),
 		isWorkDay:workDayIs,
 		isOTDay:overTimeDayIs,
-		workerMult:(workDayIs?Math.floor(randRange(75,100)):overTimeDayIs?Math.floor(randRange(10,40)):0)/100, /* TODO create a function for this that is better */
+		workerMult:((workDayIs?Math.floor(randRange(75,100)):overTimeDayIs?Math.floor(randRange(10,40)):0)/100), /* TODO create a function for this that is better */
+		otWorkerMult:(overtimeEnabled?Math.floor(randRange(10,40)):0)/100,
+		dayStart:thisDay_start,
+		dayEnd:thisDay_end,
+		workdayOf: thisWorkdayOf,
 		// these need to be populated during runtime
 		backlogStart:0,
 		backlogEnd:0,
@@ -1348,24 +1355,43 @@ function processPend(pendCase)
 	// otherwise it is denied	
 }
 
+const runbtn=document.getElementById('runBtn');
+const conbtn=document.getElementById('contBtn');
+const restbtn=document.getElementById('resetBtn');
+runbtn.disabled=false;
+conbtn.disabled=true;
+restbtn.disabled=true; // set visibility?
+
+function resetSimulation()
+{
+	// TODO: Re-enable all the controls
+	// TODO: clear the results section
+	
+	runbtn.disabled=false;
+	conbtn.disabled=true;
+	restbtn.disabled=true;
+	inRun = false;
+
+}
+
 function runSimulation()
 {
-  /*
-  const btn=document.getElementById('runBtn');
-  btn.disabled=true;
-  document.getElementById('status').textContent='Initializing simulation...';
-  document.getElementById('progBar').style.display='block';
-  document.getElementById('progFill').style.width='0%';
-  document.getElementById('resultsSection').style.display='none';
-  */
- 
-// TODO: finish all tracking for daily/monthly data
+  runbtn.disabled=true;
+  conbtn.disabled=false;
+  restbtn.disabled=false;
+  
 
-  const myDates = generateDateList();
   // iterate through myDates and run simulation for each day updating stats for each day
   const startingCaseLoad = parseInt(document.getElementById('currentCaseload').value)||0;
   if(!inRun)
   {
+	runbtn.disabled=true;
+	conbtn.disabled=false;
+	restbtn.disabled=false;
+	
+	simDate = new Date(startYear, startMonth-1,1);
+    simEndDate = getLastDate(addMonths(simDate, simMonths));
+	
 	currentCaseLoad = startingCaseLoad; // currentCaseLoad will incorporate unworked applications that are expected to be approved
 	actualCaseLoad = startingCaseLoad; // actualCaseLoad is the actual current cases approved
 	uninitiatedApps = 0;
@@ -1376,8 +1402,9 @@ function runSimulation()
 	carryCalls = 0;  // this is used to add calls to the next workdays call queue for % if unanswered calls and % of weekday holiday calls
 	simDay = 1;
 	simDateID = 0;
-	
   }
+  
+  const myDates = generateDateList();
   const maxSimDays = Math.floor(Math.abs(simEndDate - simDate) / 86400000)+1;
 
 // these can be changed between pieces of consecutive runs
@@ -1400,13 +1427,28 @@ function runSimulation()
   inRun = true;
    while(simDate <= new Date(simEndDate))
    {
+		//function generateDateList
+		/*
+		id:
+		dt: 
+		batchMult:
+		phonesMult
+		isWorkDay:
+		isOTDay:
+		workerMult:
+		dayStart:
+		dayEnd:
+		workdayOf:
+		*/
 		  const uniqueCallers = new Set();
           let myDay = myDates.filter(e=>e.id === simDay)[0]; 
-          const weekday = getWeekday(simDate);
-          const workDayIs = isWorkday(simDate);
-          const overTimeDayIs = ((!workDayIs) && (getWeekday(simDate)===6) && overtimeEnabled && (!isHoliday(advanceDate(simDate,-1))));
-          let curr_day_start  = ((workDayIs)&&(overtimeEnabled))?-3600:0; //  can be -3600 for OT start
-          let curr_day_end = DAY_END+((workDayIs)&&(overtimeEnabled))?3600:0; // can be DAY_END + 3600 for OT end
+          let weekday = getWeekday(simDate);
+          let workDayIs = isWorkday(simDate);
+		  
+          let overTimeDayIs = myDay.isOTDay;
+          let curr_day_start  = myDay.dayStart; //  can be -3600 for OT start
+          let curr_day_end = myDay.dayEnd; // can be DAY_END + 3600 for OT end
+		  
           let estNumCallers = 0;
 		  const avgCallTime = Math.floor((randRange(900,1100)/1000) * simAvgCallTime);
           const numWorkers = Math.floor(myDay.workerMult * simNumWorkers);
@@ -1447,8 +1489,8 @@ function runSimulation()
 			});
 		  }
 		  currentCaseLoad = actualCaseLoad + Math.round(approvalMult * uninitiatedApps);
-		  const estBatchCases = Math.round(myDay.batchMult * currentCaseLoad);
-		  let newBatchCases = Math.floor(estBatchCases*(randRange(900,1100)/1000)); // Assume estimate is within +/- 10%
+		  //const estBatchCases = Math.round(myDay.batchMult * currentCaseLoad); // No longer needed, now use getTotalbatch for newBatchCases directly
+		  let newBatchCases = getTotalBatch(simDate, currentCaseLoad, true); // No longer use estimated value Math.floor(estBatchCases*(randRange(900,1100)/1000)); // Assume estimate is within +/- 10%
           batchQueue=generateBatch(0,newBatchCases,avgBatchTime, batchQueue, simDate);
 		  
           if (workDayIs) // only get calls on workdays
@@ -1472,10 +1514,10 @@ function runSimulation()
 		
           allCalls=generateCalls(numCalls,weekday,avgCallTime);
 		 
-          workers=assignWorkerSchedules(numWorkers);
+          workers=assignWorkerSchedules(numWorkers, (workDayIs && overtimeEnabled), Math.round(myDay.otWorkerMult * numWorkers)); // total workers, seperate OTcount?, otCount
 
           // Process one day at a time until the end of the projection period is reached.
-		  currentTime=0;
+		  currentTime=curr_day_start;
           iterations=0; // max steps per day, shouldn't be needed but just in case
 		  
 		  // Get all the starting metrics for the day
@@ -1488,7 +1530,7 @@ function runSimulation()
 		  myDay.oldestApp = daysBetween(availBatch.filter(e => e.type === "App" && !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
 		  
 		  
-        while(currentTime < SIM_END && iterations < MAX_ITER && numWorkers > 0)
+        while(currentTime < curr_day_end && iterations <= MAX_ITER && numWorkers > 0)
         {
                 iterations++;
                 totalIterations++;
@@ -1707,16 +1749,16 @@ function runSimulation()
 					// first case call logic
 					const wantsCall=((firstCaseCall && !w.hasFirstCall) || (rand()<=callActivePct));
 
-					if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= SIM_END))
+					if(wantsCall && activeCallQueue.length>0 && ((currentTime+avgCallTime) <= curr_day_end))
 					{
-					// ~30% of calls are for batch received, the batch case is worked during the call
+					// some high % of calls are for batch received, the batch case is worked during the call
 					// random chance per call to remove one random ready to work case from batch.
 					// the handle time of the call will be the max of the original call handle time or the selected batch case handle time.
 					
 			            const call=activeCallQueue.shift();
 			            const waitTime=currentTime-call.callTime;
 						
-						if(rand() < 0.3 && availBatch.length > 0)
+						if(rand() < 0.5 && availBatch.length > 0) // TODO: the percentage should be shifted higher based on how high the backlog is...
 						{
 							let myBatchCase = availBatch[Math.floor(randRange(0,availBatch.length-1))];
 							if (myBatchCase.handleTime > call.handleTime)
@@ -1788,7 +1830,7 @@ function runSimulation()
 				            myDay.numCalls++;
 			            }
 					} 
-					else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= SIM_END) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
+					else if((availBatch.length>0) && ((currentTime+avgBatchTime) <= curr_day_end) && !(firstCaseCall && !w.hasFirstCall && (currentTime < 600))) // wait max 10 minutes for first call when firstCaseCall
 					{
 						const bc=availBatch.shift();
 						if(bc.type === "App")
@@ -1815,7 +1857,7 @@ function runSimulation()
 					}
                 }
                 // track idle time for this step
-                const nextT=getNextEventTime();
+                const nextT=getNextEventTime(curr_day_end);
                 const stepDur=nextT-currentTime;
                 for(const w of workers)
 	            {
@@ -1879,7 +1921,7 @@ function runSimulation()
   // export data calls exportToCSV which exports the entire run data to a CSV file
 }
 
-  function getNextEventTime()
+  function getNextEventTime(day_end)
   {
     let next=Infinity;
     // next call arrival
@@ -1901,7 +1943,7 @@ function runSimulation()
       next=Math.min(next,c.callTime+c.maxWaitTime);
     }
     if(next===Infinity || next===currentTime) next=currentTime+MIN_STEP;
-    return Math.min(Math.ceil(next), SIM_END);
+    return Math.min(Math.ceil(next), day_end);
   }
 
 // TODO: make this better.
