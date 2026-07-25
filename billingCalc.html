@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCSP Billing Calculator</title>
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --paper-dim:#EFEAE0;
+    --ink:#242320;
+    --ink-soft:#6b6659;
+    --line:#DCD5C4;
+    --line-strong:#c7bea8;
+    --teal:#2c6e6b;
+    --teal-dark:#1c4a48;
+    --teal-pale:#dcebe9;
+    --holiday:#a8433c;
+    --holiday-light:#f2d6d2;
+    --scheduled:#6f7480;
+    --scheduled-light:#e4e4e7;
+    --attended:#2f5f86;
+    --attended-light:#d4e3ee;
+    --card:#fffdf9;
+    --danger:#a8433c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+
+  /* ---------- Top bars ---------- */
+  .brandbar{
+    background:var(--teal-dark);
+    color:#f2ede1;
+    padding:18px 28px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:4px solid var(--teal);
+  }
+  .brandbar .mark{font-family:var(--mono);letter-spacing:.12em;font-size:12px;text-transform:uppercase;opacity:.75;}
+  .brandbar h1{font-size:20px;margin:2px 0 0;font-weight:600;letter-spacing:.02em;}
+  .brandbar .proj-badge{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:3px;}
+  .topbar{
+    background:var(--card);
+    border-bottom:1px solid var(--line);
+    padding:10px 28px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .topbar .backbtn{
+    background:none;border:1px solid var(--line-strong);color:var(--ink-soft);
+    padding:6px 12px;border-radius:3px;font-size:13px;
+  }
+  .topbar .backbtn:hover{background:var(--paper-dim);}
+  .topbar .proj-title{font-weight:600;font-size:16px;}
+  .topbar .proj-id{font-family:var(--mono);color:var(--ink-soft);font-size:12px;}
+
+  /* ---------- Home screen ---------- */
+  #home-screen{max-width:820px;margin:0 auto;padding:40px 24px 80px;}
+  .ledger-list{list-style:none;margin:0 0 32px;padding:0;border-top:1px solid var(--line-strong);}
+  .ledger-row{
+    display:flex;align-items:center;gap:16px;
+    padding:14px 6px;border-bottom:1px solid var(--line);
+  }
+  .ledger-row .tab-no{
+    font-family:var(--mono);font-size:13px;color:var(--teal-dark);
+    background:var(--teal-pale);padding:4px 8px;border-radius:3px;min-width:54px;text-align:center;
+  }
+  .ledger-row .row-name{flex:1;font-size:15px;}
+  .ledger-row .row-meta{font-family:var(--mono);font-size:11px;color:var(--ink-soft);}
+  .ledger-row button{
+    background:var(--teal);color:#fff;border:none;padding:7px 16px;border-radius:3px;font-size:13px;
+  }
+  .ledger-row button:hover{background:var(--teal-dark);}
+  .empty-note{color:var(--ink-soft);font-size:14px;padding:18px 6px;font-style:italic;}
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:18px 20px;
+    margin-bottom:18px;
+  }
+  .panel h2{
+    font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--teal-dark);
+    margin:0 0 14px;border-bottom:1px solid var(--line);padding-bottom:8px;
+  }
+  .field{margin-bottom:4px;display:flex;flex-direction:column;gap:4px;}
+  
+  .field label{font-size:12px;color:var(--ink-soft);}
+  
+  .field input[type=number]
+  {
+    padding:2px 2px;border:1px solid var(--line-strong);border-radius:3px;background:#fff;font-size:14px;color:var(--ink); width: 12ch;
+  }
+  
+  .field input[type=text]{
+    padding:2px 2px;border:1px solid var(--line-strong);border-radius:3px;background:#fff;font-size:14px;color:var(--ink); width: 22ch;
+  }
+  .field input[type=date]
+  {
+    padding:2px 2px;border:1px solid var(--line-strong);border-radius:3px;background:#fff;font-size:14px;color:var(--ink); width: 18ch;
+  }
+  .field input[type=month]
+  {
+    padding:2px 2px;border:1px solid var(--line-strong);border-radius:3px;background:#fff;font-size:14px;color:var(--ink); width: 12ch;
+  }
+  .field select{
+    padding:2px 2px;border:1px solid var(--line-strong);border-radius:3px;background:#fff;font-size:14px;color:var(--ink); width: 16ch;
+  }
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  
+  .primary-btn{
+    background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:3px;font-size:14px;font-weight:600;
+  }
+  .primary-btn:hover{background:var(--teal-dark);}
+  .ghost-btn{
+    background:none;border:1px solid var(--line-strong);color:var(--ink);padding:8px 16px;border-radius:3px;font-size:13px;
+  }
+  .ghost-btn:hover{background:var(--paper-dim);}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:-4px;}
+
+  /* ---------- App layout ---------- */
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 80px;align-items:start;}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;}}
+
+  .chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .chip{
+    font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:14px;border:1px solid var(--line-strong);
+    background:var(--paper-dim);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;
+  }
+  .chip.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .chip .x{opacity:.6;font-weight:700;}
+  .chip .x:hover{opacity:1;color:var(--danger);}
+  .add-inline{display:flex;gap:8px;align-items:center;}
+  .add-inline input,.add-inline select{flex:1;padding:7px 9px;border:1px solid var(--line-strong);border-radius:3px;font-size:13px;}
+  .add-inline button{white-space:nowrap;background:var(--teal);color:#fff;border:none;padding:7px 12px;border-radius:3px;font-size:13px;}
+  .add-inline button:hover{background:var(--teal-dark);}
+
+  .child-row{
+    display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  .child-row:last-of-type{border-bottom:none;}
+  .child-row.active{background:var(--teal-pale);border-radius:3px;}
+  .child-row .radio-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0;}
+  .child-row.active .radio-dot{border-color:var(--teal);background:var(--teal);}
+  .child-row .cname{flex:1;font-size:14px;}
+  .child-row .cid{font-family:var(--mono);font-size:11px;color:var(--ink-soft);}
+  .child-row .rm{background:none;border:none;color:var(--ink-soft);font-size:15px;padding:2px 6px;}
+  .child-row .rm:hover{color:var(--danger);}
+
+  .tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .tab-btn{
+    background:none;border:none;padding:8px 14px;font-size:13px;color:var(--ink-soft);border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--teal-dark);border-bottom-color:var(--teal);font-weight:600;}
+  .weekday-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;}
+  .wd{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--ink-soft);}
+  .wd input{margin:0;}
+  .radio-line{display:flex;gap:16px;font-size:13px;margin-bottom:10px;}
+  .radio-line label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+
+  .no-child-note{color:var(--ink-soft);font-size:13px;font-style:italic;padding:8px 2px;}
+
+  /* ---------- Calendar ---------- */
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-header h2{margin:0;border:none;padding:0;font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink);}
+  .cal-header .cal-sub{font-family:var(--mono);font-size:12px;color:var(--ink-soft);}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--ink-soft);margin-bottom:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .weekday-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px;}
+  .weekday-labels div{text-align:center;font-size:11px;color:var(--ink-soft);font-family:var(--mono);}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .day-cell{
+    min-height:96px;border:1px solid var(--line);border-radius:4px;background:var(--paper-dim);
+    padding:5px;display:flex;flex-direction:column;gap:3px;position:relative;
+  }
+  .day-cell.empty{background:transparent;border:none;}
+  .day-num{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:right;}
+  .period{
+    font-size:10.5px;padding:2px 5px;border-radius:2px;cursor:pointer;line-height:1.35;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .period:hover{filter:brightness(0.94);}
+  .period.attended{background:var(--attended-light);border-left:3px solid var(--attended);color:var(--teal-dark);}
+  .period.scheduled{background:var(--scheduled-light);border-left:3px solid var(--scheduled);color:#3a3d44;}
+  .period.holiday{background:var(--holiday-light);border-left:3px solid var(--holiday);color:#6e2b26;}
+
+  /* ---------- Details ---------- */
+  table.totals{width:100%;border-collapse:collapse;font-size:13px;}
+  table.totals th,table.totals td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);}
+  table.totals th:first-child,table.totals td:first-child{text-align:left;}
+  table.totals thead th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);border-bottom:1px solid var(--line-strong);}
+  table.totals td{font-family:var(--mono);}
+  table.totals tr:last-child td{font-weight:700;border-top:1px solid var(--line-strong);border-bottom:none;}
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(28,26,20,.45);display:flex;align-items:center;justify-content:center;z-index:50;
+  }
+  .modal-box{
+    background:var(--card);border-radius:6px;padding:22px 24px;width:340px;max-width:90vw;
+    border:1px solid var(--line-strong);
+  }
+  .modal-box h3{margin:0 0 14px;font-size:15px;}
+  .modal-actions{display:flex;justify-content:space-between;margin-top:16px;gap:8px;}
+  .modal-actions .danger-btn{background:none;border:1px solid var(--holiday);color:var(--holiday);padding:8px 14px;border-radius:3px;font-size:13px;}
+  .modal-actions .danger-btn:hover{background:var(--holiday-light);}
+
+  .section-flex{display:flex;justify-content:space-between;align-items:center;}
+  ::selection{background:var(--teal-pale);}
+</style>
+</head>
+<body>
+
+<div id="home-screen" style="display:none;">
+  <div class="brandbar">
+    <div>
+      <div class="mark">CCSP Billing Calculator</div>
+      <h1>Projects</h1>
+    </div>
+  </div>
+  <div id="home-content"></div>
+</div>
+
+<div id="app-screen" style="display:none;">
+  <div class="brandbar">
+    <div>
+      <div class="mark">CCSP Billing Calculator</div>
+      <h1 id="app-project-name"></h1>
+    </div>
+    <div class="proj-badge" id="app-project-badge"></div>
+  </div>
+  <div class="topbar">
+    <button class="backbtn" onclick="goHome()">&larr; All Projects</button>
+	<button class="primary-btn" onclick="expProject()"> Export Project</button>
+	<button class="primary-btn" onclick="expToCSV()"> Download Project Data (CSV)</button>
+  </div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+
+const IDX_KEY = "billing_index";
+const PROJ_PREFIX = "billing_project_";
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const WEEKDAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+let project = null;
+let editing = null;      // {childId, dateStr, idx}
+let scheduleTab = "single";
+let recurWeekdays = [false,false,false,false,false,false,false];
+
+  // ---------- storage ----------
+ function loadIndex()
+  {
+    try
+	{ 
+		return JSON.parse(localStorage.getItem(IDX_KEY)) || []; 
+	}
+    catch(e)
+	{ 
+		return [];
+	}
+  }
+  
+  function saveIndex(idx)
+  { 
+	localStorage.setItem(IDX_KEY, JSON.stringify(idx)); 
+  }
+  
+  function loadProjectById(id)
+  {
+    try
+	{ 
+		return JSON.parse(localStorage.getItem(PROJ_PREFIX+id)); 
+		}
+    catch(e)
+	{
+		return null;
+	}
+  }
+  
+  function saveProject()
+  {
+    if(!project) return;
+    localStorage.setItem(PROJ_PREFIX+project.id, JSON.stringify(project));
+  }
+
+  // ---------- init ----------
+  function init()
+  {
+    renderHome();
+    document.getElementById("home-screen").style.display = "block";
+  }
+
+  function goHome()
+  {
+    project = null;
+    editing = null;
+    document.getElementById("app-screen").style.display = "none";
+    renderHome();
+    document.getElementById("home-screen").style.display = "block";
+  }
+
+  function openProject(id)
+  {
+    const p = loadProjectById(id);
+    if(!p){ alert("That project could not be loaded."); return; }
+    project = p;
+    editing = null;
+    scheduleTab = "single";
+    recurWeekdays = [false,false,false,false,false,false,false];
+    document.getElementById("home-screen").style.display = "none";
+    document.getElementById("app-screen").style.display = "block";
+    renderApp();
+  }
+  
+  function deleteProject(id)
+  {
+	let idx = loadIndex();
+	idx = idx.filter(e => e.id !== id);
+	saveIndex(idx);
+    localStorage.removeItem(PROJ_PREFIX + id);
+	goHome();
+  }
+
+  // ================= HOME =================
+  function renderHome()
+  {
+    const idx = loadIndex().slice().sort((a,b)=>a.id-b.id);
+    let rows = "";
+    if(idx.length === 0)
+	{
+      rows = '<div class="empty-note">No projects yet. Start one below.</div>';
+    } else 
+	{
+      rows = '<ul class="ledger-list">' + idx.map(p => `
+        <li class="ledger-row">
+          <span class="tab-no">No. ${String(p.id).padStart(3,"0")}</span>
+          <span class="row-name">${escapeHtml(p.name)}</span>
+          <button onclick="openProject(${p.id})">Open</button>
+		  <button style="background-color:red; color:white;" onclick="deleteProject(${p.id})">Delete</button>
+        </li>`).join("") + "</ul>";
+    }
+
+    const maxMonth = maxSelectableMonth();
+
+    document.getElementById("home-content").innerHTML = `
+      <div class="panel">
+        <h2>Saved Projects</h2>
+        ${rows}
+      </div>
+      <div class="panel">
+        <h2>Start a New Project</h2>
+        <div class="field">
+          <label for="np-name">Project name</label>
+          <input type="text" id="np-name" placeholder="e.g. Smith Case">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="np-start">First month</label>
+            <input type="month" id="np-start" max="${maxMonth}">
+          </div>
+          <div class="field">
+            <label for="np-end">Last month</label>
+            <input type="month" id="np-end" max="${maxMonth}">
+          </div>
+        </div>
+        <div class="hint">Only fully completed prior months can be selected. The range must span at least one month.</div>
+        <div style="margin-top:14px;">
+          <button class="primary-btn" onclick="createProject()">Create Project</button>
+		  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importProject(event)">
+		  <button class="primary-btn" onclick="document.getElementById('importFile').click()">Import Project</button>
+        </div>
+      </div>`;
+  }
+
+function importProject(event)
+{	
+	const file = event.target.files[0];
+    if (!file) return;
+	
+	const idx = loadIndex();
+    const reader = new FileReader();
+    reader.onload = function(e) 
+	{
+        try 
+		{
+            const data = JSON.parse(e.target.result);
+			// If project exists with same name, prompt to overwrite or add new.
+			const exists = idx.filter(e=>e.name === data.name).length;
+			let overwrite = false;
+			
+			if(exists > 0)
+			{
+				if(exists === 1) 
+				{
+					if (confirm("A project already exists with this name, do you want to overwrite it?")) 
+					{
+						overwrite = true;
+					}
+				}
+				else
+				{
+					alert("More than one project with this name exists, this will be added as a new project.");
+				}
+			}
+			
+			if(overwrite)
+			{
+				localStorage.setItem(PROJ_PREFIX+idx.find(e=>e.name === data.name).id, JSON.stringify(data));
+			}
+			else
+			{
+				const newId = idx.reduce((m,p) => Math.max(m,p.id), 0) + 1;
+				idx.push({id:newId, name:data.name});
+				saveIndex(idx);
+				localStorage.setItem(PROJ_PREFIX+newId, JSON.stringify(data));
+			}
+            alert("Project imported successfully.");
+			goHome();
+        } 
+		catch (err) 
+		{
+            alert("That file isn't a valid project.");
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+function expProject()
+{
+	if(project === null)
+	{
+		alert('Error: Unable to export current project!'); 
+		return;
+	}
+	
+	const data = JSON.parse(localStorage.getItem(PROJ_PREFIX+project.id))
+	
+    if (!data) 
+	{
+        alert("No saved data found.");
+        return;
+    }
+
+    const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = project.name + "_backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function expToCSV()
+{
+	// TODO: write this
+}
+
+  function createProject()
+  {
+    const nameEl = document.getElementById("np-name");
+    const startEl = document.getElementById("np-start");
+    const endEl = document.getElementById("np-end");
+    const name = nameEl.value.trim();
+    const start = startEl.value;
+    const end = endEl.value;
+    const maxMonth = maxSelectableMonth();
+
+    if(!name){ alert("Please enter a project name."); return; }
+    if(!start || !end){ alert("Please select both a first and last month."); return; }
+    if(start > maxMonth || end > maxMonth){ alert("Only fully completed prior months may be selected."); return; }
+    if(end < start){ alert("The last month must be on or after the first month."); return; }
+
+    const idx = loadIndex();
+    const newId = idx.reduce((m,p) => Math.max(m,p.id), 0) + 1;
+    const months = generateMonthRange(start, end);
+
+    const project = {
+      id: newId,
+      name: name,
+      months: months,
+      children: [],
+      schedule: {},          // childId -> dateStr -> [{start,end,type}]
+      viewMonth: months[months.length - 1],
+      activeChildId: null
+    };
+
+    idx.push({id:newId, name:name});
+    saveIndex(idx);
+    localStorage.setItem(PROJ_PREFIX+newId, JSON.stringify(project));
+
+    openProject(newId);
+  }
+
+  // ================= APP SHELL =================
+  function  renderApp()
+  {
+    const p = project;
+    document.getElementById("app-project-name").textContent = p.name;
+    document.getElementById("app-project-badge").textContent = "No. " + String(p.id).padStart(3,"0");
+    document.getElementById("sidebar").innerHTML = renderMonthsPanel() + renderChildrenPanel() + renderSchedulePanel();
+    document.getElementById("main").innerHTML = renderCalendarPanel() + renderDetailsPanel();
+    renderModal();
+  }
+
+  // ---------- Months ----------
+  function renderMonthsPanel()
+  {
+    const p = project;
+    const months = p.months.slice().sort();
+    const maxMonth = maxSelectableMonth();
+    const chips = months.map(ym => `
+      <span class="chip ${ym===p.viewMonth ? "active" : ""}">
+        <span onclick="setViewMonth('${ym}')">${monthLabel(ym)}</span>
+        ${months.length > 1 ? `<span class="x" onclick="event.stopPropagation();removeMonth('${ym}')">&times;</span>` : ""}
+      </span>`).join("");
+
+    return `
+      <section class="panel">
+        <h2>Project Months</h2>
+        <div class="chip-list">${chips}</div>
+        <div class="hint" style="margin-bottom:8px;">Click a month to view it on the calendar.</div>
+        <div class="add-inline">
+          <input type="month" id="add-month-input" max="${maxMonth}">
+          <button onclick="addMonth()">Add</button>
+        </div>
+      </section>`;
+  }
+
+  function addMonth()
+  {
+    const input = document.getElementById("add-month-input");
+    const val = input.value;
+    if(!val) return;
+    const maxMonth = maxSelectableMonth();
+    if(val > maxMonth){ alert("Only fully completed prior months may be selected."); return; }
+    if(project.months.includes(val)){ alert("That month is already part of the project."); return; }
+    project.months.push(val);
+    project.months.sort();
+    saveProject();
+    renderApp();
+  }
+
+  function removeMonth(ym)
+  {
+    if(project.months.length <= 1){ alert("A project must include at least one month."); return; }
+    if(!confirm(`Remove ${monthLabel(ym)} from this project? Recorded schedule data for that month is kept but will no longer be shown.`)) return;
+    project.months = project.months.filter(m => m !== ym);
+    if(project.viewMonth === ym){ project.viewMonth = project.months[0]; }
+    saveProject();
+    renderApp();
+  }
+
+  function setViewMonth(ym)
+  {
+    project.viewMonth = ym;
+    saveProject();
+    renderApp();
+  }
+
+  // ---------- Children ----------
+  function renderChildrenPanel()
+  {
+    const p = project;
+    const rows = p.children.map(c => `
+      <div class="child-row ${c.id===p.activeChildId ? "active" : ""}" onclick="setActiveChild('${c.id}')">
+        <span class="radio-dot"></span>
+        <span class="cname">${escapeHtml(c.name)}</span>
+        <span class="cid">#${escapeHtml(c.id)}</span>
+        <button class="rm" title="Remove child" onclick="event.stopPropagation();removeChild('${c.id}')">&times;</button>
+      </div>`).join("") || '<div class="no-child-note">No children added yet.</div>';
+
+    return `
+      <section class="panel">
+        <h2>Children</h2>
+        ${rows}
+        <div class="row-2" style="margin-top:12px;">
+          <div class="field" style="margin-bottom:0;">
+            <label for="new-child-name">Name</label>
+            <input type="text" id="new-child-name" placeholder="Childs name">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="new-child-id">ID</label>
+            <input type="number" id="new-child-id" placeholder="e.g. 101">
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="ghost-btn" onclick="addChild()">+ Add Child</button>
+        </div>
+      </section>`;
+  }
+
+  function addChild()
+  {
+    const nameEl = document.getElementById("new-child-name");
+    const idEl = document.getElementById("new-child-id");
+    const name = nameEl.value.trim();
+    const idVal = idEl.value.trim();
+    if(!name){ alert("Please enter a name."); return; }
+    if(idVal === ""){ alert("Please enter a numeric ID."); return; }
+    if(project.children.some(c => c.id === idVal)){ alert("That ID is already used by another child in this project."); return; }
+    project.children.push({id:idVal, name:name});
+    if(!project.activeChildId) project.activeChildId = idVal;
+    saveProject();
+    renderApp();
+  }
+
+  function removeChild(id)
+  {
+    const child = project.children.find(c => c.id === id);
+    if(!child) return;
+    if(!confirm(`Remove ${child.name} and all of their recorded schedule data?`)) return;
+    project.children = project.children.filter(c => c.id !== id);
+    delete project.schedule[id];
+    if(project.activeChildId === id){
+      project.activeChildId = project.children.length ? project.children[0].id : null;
+    }
+    saveProject();
+    renderApp();
+  }
+
+  function setActiveChild(id)
+  {
+    project.activeChildId = id;
+    saveProject();
+    renderApp();
+  }
+
+  // ---------- Schedule entry ----------
+  function renderSchedulePanel()
+  {
+    const p = project;
+    const child = p.children.find(c => c.id === p.activeChildId);
+    if(!child){
+      return `<section class="panel"><h2>Add Schedule Information</h2><div class="no-child-note">Select or add a child to enter schedule information.</div></section>`;
+    }
+
+    const vm = p.viewMonth;
+    const monthStart = vm + "-01";
+    const monthEnd = vm + "-" + pad2(daysInMonth(vm));
+
+    const singleForm = `
+      <div class="field">
+        <label for="se-date">Date</label>
+        <input type="date" id="se-date" min="${monthStart}" max="${monthEnd}" value="${monthStart}">
+      </div>
+      <div class="field">
+        <label for="se-type">Type</label>
+        <select id="se-type">
+          <option value="Attended">Attended</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="Holiday">Holiday</option>
+        </select>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="se-start">Start</label>
+          <select id="se-start">${timeOptions(480)}</select>
+        </div>
+        <div class="field">
+          <label for="se-end">End</label>
+          <select id="se-end">${timeOptions(1020)}</select>
+        </div>
+      </div>
+      <button class="primary-btn" onclick="addSingleEntry()">Add Entry</button>`;
+
+    const weekdayBoxes = WEEKDAY_NAMES.map((wd,i) => `
+      <label class="wd"><input type="checkbox" id="rec-wd-${i}"> ${wd}</label>`).join("");
+
+    const recurringForm = `
+      <div class="field">
+        <label for="re-type">Type</label>
+        <select id="re-type">
+          <option value="Attended">Attended</option>
+          <option value="Scheduled">Scheduled</option>
+        </select>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="re-start">Start</label>
+          <select id="re-start">${timeOptions(480)}</select>
+        </div>
+        <div class="field">
+          <label for="re-end">End</label>
+          <select id="re-end">${timeOptions(1020)}</select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Repeat on</label>
+        <div class="weekday-grid">${weekdayBoxes}</div>
+      </div>
+      <div class="field">
+        <label>Apply to</label>
+        <div class="radio-line">
+          <label><input type="radio" name="re-scope" value="current" checked> Current month (${monthLabel(vm)})</label>
+          <label><input type="radio" name="re-scope" value="all"> All months in project</label>
+        </div>
+      </div>
+      <button class="primary-btn" onclick="addRecurringEntry()">Add Recurring Entries</button>`;
+
+    return `
+      <section class="panel">
+        <h2>Add Schedule Information &mdash; ${escapeHtml(child.name)}</h2>
+        <div class="tabs">
+          <button class="tab-btn ${scheduleTab==="single"?"active":""}" onclick="setScheduleTab('single')">Single Day</button>
+          <button class="tab-btn ${scheduleTab==="recurring"?"active":""}" onclick="setScheduleTab('recurring')">Recurring</button>
+        </div>
+        ${scheduleTab === "single" ? singleForm : recurringForm}
+      </section>`;
+  }
+
+  function setScheduleTab(tab)
+  {
+    scheduleTab = tab;
+    renderApp();
+  }
+
+  function addSingleEntry()
+  {
+    const child = project.activeChildId;
+    if(!child){ alert("Select a child first."); return; }
+    const date = document.getElementById("se-date").value;
+    const type = document.getElementById("se-type").value;
+    const start = parseInt(document.getElementById("se-start").value, 10);
+    const end = parseInt(document.getElementById("se-end").value, 10);
+    if(!date){ alert("Please choose a date."); return; }
+    if(end <= start){ alert("The end time must be after the start time."); return; }
+    mergeAddPeriod(project, child, date, type, start, end);
+    saveProject();
+    renderApp();
+  }
+
+  function addRecurringEntry()
+  {
+    const child = project.activeChildId;
+    if(!child){ alert("Select a child first."); return; }
+    const type = document.getElementById("re-type").value;
+    const start = parseInt(document.getElementById("re-start").value, 10);
+    const end = parseInt(document.getElementById("re-end").value, 10);
+    if(end <= start){ alert("The end time must be after the start time."); return; }
+    const weekdays = [];
+    for(let i=0;i<7;i++){
+      if(document.getElementById("rec-wd-"+i).checked) weekdays.push(i);
+    }
+    if(weekdays.length === 0){ alert("Select at least one day of the week."); return; }
+    const scope = document.querySelector('input[name="re-scope"]:checked').value;
+    const months = scope === "current" ? [project.viewMonth] : project.months.slice();
+
+    months.forEach(ym => {
+      const dim = daysInMonth(ym);
+      const [y,m] = ym.split("-").map(Number);
+      for(let d=1; d<=dim; d++){
+        const dow = new Date(y, m-1, d).getDay();
+        if(weekdays.includes(dow)){
+          const dateStr = ym + "-" + pad2(d);
+          mergeAddPeriod(project, child, dateStr, type, start, end);
+        }
+      }
+    });
+
+    saveProject();
+    renderApp();
+  }
+
+  // ---------- Calendar ----------
+  function renderCalendarPanel()
+  {
+    const p = project;
+    const ym = p.viewMonth;
+    const child = p.children.find(c => c.id === p.activeChildId);
+    const dim = daysInMonth(ym);
+    const fw = firstWeekday(ym);
+
+    const weekdayLabels = WEEKDAY_NAMES.map(w => `<div>${w}</div>`).join("");
+
+    let cells = "";
+    for(let i=0;i<fw;i++) cells += `<div class="day-cell empty"></div>`;
+    for(let d=1; d<=dim; d++){
+      const dateStr = ym + "-" + pad2(d);
+      const periods = (child && p.schedule[child.id] && p.schedule[child.id][dateStr]) || [];
+      const blocks = periods.map((per, idx) => `
+        <div class="period ${per.type.toLowerCase()}" title="${per.type}: ${minutesLabel(per.start)} - ${minutesLabel(per.end)}"
+             onclick="openEditModal('${child.id}','${dateStr}',${idx})">
+          ${shortTime(per.start)}&ndash;${shortTime(per.end)} ${per.type[0]}
+        </div>`).join("");
+      cells += `<div class="day-cell"><div class="day-num">${d}</div>${blocks}</div>`;
+    }
+    const totalCells = fw + dim;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    for(let i=0;i<trailing;i++) cells += `<div class="day-cell empty"></div>`;
+
+    return `
+      <section class="panel calendar-panel">
+        <div class="cal-header">
+          <h2>${monthLabel(ym)}</h2>
+          <span class="cal-sub">${child ? escapeHtml(child.name) : "No child selected"}</span>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--attended-light);border-left:3px solid var(--attended);"></i>Attended</span>
+          <span><i style="background:var(--scheduled-light);border-left:3px solid var(--scheduled);"></i>Scheduled</span>
+          <span><i style="background:var(--holiday-light);border-left:3px solid var(--holiday);"></i>Holiday</span>
+        </div>
+        <div class="weekday-labels">${weekdayLabels}</div>
+        <div class="calendar-grid">${cells}</div>
+        ${!child ? '<div class="no-child-note" style="margin-top:10px;">Select a child in the sidebar to view or add their schedule.</div>' : ""}
+      </section>`;
+  }
+
+  function openEditModal(childId, dateStr, idx)
+  {
+    editing = {childId, dateStr, idx};
+    renderModal();
+  }
+
+  function closeModal()
+  {
+    editing = null;
+    renderModal();
+  }
+
+  function renderModal()
+  {
+    const root = document.getElementById("modal-root");
+    if(!editing){ root.innerHTML = ""; return; }
+    const {childId, dateStr, idx} = editing;
+    const list = (project.schedule[childId] && project.schedule[childId][dateStr]) || [];
+    const per = list[idx];
+    if(!per){ editing = null; root.innerHTML = ""; return; }
+
+    root.innerHTML = `
+      <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="modal-box">
+          <h3>Edit Entry &mdash; ${dateStr}</h3>
+          <div class="field">
+            <label for="em-type">Type</label>
+            <select id="em-type">
+              <option value="Attended" ${per.type==="Attended"?"selected":""}>Attended</option>
+              <option value="Scheduled" ${per.type==="Scheduled"?"selected":""}>Scheduled</option>
+              <option value="Holiday" ${per.type==="Holiday"?"selected":""}>Holiday</option>
+            </select>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="em-start">Start</label>
+              <select id="em-start">${timeOptions(per.start)}</select>
+            </div>
+            <div class="field">
+              <label for="em-end">End</label>
+              <select id="em-end">${timeOptions(per.end)}</select>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="danger-btn" onclick="deleteEditingPeriod()">Delete</button>
+            <div style="display:flex;gap:8px;">
+              <button class="ghost-btn" onclick="closeModal()">Cancel</button>
+              <button class="primary-btn" onclick="saveEditingPeriod()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function saveEditingPeriod()
+  {
+    const {childId, dateStr, idx} = editing;
+    const newType = document.getElementById("em-type").value;
+    const newStart = parseInt(document.getElementById("em-start").value, 10);
+    const newEnd = parseInt(document.getElementById("em-end").value, 10);
+    if(newEnd <= newStart){ alert("The end time must be after the start time."); return; }
+
+    const list = project.schedule[childId][dateStr];
+    list.splice(idx, 1);
+    if(list.length === 0) delete project.schedule[childId][dateStr];
+    mergeAddPeriod(project, childId, dateStr, newType, newStart, newEnd);
+
+    editing = null;
+    saveProject();
+    renderApp();
+  }
+
+  function deleteEditingPeriod()
+  {
+    const {childId, dateStr, idx} = editing;
+    const list = project.schedule[childId][dateStr];
+    list.splice(idx, 1);
+    if(list.length === 0) delete project.schedule[childId][dateStr];
+    editing = null;
+    saveProject();
+    renderApp();
+  }
+
+  // ---------- Details ----------
+  function renderDetailsPanel()
+  {
+    const p = project;
+    const ym = p.viewMonth;
+    const rows = p.children.map(c => {
+      const t = computeMonthTotals(p, c.id, ym);
+      return `<tr><td>${escapeHtml(c.name)} <span style="color:var(--ink-soft);font-family:var(--mono);font-size:11px;">#${escapeHtml(c.id)}</span></td>
+        <td>${t.scheduled.toFixed(2)}</td><td>${t.attended.toFixed(2)}</td><td>${t.holiday.toFixed(2)}</td><td>${t.NSH.toFixed(2)}</td></tr>`;
+    }).join("") || `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft);font-style:italic;">No children in this project yet.</td></tr>`;
+
+    return `
+      <section class="panel details-panel">
+        <div class="section-flex"><h2 style="border:none;margin:0;">Totals &mdash; ${monthLabel(ym)}</h2></div>
+        <table class="totals">
+          <thead><tr><th>Child</th><th>Scheduled (hrs)</th><th>Attended (hrs)</th><th>Holiday (hrs)</th><th>NSHB (hrs)</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>
+    `;
+  }
+
+
+function escapeHtml(s)
+{
+  return String(s).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[ch]));
+}
+
+function pad2(n)
+{
+	return String(n).padStart(2,"0"); 
+}
+
+function currentMonthStr()
+{
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+}
+
+function prevMonthStr(ym)
+{
+  let [y,m] = ym.split("-").map(Number);
+  m -= 1;
+  if(m === 0){ m = 12; y -= 1; }
+  return `${y}-${pad2(m)}`;
+}
+
+function maxSelectableMonth()
+{
+  return prevMonthStr(currentMonthStr());
+}
+
+function generateMonthRange(start, end)
+{
+  const result = [];
+  let [y,m] = start.split("-").map(Number);
+  const [ey,em] = end.split("-").map(Number);
+  while(y < ey || (y === ey && m <= em)){
+    result.push(`${y}-${pad2(m)}`);
+    m += 1;
+    if(m > 12){ m = 1; y += 1; }
+  }
+  return result;
+}
+
+function daysInMonth(ym)
+{
+  const [y,m] = ym.split("-").map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+function firstWeekday(ym)
+{
+  const [y,m] = ym.split("-").map(Number);
+  return new Date(y, m-1, 1).getDay();
+}
+
+function monthLabel(ym)
+{
+  const [y,m] = ym.split("-").map(Number);
+  return `${MONTH_NAMES[m-1]} ${y}`;
+}
+
+function minutesLabel(min)
+{
+  if(min === 1440) return "12:00 AM (end of day)";
+  const h = Math.floor(min/60), mm = min % 60;
+  const period = h < 12 ? "AM" : "PM";
+  let h12 = h % 12;
+  if(h12 === 0) h12 = 12;
+  return `${h12}:${pad2(mm)} ${period}`;
+}
+
+function shortTime(min)
+{
+  if(min === 1440) return "12a";
+  const h = Math.floor(min/60), mm = min % 60;
+  const period = h < 12 ? "a" : "p";
+  let h12 = h % 12;
+  if(h12 === 0) h12 = 12;
+  return mm === 0 ? `${h12}${period}` : `${h12}:${pad2(mm)}${period}`;
+}
+
+function timeOptions(selected)
+{
+  let opts = "";
+  for(let min = 0; min <= 1440; min += 1){
+    opts += `<option value="${min}" ${min===selected?"selected":""}>${minutesLabel(min)}</option>`;
+  }
+  return opts;
+}
+
+// Merge a list of same-type intervals (touching or overlapping) into the minimal set.
+function mergeIntervals(list)
+{
+  if(list.length === 0) return [];
+  const sorted = list.slice().sort((a,b) => a.start - b.start);
+  const merged = [{start:sorted[0].start, end:sorted[0].end}];
+  for(let i=1;i<sorted.length;i++){
+    const last = merged[merged.length-1];
+    const cur = sorted[i];
+    if(cur.start <= last.end){
+      last.end = Math.max(last.end, cur.end);
+    } else {
+      merged.push({start:cur.start, end:cur.end});
+    }
+  }
+  return merged;
+}
+
+// Adds a period for a child/date/type, merging with any touching or overlapping
+// period of the SAME type. Periods of different types are left independent.
+function mergeAddPeriod(project, childId, dateStr, type, start, end)
+{
+  project.schedule[childId] = project.schedule[childId] || {};
+  project.schedule[childId][dateStr] = project.schedule[childId][dateStr] || [];
+  const periods = project.schedule[childId][dateStr];
+
+  const sameType = periods.filter(p => p.type === type);
+  const others = periods.filter(p => p.type !== type);
+  sameType.push({start, end, type});
+
+  const merged = mergeIntervals(sameType).map(p => ({start:p.start, end:p.end, type}));
+  const combined = others.concat(merged).sort((a,b) => a.start - b.start);
+
+  if(combined.length === 0)
+  {
+    delete project.schedule[childId][dateStr];
+  } else 
+  {
+    project.schedule[childId][dateStr] = combined;
+  }
+}
+
+// 0 = Monday, 6 = Sunday
+function getWeekday(dateStr) 
+{
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) 
+	{
+        return -1;
+    }
+    const date = new Date(dateStr);
+
+    if (isNaN(date.getTime())) 
+	{
+        return -1;
+    }
+
+    return date.getDay();
+}
+function getWeekdayName(dateStr)
+{
+	let val = getWeekday(dateStr);
+	if (val === -1) return null;
+	
+	return WEEKDAY_NAMES[(getWeekday(dateStr)+1%7)];
+}
+
+// Per-day totals (hours) for a child, by type. Used for business-rule calculations.
+function computeDayTotals(project, childId, dateStr)
+{
+  const totals = {scheduled:0, attended:0, holiday:0, NSH:0};
+  const periods = (project.schedule[childId] && project.schedule[childId][dateStr]) || [];
+  periods.forEach(p => {
+    const hrs = (p.end - p.start) / 60;
+	let nshrs = 0;
+    if(p.type === "Scheduled") totals.scheduled += hrs;
+    else if(p.type === "Attended") totals.attended += hrs;
+    else if(p.type === "Holiday") totals.holiday += hrs;
+	let myDay = getWeekday(dateStr);
+	if (getWeekday(dateStr) > 4) // Sat or Sunday
+	{
+		totals.NSH += hrs;
+	}
+	else
+	{
+		if (p.start < 360)
+		{
+			nshrs += ((p.end>360?360:p.end) - p.start)/60;
+		}
+		if(p.end > 1080)
+		{
+			nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
+		}
+		totals.NSH += nshrs;
+	}
+  });
+  return totals;
+}
+
+function computeMonthTotals(project, childId, ym)
+{
+  const totals = {scheduled:0, attended:0, holiday:0, NSH:0};
+  const sched = project.schedule[childId] || {};
+  Object.keys(sched).forEach(dateStr => {
+    if(!dateStr.startsWith(ym)) return;
+    const d = computeDayTotals(project, childId, dateStr);
+    totals.scheduled += d.scheduled;
+    totals.attended += d.attended;
+    totals.holiday += d.holiday;
+	totals.NSH += d.NSH;
+  });
+  return totals;
+}
+
+// Exposed for future business-rule development in the browser console.
+window.BillingData = {
+  computeDayTotals: (childId, dateStr) => computeDayTotals(project, childId, dateStr),
+  computeMonthTotals: (childId, ym) => computeMonthTotals(project, childId, ym),
+  currentProject: () => project
+};
+
+
+document.addEventListener("DOMContentLoaded", () => init());
+</script>
+</body>
+</html>
