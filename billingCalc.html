@@ -12,11 +12,13 @@
     --ink-soft:#6b6659;
     --line:#DCD5C4;
     --line-strong:#c7bea8;
-    --teal:#2c6e6b;
-    --teal-dark:#1c4a48;
-    --teal-pale:#dcebe9;
+	--purple: #853694;
+	--purple-dark: #592461;
+	--purple-pale: #efe2f2;
     --holiday:#a8433c;
     --holiday-light:#f2d6d2;
+	--profDev:#800080;
+    --profDev-light:#CBC3E3;
     --scheduled:#6f7480;
     --scheduled-light:#e4e4e7;
     --attended:#2f5f86;
@@ -37,15 +39,14 @@
   button{font-family:inherit;cursor:pointer;}
   input,select{font-family:inherit;}
 
-  /* ---------- Top bars ---------- */
   .brandbar{
-    background:var(--teal-dark);
+    background:var(--purple-dark);
     color:#f2ede1;
     padding:18px 28px;
     display:flex;
     align-items:baseline;
     justify-content:space-between;
-    border-bottom:4px solid var(--teal);
+    border-bottom:4px solid var(--purple);
   }
   .brandbar .mark{font-family:var(--mono);letter-spacing:.12em;font-size:12px;text-transform:uppercase;opacity:.75;}
   .brandbar h1{font-size:20px;margin:2px 0 0;font-weight:600;letter-spacing:.02em;}
@@ -66,23 +67,23 @@
   .topbar .proj-title{font-weight:600;font-size:16px;}
   .topbar .proj-id{font-family:var(--mono);color:var(--ink-soft);font-size:12px;}
 
-  /* ---------- Home screen ---------- */
+ 
   #home-screen{max-width:820px;margin:0 auto;padding:40px 24px 80px;}
-  .ledger-list{list-style:none;margin:0 0 32px;padding:0;border-top:1px solid var(--line-strong);}
-  .ledger-row{
+  .project-list{list-style:none;margin:0 0 32px;padding:0;border-top:1px solid var(--line-strong);}
+  .project-row{
     display:flex;align-items:center;gap:16px;
     padding:14px 6px;border-bottom:1px solid var(--line);
   }
-  .ledger-row .tab-no{
-    font-family:var(--mono);font-size:13px;color:var(--teal-dark);
-    background:var(--teal-pale);padding:4px 8px;border-radius:3px;min-width:54px;text-align:center;
+  .project-row .tab-no{
+    font-family:var(--mono);font-size:13px;color:var(--purple-dark);
+    background:var(--purple-pale);padding:4px 8px;border-radius:3px;min-width:54px;text-align:center;
   }
-  .ledger-row .row-name{flex:1;font-size:15px;}
-  .ledger-row .row-meta{font-family:var(--mono);font-size:11px;color:var(--ink-soft);}
-  .ledger-row button{
-    background:var(--teal);color:#fff;border:none;padding:7px 16px;border-radius:3px;font-size:13px;
+  .project-row .row-name{flex:1;font-size:15px;}
+  .project-row .row-meta{font-family:var(--mono);font-size:11px;color:var(--ink-soft);}
+  .project-row button{
+    background:var(--purple);color:#fff;border:none;padding:7px 16px;border-radius:3px;font-size:13px;
   }
-  .ledger-row button:hover{background:var(--teal-dark);}
+  .project-row button:hover{background:var(--purple-dark);}
   .empty-note{color:var(--ink-soft);font-size:14px;padding:18px 6px;font-style:italic;}
 
   .panel{
@@ -93,7 +94,7 @@
     margin-bottom:18px;
   }
   .panel h2{
-    font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--teal-dark);
+    font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--purple-dark);
     margin:0 0 14px;border-bottom:1px solid var(--line);padding-bottom:8px;
   }
   .field{margin-bottom:4px;display:flex;flex-direction:column;gap:4px;}
@@ -122,39 +123,43 @@
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
   
   .primary-btn{
-    background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:3px;font-size:14px;font-weight:600;
+    background:var(--purple);color:#fff;border:none;padding:9px 18px;border-radius:3px;font-size:14px;font-weight:600;
   }
-  .primary-btn:hover{background:var(--teal-dark);}
+  .primary-btn:hover{background:var(--purple-dark);}
   .ghost-btn{
     background:none;border:1px solid var(--line-strong);color:var(--ink);padding:8px 16px;border-radius:3px;font-size:13px;
   }
   .ghost-btn:hover{background:var(--paper-dim);}
   .hint{font-size:12px;color:var(--ink-soft);margin-top:-4px;}
 
-  /* ---------- App layout ---------- */
-  .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 80px;align-items:start;}
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 10px;align-items:start;}
   @media (max-width:900px){.layout{grid-template-columns:1fr;}}
 
+/*
+.main {
+  align-self: end;
+}
+*/
   .chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
   .chip{
     font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:14px;border:1px solid var(--line-strong);
     background:var(--paper-dim);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;
   }
-  .chip.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .chip.active{background:var(--purple);border-color:var(--purple);color:#fff;}
   .chip .x{opacity:.6;font-weight:700;}
   .chip .x:hover{opacity:1;color:var(--danger);}
   .add-inline{display:flex;gap:8px;align-items:center;}
   .add-inline input,.add-inline select{flex:1;padding:7px 9px;border:1px solid var(--line-strong);border-radius:3px;font-size:13px;}
-  .add-inline button{white-space:nowrap;background:var(--teal);color:#fff;border:none;padding:7px 12px;border-radius:3px;font-size:13px;}
-  .add-inline button:hover{background:var(--teal-dark);}
+  .add-inline button{white-space:nowrap;background:var(--purple);color:#fff;border:none;padding:7px 12px;border-radius:3px;font-size:13px;}
+  .add-inline button:hover{background:var(--purple-dark);}
 
   .child-row{
     display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;
   }
   .child-row:last-of-type{border-bottom:none;}
-  .child-row.active{background:var(--teal-pale);border-radius:3px;}
+  .child-row.active{background:var(--purple-pale);border-radius:3px;}
   .child-row .radio-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-strong);flex-shrink:0;}
-  .child-row.active .radio-dot{border-color:var(--teal);background:var(--teal);}
+  .child-row.active .radio-dot{border-color:var(--purple);background:var(--purple);}
   .child-row .cname{flex:1;font-size:14px;}
   .child-row .cid{font-family:var(--mono);font-size:11px;color:var(--ink-soft);}
   .child-row .rm{background:none;border:none;color:var(--ink-soft);font-size:15px;padding:2px 6px;}
@@ -164,7 +169,7 @@
   .tab-btn{
     background:none;border:none;padding:8px 14px;font-size:13px;color:var(--ink-soft);border-bottom:2px solid transparent;margin-bottom:-1px;
   }
-  .tab-btn.active{color:var(--teal-dark);border-bottom-color:var(--teal);font-weight:600;}
+  .tab-btn.active{color:var(--purple-dark);border-bottom-color:var(--purple);font-weight:600;}
   .weekday-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;}
   .wd{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--ink-soft);}
   .wd input{margin:0;}
@@ -173,7 +178,6 @@
 
   .no-child-note{color:var(--ink-soft);font-size:13px;font-style:italic;padding:8px 2px;}
 
-  /* ---------- Calendar ---------- */
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .cal-header h2{margin:0;border:none;padding:0;font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink);}
   .cal-header .cal-sub{font-family:var(--mono);font-size:12px;color:var(--ink-soft);}
@@ -187,18 +191,31 @@
     min-height:96px;border:1px solid var(--line);border-radius:4px;background:var(--paper-dim);
     padding:5px;display:flex;flex-direction:column;gap:3px;position:relative;
   }
+  .day-cell.weekday{background:#FFFFFF;min-height:96px;border:1px solid #000000;border-radius:4px;
+    padding:5px;display:flex;flex-direction:column;gap:3px;position:relative;}
+	
+  .day-cell.legalHoliday{background:#98FB98;min-height:96px;border:1px solid var(--line);border-radius:4px;
+    padding:5px;display:flex;flex-direction:column;gap:3px;position:relative;}
+	
   .day-cell.empty{background:transparent;border:none;}
+  
   .day-num{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:right;}
   .period{
     font-size:10.5px;padding:2px 5px;border-radius:2px;cursor:pointer;line-height:1.35;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .period:hover{filter:brightness(0.94);}
-  .period.attended{background:var(--attended-light);border-left:3px solid var(--attended);color:var(--teal-dark);}
+  .period.attended{background:var(--attended-light);border-left:3px solid var(--attended);color:var(--purple-dark);}
   .period.scheduled{background:var(--scheduled-light);border-left:3px solid var(--scheduled);color:#3a3d44;}
   .period.holiday{background:var(--holiday-light);border-left:3px solid var(--holiday);color:#6e2b26;}
+  .period.profdev{background:var(--profDev-light);border-left:3px solid var(--profDev);color:#800080;}
 
-  /* ---------- Details ---------- */
+ .results{
+	padding-top: 0px;
+	padding-right: 20px;
+	padding-bottom: 0px;
+	padding-left: 20px;}
+
   table.totals{width:100%;border-collapse:collapse;font-size:13px;}
   table.totals th,table.totals td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);}
   table.totals th:first-child,table.totals td:first-child{text-align:left;}
@@ -206,7 +223,7 @@
   table.totals td{font-family:var(--mono);}
   table.totals tr:last-child td{font-weight:700;border-top:1px solid var(--line-strong);border-bottom:none;}
 
-  /* ---------- Modal ---------- */
+
   .modal-overlay{
     position:fixed;inset:0;background:rgba(28,26,20,.45);display:flex;align-items:center;justify-content:center;z-index:50;
   }
@@ -220,7 +237,7 @@
   .modal-actions .danger-btn:hover{background:var(--holiday-light);}
 
   .section-flex{display:flex;justify-content:space-between;align-items:center;}
-  ::selection{background:var(--teal-pale);}
+  ::selection{background:var(--purple-pale);}
 </style>
 </head>
 <body>
@@ -252,12 +269,14 @@
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main" id="main"></main>
   </div>
+  
+  <div class="results" id="results"></div>
 </div>
 
 <div id="modal-root"></div>
 
 <script>
-
+// Sorry if you are looking at this, yes it is an Andrew project...  >:(
 const IDX_KEY = "billing_index";
 const PROJ_PREFIX = "billing_project_";
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -268,7 +287,6 @@ let editing = null;      // {childId, dateStr, idx}
 let scheduleTab = "single";
 let recurWeekdays = [false,false,false,false,false,false,false];
 
-  // ---------- storage ----------
  function loadIndex()
   {
     try
@@ -304,7 +322,6 @@ let recurWeekdays = [false,false,false,false,false,false,false];
     localStorage.setItem(PROJ_PREFIX+project.id, JSON.stringify(project));
   }
 
-  // ---------- init ----------
   function init()
   {
     renderHome();
@@ -342,7 +359,6 @@ let recurWeekdays = [false,false,false,false,false,false,false];
 	goHome();
   }
 
-  // ================= HOME =================
   function renderHome()
   {
     const idx = loadIndex().slice().sort((a,b)=>a.id-b.id);
@@ -352,8 +368,8 @@ let recurWeekdays = [false,false,false,false,false,false,false];
       rows = '<div class="empty-note">No projects yet. Start one below.</div>';
     } else 
 	{
-      rows = '<ul class="ledger-list">' + idx.map(p => `
-        <li class="ledger-row">
+      rows = '<ul class="project-list">' + idx.map(p => `
+        <li class="project-row">
           <span class="tab-no">No. ${String(p.id).padStart(3,"0")}</span>
           <span class="row-name">${escapeHtml(p.name)}</span>
           <button onclick="openProject(${p.id})">Open</button>
@@ -387,7 +403,7 @@ let recurWeekdays = [false,false,false,false,false,false,false];
         <div class="hint">Only fully completed prior months can be selected. The range must span at least one month.</div>
         <div style="margin-top:14px;">
           <button class="primary-btn" onclick="createProject()">Create Project</button>
-		  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importProject(event)">
+		  <input type="file" id="importFile" accept=".csch" style="display:none" onchange="importProject(event)">
 		  <button class="primary-btn" onclick="document.getElementById('importFile').click()">Import Project</button>
         </div>
       </div>`;
@@ -413,7 +429,7 @@ function importProject(event)
 			{
 				if(exists === 1) 
 				{
-					if (confirm("A project already exists with this name, do you want to overwrite it?")) 
+					if (confirm("A project already exists with this name, click OK to overwrite it, or Cancel to import as a new project.")) 
 					{
 						overwrite = true;
 					}
@@ -469,14 +485,56 @@ function expProject()
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = project.name + "_backup.json";
+    a.download = project.name + "_backup.csch";
     a.click();
     URL.revokeObjectURL(url);
 }
 
+function createProjectTable(id)
+{
+	// TODO: write this!
+	// Needs to return an object with date, childname - id, type (Attended/Holiday/ProfDev), period(s), ttlHours, NSHRs, FDU, HDU, OTU, eligHrs
+	// With row of monthly summary at end of each month
+	
+}
+
 function expToCSV()
 {
-	// TODO: write this
+	if(project === null)
+	{
+		alert('Error: Unable to export data from current project!'); 
+		return;
+	}
+	const projectData = createProjectTable(project.id);
+    if (projectData.length === 0) 
+	{
+        alert("Error: The project contains no data!");
+        return;
+    }
+	// Extract headers
+    const headers = Object.keys(projectData[0]);
+    const csvRows = [];
+    // Add header row
+    csvRows.push(headers.join(','));
+    // Add data rows
+    for (const row of projectData) 
+	{
+        const values = headers.map(header => {
+            const escaped = ('' + row[header]).replace(/"/g, '\\"');
+            return `"${escaped}"`;});
+		
+        csvRows.push(values.join(','));
+    }
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', project.name + '_data.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);	
 }
 
   function createProject()
@@ -515,18 +573,20 @@ function expToCSV()
     openProject(newId);
   }
 
-  // ================= APP SHELL =================
+  
   function  renderApp()
   {
     const p = project;
     document.getElementById("app-project-name").textContent = p.name;
     document.getElementById("app-project-badge").textContent = "No. " + String(p.id).padStart(3,"0");
     document.getElementById("sidebar").innerHTML = renderMonthsPanel() + renderChildrenPanel() + renderSchedulePanel();
-    document.getElementById("main").innerHTML = renderCalendarPanel() + renderDetailsPanel();
+    document.getElementById("main").innerHTML = renderCalendarPanel();
+	document.getElementById("results").innerHTML = renderDetailsPanel();
+	
     renderModal();
   }
 
-  // ---------- Months ----------
+ 
   function renderMonthsPanel()
   {
     const p = project;
@@ -581,7 +641,7 @@ function expToCSV()
     renderApp();
   }
 
-  // ---------- Children ----------
+  
   function renderChildrenPanel()
   {
     const p = project;
@@ -590,7 +650,7 @@ function expToCSV()
         <span class="radio-dot"></span>
         <span class="cname">${escapeHtml(c.name)}</span>
         <span class="cid">#${escapeHtml(c.id)}</span>
-        <button class="rm" title="Remove child" onclick="event.stopPropagation();removeChild('${c.id}')">&times;</button>
+        <button class="rm" title="Remove child" onclick="event.stopPropagation();deleteChild('${c.id}')">&times;</button>
       </div>`).join("") || '<div class="no-child-note">No children added yet.</div>';
 
     return `
@@ -628,7 +688,7 @@ function expToCSV()
     renderApp();
   }
 
-  function removeChild(id)
+  function deleteChild(id)
   {
     const child = project.children.find(c => c.id === id);
     if(!child) return;
@@ -649,7 +709,7 @@ function expToCSV()
     renderApp();
   }
 
-  // ---------- Schedule entry ----------
+
   function renderSchedulePanel()
   {
     const p = project;
@@ -673,6 +733,7 @@ function expToCSV()
           <option value="Attended">Attended</option>
           <option value="Scheduled">Scheduled</option>
           <option value="Holiday">Holiday</option>
+		  <option value="ProfDev">Prof. Dev.</option>
         </select>
       </div>
       <div class="row-2">
@@ -785,7 +846,7 @@ function expToCSV()
     renderApp();
   }
 
-  // ---------- Calendar ----------
+
   function renderCalendarPanel()
   {
     const p = project;
@@ -806,7 +867,20 @@ function expToCSV()
              onclick="openEditModal('${child.id}','${dateStr}',${idx})">
           ${shortTime(per.start)}&ndash;${shortTime(per.end)} ${per.type[0]}
         </div>`).join("");
-      cells += `<div class="day-cell"><div class="day-num">${d}</div>${blocks}</div>`;
+		// if it is a weekday, use day-cell.weekday
+		// if it is a legal holiday, use day-cell.legalHoliday
+		if(isHolidayStr(dateStr))
+		{
+			cells += `<div class="day-cell legalHoliday"><div class="day-num">${d}</div>${blocks}</div>`;
+		}
+		else if(getWeekday(dateStr) < 5)
+		{
+			cells += `<div class="day-cell weekday"><div class="day-num">${d}</div>${blocks}</div>`;
+		}
+		else
+		{
+			cells += `<div class="day-cell"><div class="day-num">${d}</div>${blocks}</div>`;
+		}
     }
     const totalCells = fw + dim;
     const trailing = (7 - (totalCells % 7)) % 7;
@@ -822,6 +896,7 @@ function expToCSV()
           <span><i style="background:var(--attended-light);border-left:3px solid var(--attended);"></i>Attended</span>
           <span><i style="background:var(--scheduled-light);border-left:3px solid var(--scheduled);"></i>Scheduled</span>
           <span><i style="background:var(--holiday-light);border-left:3px solid var(--holiday);"></i>Holiday</span>
+		  <span><i style="background:var(--profDev-light);border-left:3px solid var(--profDev);"></i>Prof. Dev.</span>
         </div>
         <div class="weekday-labels">${weekdayLabels}</div>
         <div class="calendar-grid">${cells}</div>
@@ -860,6 +935,7 @@ function expToCSV()
               <option value="Attended" ${per.type==="Attended"?"selected":""}>Attended</option>
               <option value="Scheduled" ${per.type==="Scheduled"?"selected":""}>Scheduled</option>
               <option value="Holiday" ${per.type==="Holiday"?"selected":""}>Holiday</option>
+			  <option value="ProfDev" ${per.type==="ProfDev"?"selected":""}>Prof. Dev.</option>
             </select>
           </div>
           <div class="row-2">
@@ -913,22 +989,24 @@ function expToCSV()
     renderApp();
   }
 
-  // ---------- Details ----------
+
   function renderDetailsPanel()
   {
+	  //TODO: update this for necessary columns, report what was used/include and what is allowable
+	  // Child: Month: Hrs Attended, HolidaysUsed, profDevDaysUsed, eligibleDays, allAuth, eligFDU, eligHDU, eligHrs, NSHB
     const p = project;
     const ym = p.viewMonth;
     const rows = p.children.map(c => {
       const t = computeMonthTotals(p, c.id, ym);
       return `<tr><td>${escapeHtml(c.name)} <span style="color:var(--ink-soft);font-family:var(--mono);font-size:11px;">#${escapeHtml(c.id)}</span></td>
-        <td>${t.scheduled.toFixed(2)}</td><td>${t.attended.toFixed(2)}</td><td>${t.holiday.toFixed(2)}</td><td>${t.NSH.toFixed(2)}</td></tr>`;
-    }).join("") || `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft);font-style:italic;">No children in this project yet.</td></tr>`;
-
+        <td>${t.scheduled.toFixed(2)}</td><td>${t.attended.toFixed(2)}</td><td>${t.holiday.toFixed(2)}</td><td>${t.profDev.toFixed(2)}</td><td>${t.NSH.toFixed(2)}</td></tr>`;
+    }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);font-style:italic;">No children in this project yet.</td></tr>`;
+	
     return `
       <section class="panel details-panel">
         <div class="section-flex"><h2 style="border:none;margin:0;">Totals &mdash; ${monthLabel(ym)}</h2></div>
         <table class="totals">
-          <thead><tr><th>Child</th><th>Scheduled (hrs)</th><th>Attended (hrs)</th><th>Holiday (hrs)</th><th>NSHB (hrs)</th></tr></thead>
+          <thead><tr><th>Child</th><th>Scheduled (hrs)</th><th>Attended (hrs)</th><th>Holiday (hrs)</th><th>Prof Dev (hrs)</th><th>NSHB (hrs)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </section>
@@ -1076,14 +1154,14 @@ function getWeekday(dateStr)
 	{
         return -1;
     }
-    const date = new Date(dateStr);
+    const date = new Date(dateStr + 'T00:00:00');
 
     if (isNaN(date.getTime())) 
 	{
         return -1;
     }
-
-    return date.getDay();
+	let retDay = date.getDay();
+    return (retDay === 0?6:retDay-1);
 }
 function getWeekdayName(dateStr)
 {
@@ -1093,41 +1171,260 @@ function getWeekdayName(dateStr)
 	return WEEKDAY_NAMES[(getWeekday(dateStr)+1%7)];
 }
 
-// Per-day totals (hours) for a child, by type. Used for business-rule calculations.
 function computeDayTotals(project, childId, dateStr)
 {
-  const totals = {scheduled:0, attended:0, holiday:0, NSH:0};
+  const totals = {scheduled:0, attended:0, holiday:0, NSH:0, profDev:0, aFDU:0, aHDU:0, aOTU:0, sFDU:0, sHDU:0, sOTU:0, numAtt:0, numHoliday:0, numProfDev:0, numSched:0};
   const periods = (project.schedule[childId] && project.schedule[childId][dateStr]) || [];
   periods.forEach(p => {
     const hrs = (p.end - p.start) / 60;
 	let nshrs = 0;
-    if(p.type === "Scheduled") totals.scheduled += hrs;
-    else if(p.type === "Attended") totals.attended += hrs;
-    else if(p.type === "Holiday") totals.holiday += hrs;
-	let myDay = getWeekday(dateStr);
-	if (getWeekday(dateStr) > 4) // Sat or Sunday
+    if(p.type === "Scheduled") 
 	{
-		totals.NSH += hrs;
+		totals.scheduled += hrs;
+	}
+    else if(p.type === "Attended")
+	{		
+		totals.attended += hrs;
+		
+		// calculate NSHB, include all hours of attendance
+		if ((getWeekday(dateStr) > 4) || (isHolidayStr(dateStr))) // Sat or Sunday or Legal Holiday
+		{
+			totals.NSH += hrs;
+		}
+		else
+		{
+			let nshrs = 0;
+			if (p.start < 360)
+			{
+				nshrs += ((p.end>360?360:p.end) - p.start)/60;
+			}
+			if(p.end > 1080)
+			{
+				nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
+			}
+			totals.NSH += nshrs;
+		}
+	}
+    else if(p.type === "Holiday")
+	{
+		totals.holiday += hrs;
+	}
+	else if(p.type === "ProfDev") 
+	{
+		totals.profDev += hrs;
+	}
+
+  });
+	// Maximum of 16 hours per day can be scheduled or counted as attended (aside from NSH)
+	totals.scheduled = Math.min(totals.scheduled,16.0);
+	totals.attended = Math.min(totals.attended,16.0);
+	// calculate daily units based on totals after all periods have been processed
+	totals.numAtt = (totals.attended > 0?1:0); 
+	totals.numSched = (totals.scheduled > 0?1:0); 
+	if(totals.scheduled < 5)
+	{
+		totals.sHDU = 1;
+	}
+	else if(totals.scheduled <= 10)
+	{
+		totals.sFDU = 1;
+	}
+	else if(totals.scheduled <= 15)
+	{
+		totals.sFDU = 1;
+		totals.sOTU = 1;
 	}
 	else
 	{
-		if (p.start < 360)
-		{
-			nshrs += ((p.end>360?360:p.end) - p.start)/60;
-		}
-		if(p.end > 1080)
-		{
-			nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
-		}
-		totals.NSH += nshrs;
+		totals.sFDU = 1;
+		totals.sOTU = 2;
 	}
-  });
+	
+	if(totals.numAtt === 0)
+	{
+		totals.numHoliday = (totals.holiday > 0?1:0);
+		if(totals.numHoliday ===0)
+		{
+			totals.numProfDev = (totals.profDev > 0?1:0);  
+		}
+	}
+	else
+	{
+		if(totals.attended < 5)
+		{
+			totals.aHDU = 1;
+		}
+		else if(totals.attended <= 10)
+		{
+			totals.aFDU = 1;
+		}
+		else if(totals.attended <= 15)
+		{
+			totals.aFDU = 1;
+			totals.aOTU = 1;
+		}
+		else
+		{
+			totals.aFDU = 1;
+			totals.aOTU = 2;
+		}
+	}
+	  
   return totals;
 }
 
+function isHolidayStr(dateStr)
+{
+	let myDate = new Date(dateStr+ 'T00:00:00');
+	if (isNaN(myDate.getTime())) return false;
+	
+	return isHoliday(myDate);
+}
+
+function isHoliday(date) // determines whether the date is a legal holiday as defined in RCW
+{
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // JS months are 0-based
+    const day = date.getDate();
+
+    // Returns: su, mo, tu, we, th, fr, sa
+    const wkDay = ["su", "mo", "tu", "we", "th", "fr", "sa"][date.getDay()];
+
+    let returnVal = false;
+
+    // Compare dates ignoring time
+    const sameDate = (d1, d2) =>
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate();
+
+    const addDays = (d, days) => {
+        const result = new Date(d);
+        result.setDate(result.getDate() + days);
+        return result;
+    };
+
+    const firstMonday = (year, month) => {
+        let d = new Date(year, month - 1, 1);
+        while (d.getDay() !== 1) { // Monday
+            d.setDate(d.getDate() + 1);
+        }
+        return d;
+    };
+
+    switch (month) 
+    {
+
+        case 1: // New Year's Day and MLK Day
+            if (day === 1 || (day === 2 && wkDay === "mo")) {
+                returnVal = true;
+            } else {
+                const mlkDay = addDays(firstMonday(year, 1), 14); // 3rd Monday
+                if (sameDate(date, mlkDay)) {
+                    returnVal = true;
+                }
+            }
+            break;
+
+        case 2: // Presidents Day
+            {
+                const presidentsDay = addDays(firstMonday(year, 2), 14); // 3rd Monday
+                if (sameDate(date, presidentsDay)) {
+                    returnVal = true;
+                }
+            }
+            break;
+
+        case 5: // Memorial Day
+            {
+                let memorialDay = new Date(year, 4, 31); // May 31
+                while (memorialDay.getDay() !== 1) { // Monday
+                    memorialDay.setDate(memorialDay.getDate() - 1);
+                }
+                if (sameDate(date, memorialDay)) {
+                    returnVal = true;
+                }
+            }
+            break;
+
+        case 6: // Juneteenth
+            if (year > 2021) {
+                if (
+                    day === 19 ||
+                    (day === 18 && wkDay === "fr") ||
+                    (day === 20 && wkDay === "mo")
+                ) {
+                    returnVal = true;
+                }
+            }
+            break;
+
+        case 7: // Independence Day
+            if (
+                day === 4 ||
+                (day === 3 && wkDay === "fr") ||
+                (day === 5 && wkDay === "mo")
+            ) {
+                returnVal = true;
+            }
+            break;
+
+        case 9: // Labor Day
+            {
+                const laborDay = firstMonday(year, 9);
+                if (sameDate(date, laborDay)) {
+                    returnVal = true;
+                }
+            }
+            break;
+
+        case 11: // Veterans Day, Thanksgiving, Friday after
+            if (
+                day === 11 ||
+                (day === 10 && wkDay === "fr") ||
+                (day === 12 && wkDay === "mo")
+            ) {
+                returnVal = true;
+            } else {
+                let thanksgiving = new Date(year, 10, 1); // Nov 1
+                while (thanksgiving.getDay() !== 4) { // Thursday
+                    thanksgiving.setDate(thanksgiving.getDate() + 1);
+                }
+                thanksgiving = addDays(thanksgiving, 21); // 4th Thursday
+
+                if (
+                    sameDate(date, thanksgiving) ||
+                    sameDate(date, addDays(thanksgiving, 1))
+                ) {
+                    returnVal = true;
+                }
+            }
+            break;
+
+        case 12: // Christmas and possible New Year's observation
+            if (
+                day === 25 ||
+                (day === 24 && wkDay === "fr") ||
+                (day === 26 && wkDay === "mo")
+            ) {
+                returnVal = true;
+            }
+
+            // New Year's Day observed on Dec 31 when Jan 1 is Saturday
+            if (day === 31 && wkDay === "fr") {
+                returnVal = true;
+            }
+            break;
+    }
+
+    return returnVal;
+}
+
+// Allowable billing is dependant on the rules in place at the time
 function computeMonthTotals(project, childId, ym)
 {
-  const totals = {scheduled:0, attended:0, holiday:0, NSH:0};
+  const totals = {scheduled:0, attended:0, holiday:0, NSHB:0, NSH:0, profDev:0, aFDU:0, aHDU:0, aOTU:0, sFDU:0, sHDU:0, sOTU:0, numAtt:0, numHoliday:0, numProfDev:0, numElig:0, numSched:0, maxHrs:0, maxFDU:0, maxHDU:0, maxOTU:0, allAuth:false};
+  const allDays = [];
   const sched = project.schedule[childId] || {};
   Object.keys(sched).forEach(dateStr => {
     if(!dateStr.startsWith(ym)) return;
@@ -1135,18 +1432,106 @@ function computeMonthTotals(project, childId, ym)
     totals.scheduled += d.scheduled;
     totals.attended += d.attended;
     totals.holiday += d.holiday;
+	totals.profDev += d.profDev;
 	totals.NSH += d.NSH;
+	totals.numAtt += d.numAtt;
+	
+	totals.aFDU += d.aFDU;
+	totals.aHDU += d.aHDU;
+	totals.aOTU += d.aOTU;
+	totals.sFDU += d.sFDU;
+	totals.sHDU += d.sHDU;
+	totals.sOTU += d.sOTU;
+	
+	totals.numHoliday += d.numHoliday;
+	totals.numProfDev += d.numProfDev;
+	
+	allDays.push({ dateStr:dateStr, ...d});
   });
+  
+	// IMPORTANT: if NSHB requirements change it will need to be addressed here and determined by ym
+	if(totals.NSH >= 30) { totals.NSHB = 1; }
+  
+    // Calculate monthly data once all days are processed
+	// IMPORTANT: This will need to be updated any time buisness rules change
+	// new functions may need to be added if rules change, otherwise select the appropriate logic function available
+	if(ym < '2026-10')  { priorOct2026(totals, allDays); }
+	else if(ym < '2999-12')  { priorOct2026(totals, allDays); }
+	// add else ifs here as new rules change
+	else { oct2026Rules(totals, allDays); }	// This should never be needed
+  
   return totals;
 }
 
-// Exposed for future business-rule development in the browser console.
-window.BillingData = {
-  computeDayTotals: (childId, dateStr) => computeDayTotals(project, childId, dateStr),
-  computeMonthTotals: (childId, ym) => computeMonthTotals(project, childId, ym),
-  currentProject: () => project
-};
+// !! Buisness rules functions start here...
+// can affect any of the values in totals but should at minimum set: maxHrs, maxFDU, maxOTU, maxHDU, and allAuth flag
+// which will be used to report out what the provider would be eligible to bill for the month
+function priorOct2026(totals, allDays)
+{
+	// TODO: write this!
+}
 
+// TODO: finish this?
+function oct2026Rules(totals, allDays)
+{
+	totals.numAtt = Math.min(totals.numAtt, totals.numSched); // Only allow up to scheduled amount
+	totals.numHoliday = Math.min(totals.numHoliday, 11); // Max of 11 holidays possible
+	totals.numProfDev = Math.min(totals.numProfDev, 5); // Max of 5 prof dev days possible
+	  
+	if(totals.numAtt > 0) // must attend at least one day for prof dev or holidays to become eligible days
+	{
+		while((totals.numAtt + totals.numProfDev + totals.numHoliday) > totals.Sched)
+		{
+			if(totals.numProfDev > 0) 
+				{  totals.numProfDev--;  }
+			else
+				{  totals.numHoliday--;  }
+		} // Limit total used days to maximum scheduled
+		totals.numElig = Math.min(totals.Sched, (totals.numAtt + totals.numHoliday + totals.numProfDev));
+	}
+	else
+	{
+		totals.numHoliday = 0;
+		totals.numProfDev = 0;
+	}
+	
+	if (totals.numElig > 15)
+	{
+		totals.allAuth = true;
+		totals.numElig = totals.numSched;
+	}
+	else if(totals.numElig > 8)
+	{
+		totals.numElig = Math.min(totals.numSched, 15);
+	}
+	else if(totals.numElig > 0)
+	{
+		totals.numElig = Math.min(totals.numSched, 11);
+	}
+	if(totals.numElig > 0)
+	{
+		totals.maxHrs = Math.min(totals.scheduled, totals.attended); // Hourly billing must equal only attended hours, capped at max scheduled
+		totals.maxOTU = Math.min(totals.sOTU, totals.aOTU); // overtime is only allowed when actually attended capped at max scheduled
+		if(allAuth)
+		{
+			totals.maxFDU = totals.sFDU;
+			totals.maxHDU = totals.sHDU;
+		}
+		else // base it off the maximum allowed by top # of days determined by tier based on scheduled time
+		{
+			allDays.sort((a, b) => b.scheduled - a.scheduled); // sort allDays by scheduled hours largest to smallest
+			for(let i = 0; i < Math.min(totals.numElig, allDays.length); i++)
+			{
+					totals.maxFDU += d.sFDU;
+					totals.maxHDU += d.sHDU;
+			}
+		}
+	}
+	if(totals.maxFDU === totals.sFDU && totals.maxHDU === totals.sHDU && totals.maxHrs === totals.scheduled && totals.maxOTU === totals.sOTU)
+	{
+		totals.allAuth = true;
+	}
+}
 
 document.addEventListener("DOMContentLoaded", () => init());
 </script>
