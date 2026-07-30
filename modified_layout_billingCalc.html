@@ -135,6 +135,9 @@
   .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 10px;align-items:start;}
   @media (max-width:900px){.layout{grid-template-columns:1fr;}}
 
+  .top-row{display:grid;grid-template-columns:320px 320px;gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 0;align-items:stretch;}
+  @media (max-width:900px){.top-row{grid-template-columns:1fr;}}
+
 /*
 .main {
   align-self: end;
@@ -265,6 +268,7 @@
 	<button class="primary-btn" onclick="expProject()"> Export Project</button>
 	<button class="primary-btn" onclick="expToCSV()"> Download Project Data (CSV)</button>
   </div>
+  <div class="top-row" id="top-row"></div>
   <div class="layout">
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main" id="main"></main>
@@ -341,6 +345,7 @@ let recurWeekdays = [false,false,false,false,false,false,false];
   {
     const p = loadProjectById(id);
     if(!p){ alert("That project could not be loaded."); return; }
+    if(!p.authData) p.authData = {};   // backward-compat for projects saved/imported before Authorization Data existed
     project = p;
     editing = null;
     scheduleTab = "single";
@@ -562,6 +567,7 @@ function expToCSV()
       months: months,
       children: [],
       schedule: {},          // childId -> dateStr -> [{start,end,type}]
+      authData: {},          // childId -> ym -> {FDU,HDU,OTU,Hours,NSHB}
       viewMonth: months[months.length - 1],
       activeChildId: null
     };
@@ -579,7 +585,8 @@ function expToCSV()
     const p = project;
     document.getElementById("app-project-name").textContent = p.name;
     document.getElementById("app-project-badge").textContent = "No. " + String(p.id).padStart(3,"0");
-    document.getElementById("sidebar").innerHTML = renderMonthsPanel() + renderChildrenPanel() + renderSchedulePanel();
+    document.getElementById("top-row").innerHTML = renderMonthsPanel() + renderChildrenPanel();
+    document.getElementById("sidebar").innerHTML = renderSchedulePanel() + renderAuthPanel();
     document.getElementById("main").innerHTML = renderCalendarPanel();
 	document.getElementById("results").innerHTML = renderDetailsPanel();
 	
@@ -695,6 +702,7 @@ function expToCSV()
     if(!confirm(`Remove ${child.name} and all of their recorded schedule data?`)) return;
     project.children = project.children.filter(c => c.id !== id);
     delete project.schedule[id];
+    delete project.authData[id];
     if(project.activeChildId === id){
       project.activeChildId = project.children.length ? project.children[0].id : null;
     }
@@ -846,6 +854,76 @@ function expToCSV()
     renderApp();
   }
 
+
+  function getAuthData(childId, ym)
+  {
+    const rec = project.authData && project.authData[childId] && project.authData[childId][ym];
+    return rec || {FDU:"", HDU:"", OTU:"", Hours:"", NSHB:false};
+  }
+
+  function updateAuthField(field, rawValue)
+  {
+    const childId = project.activeChildId;
+    const ym = project.viewMonth;
+    if(!childId) return;
+    if(!project.authData) project.authData = {};
+    if(!project.authData[childId]) project.authData[childId] = {};
+    if(!project.authData[childId][ym]) project.authData[childId][ym] = {FDU:0, HDU:0, OTU:0, Hours:0, NSHB:false};
+    const rec = project.authData[childId][ym];
+
+    if(field === "NSHB")
+    {
+      rec.NSHB = !!rawValue;
+    }
+    else
+    {
+      const num = parseFloat(rawValue);
+      rec[field] = (rawValue === "" || isNaN(num)) ? 0 : Math.round(num);
+    }
+    saveProject();
+  }
+
+  function renderAuthPanel()
+  {
+    const p = project;
+    const child = p.children.find(c => c.id === p.activeChildId);
+    if(!child){
+      return `<section class="panel"><h2>Authorization Data</h2><div class="no-child-note">Select or add a child to enter authorization data.</div></section>`;
+    }
+
+    const ym = p.viewMonth;
+    const auth = getAuthData(child.id, ym);
+
+    return `
+      <section class="panel">
+        <h2>Authorization Data &mdash; ${escapeHtml(child.name)}, ${monthLabel(ym)}</h2>
+        <div class="row-2">
+          <div class="field">
+            <label for="auth-fdu">FDU</label>
+            <input type="number" id="auth-fdu" min="0" step="1" value="${auth.FDU}" onchange="updateAuthField('FDU', this.value)">
+          </div>
+          <div class="field">
+            <label for="auth-hdu">HDU</label>
+            <input type="number" id="auth-hdu" min="0" step="1" value="${auth.HDU}" onchange="updateAuthField('HDU', this.value)">
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="auth-otu">OTU</label>
+            <input type="number" id="auth-otu" min="0" step="1" value="${auth.OTU}" onchange="updateAuthField('OTU', this.value)">
+          </div>
+          <div class="field">
+            <label for="auth-hours">Hours</label>
+            <input type="number" id="auth-hours" min="0" step="1" value="${auth.Hours}" onchange="updateAuthField('Hours', this.value)">
+          </div>
+        </div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="auth-nshb" ${auth.NSHB ? "checked" : ""} onchange="updateAuthField('NSHB', this.checked)">
+          <label for="auth-nshb" style="margin:0;">NSHB Authorized</label>
+        </div>
+        <div class="hint">Authorized units for ${escapeHtml(child.name)} in ${monthLabel(ym)}. Saved automatically.</div>
+      </section>`;
+  }
 
   function renderCalendarPanel()
   {
@@ -1125,9 +1203,10 @@ function mergeIntervals(list)
 
 // Adds a period for a child/date/type, merging with any touching or overlapping
 // period of the SAME type. Periods of different types are left independent.
-// A single date can have scheduled types and either: attendance types, holiday entry(s), or profesional development entry(s)
+// TODO: A single date can have scheduled types and either: attendance types, single holiday entry, or a single profesional development entry
 // If the day has attendance, can have multiple attendances that are discreet (if touching or overlapping, merge)
 // If the day has scheduled types, can have multiple scheduled periods that are discreet (if touching or overlapping, merge to one)
+// However can only have one Holiday or Professional development day on a single date
 function mergeAddPeriod(project, childId, dateStr, type, start, end)
 {
 	project.schedule[childId] = project.schedule[childId] || {};
