@@ -293,7 +293,7 @@ Just an FYI this was made by Andrew so you know it is hot garbage
 
 
     // simulation state
-  const activeCallQueue=[]; // calls that have arrived and are waiting
+  let activeCallQueue=[]; // calls that have arrived and are waiting
   let callQueueIdx=0; // pointer into allCalls
   let batchQueueIdx=0; // pointer into batchQueue
   const availBatch=[]; // batch cases available
@@ -1449,6 +1449,7 @@ function runSimulation()
 		  myDay.oldestBatch = daysBetween(availBatch.filter(e => !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
 		  myDay.uninitiatedApps = uninitiatedApps;
 		  myDay.oldestApp = daysBetween(availBatch.filter(e => e.type === "App" && !e.worked).reduce((oldest, item) => new Date(item.genDate) < new Date(oldest)?item.genDate:oldest, simDate), simDate);
+		  myDay.numCalls = numCalls;
 		  myDay.numWorkers = numWorkers;
 		  myDay.caseLoadStart = actualCaseLoad;
 		  
@@ -1817,11 +1818,12 @@ function runSimulation()
           {
             c.abandoned=true;
             myDay.callsAbandoned++;
-            if(rand() <= 0.5) // Half will call back tomorrow
+            if(rand() <= 0.3) // Some will call back tomorrow
             {
                 carryCalls++;
             }
           }
+		  activecallQueue = [];
 		 
 		// End of day stats
 		myDay.backlogEnd = availBatch.length;
