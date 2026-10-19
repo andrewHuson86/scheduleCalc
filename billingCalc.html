@@ -135,18 +135,11 @@
   .ghost-btn:hover{background:var(--paper-dim);}
   .hint{font-size:12px;color:var(--ink-soft);margin-top:-4px;}
 
-  .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 10px;align-items:start;}
-  @media (max-width:900px){.layout{grid-template-columns:1fr;}}
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;max-width:1880px;margin:0 auto;padding:20px 24px 10px;align-items:start;}
+ 
 
-  .top-row{display:grid;grid-template-columns:repeat(3, minmax(280px, 1fr));gap:20px;max-width:1320px;margin:0 auto;padding:20px 24px 0;align-items:stretch;}
-  @media (max-width:1300px){.top-row{grid-template-columns:1fr 1fr;}}
-  @media (max-width:900px){.top-row{grid-template-columns:1fr;}}
-
-/*
-.main {
-  align-self: end;
-}
-*/
+  .top-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;max-width:1880px;margin:0 auto;padding:20px 24px 0;align-items:stretch;}
+ 
   .chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
   .chip{
     font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:14px;border:1px solid var(--line-strong);
@@ -1618,182 +1611,6 @@ function getWeekdayName(dateStr)
 	return WEEKDAY_NAMES[(getWeekday(dateStr)+1%7)];
 }
 
-function computeDayTotals(project, childId, dateStr)
-{
-  const totals = {scheduled:0, attended:0, holiday:0, sNSH:0, NSH:0, profDev:0, aFDU:0, aHDU:0, aOTU:0, adOTU:0, sFDU:0, sHDU:0, sOTU:0, sdOTU:0,
-  hFDU:0, hHDU:0, hOTU:0, hdOTU:0, pFDU:0, pHDU:0, pOTU:0, pdOTU:0,
-  numAtt:0, numHoliday:0, numProfDev:0, numSched:0, otAttended:0, dubOtAttended:0};
-  const periods = (project.schedule[childId] && project.schedule[childId][dateStr]) || [];
-  periods.forEach(p => {
-    const hrs = (p.end - p.start) / 60;
-	let nshrs = 0;
-    if(p.type === "Scheduled") 
-	{
-		totals.scheduled += hrs;
-		
-		// calculate scheduled NSHB, include all hours of attendance
-		if ((getWeekday(dateStr) > 4) || (isHolidayStr(dateStr))) // Sat or Sunday or Legal Holiday
-		{
-			totals.sNSH += hrs;
-		}
-		else
-		{
-			let nshrs = 0;
-			if (p.start < 360)
-			{
-				nshrs += ((p.end>360?360:p.end) - p.start)/60;
-			}
-			if(p.end > 1080)
-			{
-				nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
-			}
-			totals.sNSH += nshrs;
-		}
-		
-	}
-    else if(p.type === "Attended")
-	{		
-		totals.attended += hrs;
-		
-		// calculate NSHB, include all hours of attendance
-		if ((getWeekday(dateStr) > 4) || (isHolidayStr(dateStr))) // Sat or Sunday or Legal Holiday
-		{
-			totals.NSH += hrs;
-		}
-		else
-		{
-			let nshrs = 0;
-			if (p.start < 360)
-			{
-				nshrs += ((p.end>360?360:p.end) - p.start)/60;
-			}
-			if(p.end > 1080)
-			{
-				nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
-			}
-			totals.NSH += nshrs;
-		}
-	}
-    else if(p.type === "Holiday")
-	{
-		totals.holiday += hrs;
-	}
-	else if(p.type === "ProfDev") 
-	{
-		totals.profDev += hrs;
-	}
-
-  });
-	// Maximum of 16 hours per day can be scheduled or counted as attended (aside from NSH)
-	totals.scheduled = Math.min(totals.scheduled,16.0);
-	totals.attended = Math.min(totals.attended,16.0);
-	// calculate daily units based on totals after all periods have been processed
-	totals.numAtt = (totals.attended > 0?1:0); 
-	totals.numSched = (totals.scheduled > 0?1:0); 
-	if(totals.scheduled < 5)
-	{
-		totals.sHDU = 1;
-	}
-	else if(totals.scheduled <= 10)
-	{
-		totals.sFDU = 1;
-	}
-	else if(totals.scheduled <= 15)
-	{
-		totals.sFDU = 1;
-		totals.sOTU = 1;
-	}
-	else
-	{
-		totals.sFDU = 1;
-		totals.sOTU = 1;
-		totals.sdOTU = 1;
-	}
-	
-	if(totals.numAtt === 0 && totals.numSched === 1) // holiday or prof dev only included if it was a scheduled day
-	{
-		totals.numHoliday = (totals.holiday > 0?1:0);
-		if(totals.numHoliday === 0)
-		{
-			totals.numProfDev = (totals.profDev > 0?1:0);  
-		}
-	}
-	else
-	{
-		if(totals.attended < 5)
-		{
-			totals.aHDU = 1;
-		}
-		else if(totals.attended <= 10)
-		{
-			totals.aFDU = 1;
-		}
-		else if(totals.attended <= 15)
-		{
-			totals.aFDU = 1;
-			totals.aOTU = 1;
-			totals.otAttended = 1; // They attended at least a day of actual overtime attendance
-		}
-		else // over 15 hours gets double overtime units
-		{
-			totals.aFDU = 1;
-			totals.aOTU = 1;
-			totals.adOTU = 1;
-			totals.otAttended = 1; // They attended at least a day of actual overtime attendance
-			totals.dubOtAttended = 1; // They attended at least a day of actual double overtime attendance
-		}
-	}
-	
-	totals.holiday *= totals.numHoliday; 	//  If not counted as a holiday, don't include holiday hours
-	totals.profDev *= totals.numProfDev;	// If not counted as prof dev day, don't include prof dev hours
-	if(totals.numHoliday)
-	{
-		if(totals.holiday < 5)
-		{
-			totals.hHDU = 1;
-		}
-		else if(totals.holiday <= 10)
-		{
-			totals.hFDU = 1;
-		}
-		else if(totals.holiday <= 15)
-		{
-			totals.hFDU = 1;
-			totals.hOTU = 1;
-		}
-		else
-		{
-			totals.hFDU = 1;
-			totals.hOTU = 1;
-			totals.hdOTU = 1;
-		}
-	}
-	else if(totals.numProfDev)
-	{
-		if(totals.profDev < 5)
-		{
-			totals.pHDU = 1;
-		}
-		else if(totals.profDev <= 10)
-		{
-			totals.pFDU = 1;
-		}
-		else if(totals.profDev <= 15)
-		{
-			totals.pFDU = 1;
-			totals.pOTU = 1;
-		}
-		else
-		{
-			totals.pFDU = 1;
-			totals.pOTU = 1;
-			totals.pdOTU = 1;
-		}
-	}
-	  
-  return totals;
-}
-
 function isHolidayStr(dateStr)
 {
 	let myDate = new Date(dateStr+ 'T00:00:00');
@@ -1941,7 +1758,186 @@ function isHoliday(date) // determines whether the date is a legal holiday as de
     return returnVal;
 }
 
+// TODO: rewrite this, this needs to make sense
+function computeDayTotals(project, childId, dateStr)
+{
+  const totals = {scheduled:0, attended:0, holiday:0, sNSH:0, NSH:0, profDev:0, aFDU:0, aHDU:0, aOTU:0, adOTU:0, sFDU:0, sHDU:0, sOTU:0, sdOTU:0,
+  hFDU:0, hHDU:0, hOTU:0, hdOTU:0, pFDU:0, pHDU:0, pOTU:0, pdOTU:0,
+  numAtt:0, numHoliday:0, numProfDev:0, numSched:0, otAttended:0, dubOtAttended:0};
+  
+  const periods = (project.schedule[childId] && project.schedule[childId][dateStr]) || [];
+  periods.forEach(p => {
+    const hrs = (p.end - p.start) / 60;
+	let nshrs = 0;
+    if(p.type === "Scheduled") 
+	{
+		totals.scheduled += hrs;
+		
+		// calculate scheduled NSHB, include all hours of attendance
+		if ((getWeekday(dateStr) > 4) || (isHolidayStr(dateStr))) // Sat or Sunday or Legal Holiday
+		{
+			totals.sNSH += hrs;
+		}
+		else
+		{
+			let nshrs = 0;
+			if (p.start < 360)
+			{
+				nshrs += ((p.end>360?360:p.end) - p.start)/60;
+			}
+			if(p.end > 1080)
+			{
+				nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
+			}
+			totals.sNSH += nshrs;
+		}
+		
+	}
+    else if(p.type === "Attended")
+	{		
+		totals.attended += hrs;
+		
+		// calculate NSHB, include all hours of attendance
+		if ((getWeekday(dateStr) > 4) || (isHolidayStr(dateStr))) // Sat or Sunday or Legal Holiday
+		{
+			totals.NSH += hrs;
+		}
+		else
+		{
+			let nshrs = 0;
+			if (p.start < 360)
+			{
+				nshrs += ((p.end>360?360:p.end) - p.start)/60;
+			}
+			if(p.end > 1080)
+			{
+				nshrs += (p.end - ((p.start<1080?1080:p.start)))/60;
+			}
+			totals.NSH += nshrs;
+		}
+	}
+	// TODO: Do holiday/profdev days that would have been NSHB count toward NSHB if the child has attended any NS hours?
+    else if(p.type === "Holiday")
+	{
+		totals.holiday += hrs;
+	}
+	else if(p.type === "ProfDev") 
+	{
+		totals.profDev += hrs;
+	}
+
+  });
+	// Maximum of 16 hours per day can be scheduled or counted as attended (aside from NSH)
+	totals.scheduled = Math.min(totals.scheduled,16.0);
+	totals.attended = Math.min(totals.attended,16.0);
+	
+	// calculate daily units based on totals after all periods have been processed
+	totals.numAtt = (totals.attended > 0?1:0); 
+	totals.numSched = (totals.scheduled > 0?1:0); 
+	if(totals.scheduled < 5)
+	{
+		totals.sHDU = 1;
+	}
+	else if(totals.scheduled <= 10)
+	{
+		totals.sFDU = 1;
+	}
+	else if(totals.scheduled <= 15)
+	{
+		totals.sFDU = 1;
+		totals.sOTU = 1;
+	}
+	else
+	{
+		totals.sFDU = 1;
+		totals.sdOTU = 1;
+	}
+	
+	if(totals.numAtt === 0 && totals.numSched === 1) // holiday or prof dev only included if it was a scheduled day
+	{
+		totals.numHoliday = (totals.holiday > 0?1:0);
+		if(totals.numHoliday === 0)
+		{
+			totals.numProfDev = (totals.profDev > 0?1:0);  
+		}
+	}
+	else
+	{
+		if(totals.attended < 5)
+		{
+			totals.aHDU = 1;
+		}
+		else if(totals.attended <= 10)
+		{
+			totals.aFDU = 1;
+		}
+		else if(totals.attended <= 15)
+		{
+			totals.aFDU = 1;
+			totals.aOTU = 1;
+			totals.otAttended = 1; // They attended at least a day of actual overtime attendance
+		}
+		else // over 15 hours gets double overtime units
+		{
+			totals.aFDU = 1;
+			totals.adOTU = 1;
+			totals.dubOtAttended = 1; // They attended at least a day of actual double overtime attendance
+		}
+	}
+	
+	totals.holiday *= totals.numHoliday; 	//  If not counted as a holiday, don't include holiday hours
+	totals.profDev *= totals.numProfDev;	// If not counted as prof dev day, don't include prof dev hours
+	if(totals.numHoliday)
+	{
+		if(totals.holiday < 5)
+		{
+			totals.hHDU = 1;
+		}
+		else if(totals.holiday <= 10)
+		{
+			totals.hFDU = 1;
+		}
+		else if(totals.holiday <= 15)
+		{
+			totals.hFDU = 1;
+			totals.hOTU = 1;
+		}
+		else
+		{
+			totals.hFDU = 1;
+			totals.hdOTU = 1;
+		}
+	}
+	else if(totals.numProfDev)
+	{
+		if(totals.profDev < 5)
+		{
+			totals.pHDU = 1;
+		}
+		else if(totals.profDev <= 10)
+		{
+			totals.pFDU = 1;
+		}
+		else if(totals.profDev <= 15)
+		{
+			totals.pFDU = 1;
+			totals.pOTU = 1;
+		}
+		else
+		{
+			totals.pFDU = 1;
+			totals.pdOTU = 1;
+		}
+	}
+	  
+  return totals;
+}
+
 // Allowable billing is dependant on the rules in place at the time
+// TODO: Update this, need to determine whether each individual day is included in counts or not, and if so, what count to use for the day if there are multiple types...
+// If there is no authorization covereage for the day, can/should anything be counted/included for that day?
+// If there is both scheduled attendance and attendance do we use only actual attendance or whichever is more or whichever is least?
+
 function computeMonthTotals(project, childId, ym)
 {
   const totals = {scheduled:0, attended:0, otAttended:0, dubOtAttended:0, holiday:0, NSHB:0, sNSH:0, NSH:0, profDev:0, aFDU:0, aHDU:0, aOTU:0, adOTU:0, sFDU:0, sHDU:0, sOTU:0, sdOTU:0,
@@ -2012,9 +2008,8 @@ function computeMonthTotals(project, childId, ym)
 	// new functions may need to be added if rules change, otherwise select the appropriate logic function available
 	if(ym < '2013-06')  { priorJuly2013(totals, allDays, thisAuth); }
 	else if(ym < '2026-10')  { july2013Rules(totals, allDays, thisAuth); }
-	else if(ym < '2999-12')  { oct2026Rules(totals, allDays, thisAuth); }
 	// add else ifs here as new rules change
-	else { oct2026Rules(totals, allDays, thisAuth); }	// This should never be needed
+	else { oct2026Rules(totals, allDays, thisAuth); }	// current rules
   
   return totals;
 }
@@ -2044,11 +2039,14 @@ function july2013Rules(totals, allDays, thisAuth)
 /* 10/1/26 rules, for any billing to occur, must have at least one day of real attendance, if there is one day, then the days of holidays
  and professional days are also counted as attendance up to the maximum allowed amount: 11 holidays per year and 5 professional days per year
  with no limit of usage per month (all holidays and prof days can be in a single month). Then there are three tiers, whether the child has 
- attended less than 8 days, less than 16 days, or 16+ days. If attendance is 0-7 days they can bill up to 11 days worth of care (using 11 days of highest
- amount of scheduled care in the month) or up to max authorized whichever is least. If attendance is 8-15 days, provider can be up to 15 days worth of care
- (calculated using the top 15 days of highest amount of scheduled care in the month) or up to max authorization, whichever is least. If 16+ days of attendance
- can bill max authorized (with exception of NSHB and OTUs, those can only be billed if actually attended and requirements met.)
+ attended less than 8 days, less than 16 days, or 16+ days. If attendance is 0-7 days they can bill up to 11 days worth of care. The number of absent days will be 11 - the number of days Attended
+the days then that were scheduled but not attended should be ordered from highest to lowest amount of scheduled care in that month, and select the top # of absent days from that list.
+Billing is calculated for all the attended days, holidays, and absent days using whichever amount is greatest for that day, attended or scheduled. 
+The amount eligible is that amount calculated or up to max authorized whichever is least. If attendance is 8-15 days, provider can be up to 15 days worth of care
+ or up to max authorization, whichever is least. If 16+ days of attendance can bill max authorized limited by scheduled care (with exception of NSHB which can only be billed if NHSB requirements met.) 
+ Overtime units are grouped together and the same tiers apply, need at least 1 day of real attendance of overtime to make any applicable holiday or prof dev days eligible to count as attendance.  
  */
+ // TODO: I think this needs revamped, we should only use care used or eligible for days within authorization(s) for the month
 function oct2026Rules(totals, allDays, thisAuth)
 {
 	totals.numAtt = Math.min(totals.numAtt, totals.numSched); // Only allow up to scheduled amount
@@ -2070,8 +2068,19 @@ function oct2026Rules(totals, allDays, thisAuth)
 	{
 		totals.numHoliday = 0;
 		totals.numProfDev = 0;
+		totals.holiday = 0;
+		totals.profDev = 0;
+		totals.hFDU = 0;
+		totals.hHDU = 0;
+		totals.hOTU = 0;
+		totals.hdOTU = 0;
+		totals.pFDU = 0;
+		totals.pHDU = 0;
+		totals.pOTU = 0;
+		totals.pdOTU = 0;
 	}
 	
+	//Do regular units and OT units seperatly
 	if (totals.numElig > 15)
 	{
 		totals.allAuth = true;
@@ -2094,6 +2103,7 @@ function oct2026Rules(totals, allDays, thisAuth)
 			totals.maxFDU = totals.sFDU;
 			totals.maxHDU = totals.sHDU;
 			totals.maxOTU = totals.sOTU;
+			totals.maxOTU += totals.sdOTU;
 		}
 		else // base it off the maximum allowed by top # of days determined by tier based on scheduled time
 		{
@@ -2104,13 +2114,24 @@ function oct2026Rules(totals, allDays, thisAuth)
 				totals.maxFDU += day.sFDU;
 				totals.maxHDU += day.sHDU;
 				totals.maxOTU += day.sOTU
+				totals.maxOTU += day.sdOTU;
 			}
 		}
 	}
-	if(totals.maxFDU === totals.sFDU && totals.maxHDU === totals.sHDU && totals.maxHrs === totals.scheduled && totals.maxOTU === totals.sOTU)
+	let numOtElig = totals.otAttended + totals.dubOtAttended;
+	if(numOtElig > 0)
+	{
+		
+	}
+	
+	
+	if(totals.maxFDU === totals.sFDU && totals.maxHDU === totals.sHDU && totals.maxHrs === totals.scheduled && totals.maxOTU === (totals.sOTU+totals.sdOTU))
 	{
 		totals.allAuth = true;
 	}
+	
+	// Need to calculate billable FDU/HDU/Hrs/OTUs which will always be limited by authorized care
+	
 }
 
 document.addEventListener("DOMContentLoaded", () => init());
