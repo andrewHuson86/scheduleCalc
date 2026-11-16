@@ -1,0 +1,370 @@
+﻿FamilyName,ChildName,AttendanceDate,AttendanceReason,TimeIn,TimeInSource,TimeOut,TimeOutSource,Absent,HoursForDisplay,Note,Textbox182,Textbox155,Textbox156
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,,22,2,156:34:00
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+,,,,,,,,,,,,,
+FamilyName1,ChildName5,AttendanceDate5,AttendanceReason3,TimeIn5,TimeInSource1,TimeOut5,TimeOutSource1,Absent5,HoursForDisplay5,Note3,Textbox186,Textbox163,Textbox164
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,,22,2,156:34:00
+,,,,,,,,,,,,,
+FamilyName2,ChildName2,AttendanceDate2,AttendanceReason1,TimeIn2,TimeInSource2,TimeOut2,TimeOutSource2,Absent2,HoursForDisplay2,Note2,Textbox183,Textbox157,Textbox158
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,,22,2,156:34:00
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+,,,,,,,,,,,,,
+FamilyName5,ChildName6,AttendanceDate6,AttendanceReason5,TimeIn6,TimeInSource3,TimeOut6,TimeOutSource3,Absent6,HoursForDisplay6,Note4,Textbox193,Textbox168,Textbox169
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,,22,6,128:58:00
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,,22,2,156:34:00
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,,22,2,156:34:00
+,,,,,,,,,,,,,
+FamilyName3,ChildName3,AttendanceDate3,AttendanceReason2,TimeIn3,TimeInSource4,TimeOut3,TimeOutSource4,Absent3,HoursForDisplay3,Textbox184,Textbox159,Textbox160,
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,22,2,156:34:00,
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+,,,,,,,,,,,,,
+FamilyName6,ChildName7,AttendanceDate7,AttendanceReason6,TimeIn7,TimeInSource5,TimeOut7,TimeOutSource5,Absent7,HoursForDisplay7,Textbox195,Textbox174,Textbox175,
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,22,2,156:34:00,
+,,,,,,,,,,,,,
+FamilyName4,ChildName4,AttendanceDate4,AttendanceReason4,TimeIn4,TimeInSource6,TimeOut4,TimeOutSource6,Absent4,HoursForDisplay4,Textbox185,Textbox161,Textbox162,
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,22,2,156:34:00,
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+,,,,,,,,,,,,,
+FamilyName7,ChildName8,AttendanceDate8,AttendanceReason7,TimeIn8,TimeInSource7,TimeOut8,TimeOutSource7,Absent8,HoursForDisplay8,Textbox197,Textbox180,Textbox181,
+ROSCHER,"BROWN, SUTTON",5/1/2025,Present,7:12 AM,KinderSmart,4:25 PM,KinderSmart,,9:13,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/2/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/5/2025,Present,7:12 AM,KinderSmart,4:35 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/6/2025,Present,7:11 AM,KinderSmart,4:44 PM,KinderSmart,,9:33,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/7/2025,Present,7:13 AM,KinderSmart,2:30 PM,KinderSmart,,7:17,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/8/2025,Present,7:14 AM,KinderSmart,4:36 PM,KinderSmart,,9:22,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/9/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/12/2025,Present,7:07 AM,KinderSmart,4:37 PM,KinderSmart,,9:30,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/13/2025,Present,7:16 AM,KinderSmart,4:39 PM,KinderSmart,,9:23,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/14/2025,Present,7:20 AM,KinderSmart,2:27 PM,KinderSmart,,7:07,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/15/2025,Present,7:14 AM,KinderSmart,2:35 PM,KinderSmart,,7:21,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/16/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/19/2025,Present,7:09 AM,KinderSmart,4:40 PM,KinderSmart,,9:31,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/20/2025,Present,7:09 AM,KinderSmart,4:49 PM,KinderSmart,,9:40,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/21/2025,Present,7:25 AM,KinderSmart,2:35 PM,KinderSmart,,7:10,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/22/2025,Present,7:17 AM,KinderSmart,4:12 PM,KinderSmart,,8:55,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/23/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/27/2025,Present,7:14 AM,KinderSmart,3:08 PM,KinderSmart,,7:54,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/28/2025,Present,7:24 AM,KinderSmart,3:03 PM,KinderSmart,,7:39,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/29/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+ROSCHER,"BROWN, SUTTON",5/30/2025,Absent,,KinderConnect,,,1,0:00,22,6,128:58:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/1/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/2/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/5/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/6/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/7/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/8/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/9/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/12/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/13/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/14/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/15/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/16/2025,Present,7:00 AM,KinderConnect,12:30 PM,KinderConnect,,5:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/19/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/20/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/21/2025,Absent,,KinderConnect,,,1,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/22/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/23/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/26/2025,Holiday,,KinderConnect,,,,0:00,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/27/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/28/2025,Present,7:00 AM,KinderConnect,3:30 PM,KinderConnect,,8:30,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/29/2025,Present,6:57 AM,KinderConnect,3:32 PM,KinderConnect,,8:35,22,2,156:34:00,
+MARTINEZ V,"SARABIA, ANTONIO",5/30/2025,Present,8:59 AM,KinderConnect,3:28 PM,KinderSmart,,6:29,22,2,156:34:00,
+,,,,,,,,,,,,,
+Textbox29,Absent1,Textbox26,,,,,,,,,,,
+44,8,285:32:00,,,,,,,,,,,
