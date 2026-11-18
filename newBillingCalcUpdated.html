@@ -265,6 +265,7 @@
     <button class="backbtn" onclick="goHome()">&larr; All Projects</button>
 	<button class="primary-btn" onclick="expProject()"> Export Project</button>
 	<button class="primary-btn" onclick="expToCSV()"> Download Project Data (CSV)</button>
+	<button class="primary-btn" onclick="importAttendanceCsv()"> Import Attendance Records (CSV)</button>
   </div>
   <div class="top-row" id="top-row"></div>
   <div class="layout">
@@ -2359,6 +2360,516 @@ function july2013Rules(totals, allDays, thisAuth) { evaluateBilling('jul2013', t
    scheduled days with no attendance. Each day is billed on attended or scheduled time, whichever is more.
    Overtime units are grouped and tiered on their own. Always limited by authorization. */
 function oct2026Rules(totals, allDays, thisAuth) { evaluateBilling('oct2026', totals, allDays, thisAuth); }
+
+/* =====================================================================
+   KinderConnect attendance CSV import
+   Entry point:  importAttendanceCsv()   (wire to a button's onclick)
+   ===================================================================== */
+
+const KC_IMPORT = {
+  TYPE_ATTENDED:  "Attended",
+  TYPE_SCHEDULED: "Scheduled", 
+  TYPE_HOLIDAY:   "Holiday",
+  // Converts minutes-since-midnight to whatever unit se-start / se-end use.
+  toUnits: minutes => minutes
+};
+
+/* ---------------------------- CSV parsing ----------------------------- */
+function kcParseCsv(text)
+{
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);       // strip BOM
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i = 0; i < text.length; i++)
+  {
+    const ch = text[i];
+    if(inQuotes)
+    {
+      if(ch === '"')
+      {
+        if(text[i + 1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      }
+      else field += ch;
+    }
+    else if(ch === '"') inQuotes = true;
+    else if(ch === ",") { row.push(field); field = ""; }
+    else if(ch === "\n" || ch === "\r")
+    {
+      if(ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); field = "";
+      rows.push(row); row = [];
+    }
+    else field += ch;
+  }
+  if(field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function kcTimeToMinutes(s)
+{
+  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i.exec((s || "").trim());
+  if(!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const ap = (m[3] || "").toUpperCase();
+  if(min > 59) return null;
+  if(ap){ if(h < 1 || h > 12) return null; if(ap === "AM" && h === 12) h = 0; else if(ap === "PM" && h !== 12) h += 12; }
+  else if(h > 23) return null;
+  return h * 60 + min;
+}
+
+function kcDateToIso(s)
+{
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((s || "").trim());
+  if(!m) return null;
+  const mo = +m[1], d = +m[2], y = +m[3];
+  const dt = new Date(y, mo - 1, d);
+  if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return y + "-" + String(mo).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+}
+
+/* ------------------------------ cleaning ------------------------------ */
+/* Only the first 9 columns are used (by position). The report repeats its
+   header and data in several blocks, and later blocks drop the Note column
+   which shifts the trailing columns, so everything after Absent is ignored. */
+function kcCleanRecords(rows)
+{
+  const stats = { rawRows: rows.length, blankRows: 0, headerRows: 0, junkRows: 0,
+                  duplicates: 0, conflicts: [], invalid: [] };
+  const seen = new Map();
+  for(const r of rows)
+  {
+    if(!r.some(c => (c || "").trim() !== "")){ stats.blankRows++; continue; }
+    if(/^familyname/i.test((r[0] || "").trim())){ stats.headerRows++; continue; }
+
+    const c = r.map(x => (x || "").trim());
+    const [family, child, dateRaw, reason, tin, , tout, , absentFlag] = c;
+    const date = kcDateToIso(dateRaw);
+    if(!child || !date){ stats.junkRows++; continue; }            // totals/footers etc.
+
+    const who = child + " " + date;
+    const rl = (reason || "").toLowerCase();
+    let status = null, start = null, end = null;
+
+    if(rl === "present" || (rl === "" && tin && tout))
+    {
+      start = kcTimeToMinutes(tin); end = kcTimeToMinutes(tout);
+      if(start === null || end === null){ stats.invalid.push(who + ": missing or unreadable time in/out"); continue; }
+      if(end <= start){ stats.invalid.push(who + ": time out is not after time in"); continue; }
+      status = "attended";
+    }
+    else if(rl === "absent" || (rl === "" && absentFlag === "1")) status = "absent";
+    else if(rl === "holiday") status = "holiday";
+    else { stats.invalid.push(who + ": unrecognized attendance reason '" + reason + "'"); continue; }
+
+    const key = family + "|" + child + "|" + date;
+    const sig = status + "|" + start + "|" + end;
+    if(seen.has(key))
+    {
+      if(seen.get(key).sig === sig) stats.duplicates++;
+      else { stats.conflicts.push(who + ": conflicting rows in file, first one kept"); }
+      continue;
+    }
+    seen.set(key, { sig, rec: { family, child, date, status, start, end } });
+  }
+  const records = [...seen.values()].map(v => v.rec);
+  return { records, stats };
+}
+
+function kcGroupChildren(records)
+{
+  const map = new Map();
+  for(const r of records)
+  {
+    const key = r.family + "|" + r.child;
+    if(!map.has(key)) map.set(key, { key, family: r.family, name: r.child, records: [] });
+    map.get(key).records.push(r);
+  }
+  map.forEach(g => g.records.sort((a, b) => a.date.localeCompare(b.date)));
+  return [...map.values()];
+}
+
+/* ------------------------------ UI helpers ---------------------------- */
+function kcEl(tag, attrs, ...kids)
+{
+  const e = document.createElement(tag);
+  for(const k in (attrs || {}))
+  {
+    if(k === "style") e.style.cssText = attrs[k];
+    else if(k in e) e[k] = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  kids.flat().forEach(x => e.appendChild(typeof x === "string" ? document.createTextNode(x) : x));
+  return e;
+}
+
+function kcInjectStyles()
+{
+  if(document.getElementById("kc-styles")) return;
+  const s = document.createElement("style");
+  s.id = "kc-styles";
+  s.textContent = `
+  .kc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;display:flex;align-items:center;justify-content:center}
+  .kc-box{background:#fff;color:#222;border-radius:8px;padding:16px 20px;max-width:760px;width:92%;max-height:88vh;overflow:auto;font:14px/1.4 sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .kc-box h3{margin:0 0 10px}
+  .kc-err{color:#b00020;min-height:1.2em;margin:8px 0}
+  .kc-bar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+  .kc-box button{padding:6px 12px;cursor:pointer}
+  .kc-primary{font-weight:bold}
+  .kc-box table{border-collapse:collapse;width:100%}
+  .kc-box td,.kc-box th{padding:3px 6px;text-align:left;border-bottom:1px solid #ddd}
+  .kc-opt{display:block;margin:10px 0 2px}
+  .kc-sub{margin:2px 0 6px 22px}
+  .kc-sub input,.kc-sub select{margin-right:8px}
+  .kc-scroll{max-height:45vh;overflow:auto;border:1px solid #ddd}
+  .kc-muted{color:#666}`;
+  document.head.appendChild(s);
+}
+
+/* Resolves {id, data}. Buttons with validate:true are blocked until validate() returns null. */
+function kcDialog({ title, body, buttons, collect, validate })
+{
+  kcInjectStyles();
+  return new Promise(resolve =>
+  {
+    const err = kcEl("div", { className: "kc-err" });
+    const bar = kcEl("div", { className: "kc-bar" });
+    const overlay = kcEl("div", { className: "kc-overlay" },
+      kcEl("div", { className: "kc-box" }, kcEl("h3", {}, title), body, err, bar));
+    buttons.forEach(b =>
+    {
+      const btn = kcEl("button", { type: "button", className: b.primary ? "kc-primary" : "" }, b.label);
+      btn.onclick = () =>
+      {
+        if(b.validate && validate){ const msg = validate(); if(msg){ err.textContent = msg; return; } }
+        const data = collect ? collect() : null;
+        overlay.remove();
+        resolve({ id: b.id, data });
+      };
+      bar.appendChild(btn);
+    });
+    document.body.appendChild(overlay);
+  });
+}
+
+function kcNormName(n)
+{
+  return (n || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean).sort().join(" ");
+}
+function kcMinToInput(m){ return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
+function kcInputToMin(v){ const m = /^(\d{2}):(\d{2})/.exec(v || ""); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+function kcNiceDate(iso)
+{
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+}
+function kcMostCommon(arr)
+{
+  const c = new Map(); arr.forEach(v => c.set(v, (c.get(v) || 0) + 1));
+  let best = null, n = 0; c.forEach((k, v) => { if(k > n){ best = v; n = k; } });
+  return best;
+}
+
+/* ------------------------- project-state helpers ---------------------- */
+function kcPeriods(childId, date){ return ((project.schedule || {})[childId] || {})[date] || []; }
+function kcHasType(childId, date, type){ return kcPeriods(childId, date).some(p => p.type === type); }
+function kcHasPeriod(childId, date, type, s, e){ return kcPeriods(childId, date).some(p => p.type === type && p.start <= s && p.end >= e); }
+
+/* Calls mergeAddPeriod, capturing the alert() it raises on a rule violation. */
+function kcAdd(childId, date, type, startMin, endMin, report, label)
+{
+  const s = KC_IMPORT.toUnits(startMin), e = KC_IMPORT.toUnits(endMin);
+  if(kcHasPeriod(childId, date, type, s, e)){ report.duplicate++; return "duplicate"; }
+  const msgs = [];
+  const origAlert = window.alert;
+  window.alert = m => msgs.push(String(m));
+  try { mergeAddPeriod(project, childId, date, type, s, e); }
+  catch(ex){ msgs.push(ex.message); }
+  finally { window.alert = origAlert; }
+  if(msgs.length){ report.rejected.push(label + " " + date + " (" + type + "): " + msgs.join(" ")); return "rejected"; }
+  return "added";
+}
+
+/* ------------------------------- dialogs ------------------------------ */
+async function kcMonthsDialog(missing)
+{
+  const maxMonth = maxSelectableMonth();
+  const boxes = [];
+  const list = kcEl("div", {});
+  missing.forEach(mo =>
+  {
+    const ok = mo <= maxMonth;
+    const cb = kcEl("input", { type: "checkbox", checked: ok, disabled: !ok, value: mo });
+    boxes.push(cb);
+    list.appendChild(kcEl("label", { className: "kc-opt" }, cb, " " + mo + (ok ? "" : "  (not a fully completed month, cannot be added)")));
+  });
+  const body = kcEl("div", {}, kcEl("p", {}, "The file contains records for months that are not in this project. Select the months to add. Records in months that are not added will be skipped."), list);
+  const r = await kcDialog({
+    title: "Months to add", body,
+    buttons: [{ id: "cancel", label: "Cancel import" }, { id: "ok", label: "Continue", primary: true }],
+    collect: () => boxes.filter(b => b.checked).map(b => b.value)
+  });
+  return r.id === "ok" ? r.data : null;
+}
+
+/* Returns {action:'match'|'new'|'skip'|'skipFamily'|'cancel', id, name} */
+async function kcChildDialog(group, pendingIds)
+{
+  const dates = group.records.map(r => r.date);
+  const existing = project.children;
+  const norm = kcNormName(group.name);
+  const auto = existing.find(c => kcNormName(c.name) === norm);
+
+  const rMatch = kcEl("input", { type: "radio", name: "kcmode", value: "match", disabled: existing.length === 0 });
+  const rNew = kcEl("input", { type: "radio", name: "kcmode", value: "new" });
+  const sel = kcEl("select", {}, existing.map(c => kcEl("option", { value: c.id, selected: !!auto && c.id === auto.id }, c.name + " (ID " + c.id + ")")));
+  const nameIn = kcEl("input", { type: "text", value: group.name, size: 28 });
+  const idIn = kcEl("input", { type: "text", size: 12 });
+  if(auto) rMatch.checked = true; else rNew.checked = true;
+
+  const body = kcEl("div", {},
+    kcEl("p", {}, kcEl("b", {}, group.name), "  (family: " + (group.family || "n/a") + ")"),
+    kcEl("p", { className: "kc-muted" }, group.records.length + " records, " + dates[0] + " to " + dates[dates.length - 1] +
+      (auto ? ". Suggested match: name equals an existing child." : "")),
+    kcEl("label", { className: "kc-opt" }, rMatch, " Match to an existing child"),
+    kcEl("div", { className: "kc-sub" }, sel),
+    kcEl("label", { className: "kc-opt" }, rNew, " Add as a new child"),
+    kcEl("div", { className: "kc-sub" }, "Name: ", nameIn, "Client ID: ", idIn));
+
+  const r = await kcDialog({
+    title: "Child in file", body,
+    validate: () =>
+    {
+      if(rMatch.checked) return sel.value ? null : "Choose an existing child.";
+      const n = nameIn.value.trim(), id = idIn.value.trim();
+      if(!n) return "Please enter a name.";
+      if(id === "") return "Please enter a numeric ID.";
+      if(existing.some(c => c.id === id) || pendingIds.has(id)) return "That ID is already used by another child in this project.";
+      return null;
+    },
+    buttons: [
+      { id: "cancel", label: "Cancel import" },
+      { id: "skipFamily", label: "Skip whole family" },
+      { id: "skip", label: "Skip this child" },
+      { id: "ok", label: "Continue", primary: true, validate: true }
+    ],
+    collect: () => rMatch.checked
+      ? { action: "match", id: sel.value }
+      : { action: "new", id: idIn.value.trim(), name: nameIn.value.trim() }
+  });
+  if(r.id === "ok") return r.data;
+  return { action: r.id };
+}
+
+/* items: [{date, kind:'absent'|'holiday'}]  ->  [{date, kind, start, end}] or null (cancel) */
+async function kcExceptionsDialog(childName, items, defStart, defEnd)
+{
+  const rows = items.map(it =>
+  {
+    const cb = kcEl("input", { type: "checkbox", checked: true });
+    const st = kcEl("input", { type: "time", value: kcMinToInput(defStart) });
+    const en = kcEl("input", { type: "time", value: kcMinToInput(defEnd) });
+    return { it, cb, st, en, tr: kcEl("tr", {},
+      kcEl("td", {}, cb), kcEl("td", {}, kcNiceDate(it.date)),
+      kcEl("td", {}, it.kind === "absent" ? "Absent: add Scheduled" : "Holiday: add Scheduled + Holiday"),
+      kcEl("td", {}, st), kcEl("td", {}, en)) };
+  });
+  const allSt = kcEl("input", { type: "time", value: kcMinToInput(defStart) });
+  const allEn = kcEl("input", { type: "time", value: kcMinToInput(defEnd) });
+  const applyBtn = kcEl("button", { type: "button" }, "Apply to all rows");
+  applyBtn.onclick = () => rows.forEach(r => { r.st.value = allSt.value; r.en.value = allEn.value; });
+  const toggle = kcEl("button", { type: "button" }, "Toggle all checks");
+  toggle.onclick = () => { const v = !rows.every(r => r.cb.checked); rows.forEach(r => r.cb.checked = v); };
+
+  const body = kcEl("div", {},
+    kcEl("p", {}, kcEl("b", {}, childName), ": days marked absent or holiday in the file. Checked rows are added using the times shown " +
+      "(defaults are this child's most common attended times). Unchecked rows are skipped."),
+    kcEl("p", {}, "Start ", allSt, " End ", allEn, " ", applyBtn, " ", toggle),
+    kcEl("div", { className: "kc-scroll" }, kcEl("table", {},
+      kcEl("tr", {}, kcEl("th", {}, ""), kcEl("th", {}, "Date"), kcEl("th", {}, "Action"), kcEl("th", {}, "Start"), kcEl("th", {}, "End")),
+      rows.map(r => r.tr))));
+
+  const r = await kcDialog({
+    title: "Absent and holiday days", body,
+    validate: () =>
+    {
+      for(const x of rows)
+      {
+        if(!x.cb.checked) continue;
+        const s = kcInputToMin(x.st.value), e = kcInputToMin(x.en.value);
+        if(s === null || e === null) return "Enter a start and end time for " + x.it.date + ".";
+        if(e <= s) return "The end time must be after the start time (" + x.it.date + ").";
+      }
+      return null;
+    },
+    buttons: [
+      { id: "cancel", label: "Cancel import" },
+      { id: "skip", label: "Skip all of these" },
+      { id: "ok", label: "Add checked rows", primary: true, validate: true }
+    ],
+    collect: () => rows.filter(x => x.cb.checked).map(x => ({ date: x.it.date, kind: x.it.kind, start: kcInputToMin(x.st.value), end: kcInputToMin(x.en.value) }))
+  });
+  if(r.id === "cancel") return null;
+  return r.id === "skip" ? [] : r.data;
+}
+
+function kcInfoDialog(title, lines, detail)
+{
+  const body = kcEl("div", {}, lines.map(l => kcEl("p", {}, l)));
+  if(detail && detail.length)
+    body.appendChild(kcEl("div", { className: "kc-scroll", style: "padding:6px" }, detail.slice(0, 200).map(d => kcEl("div", {}, d)),
+      detail.length > 200 ? kcEl("div", { className: "kc-muted" }, "... and " + (detail.length - 200) + " more") : ""));
+  return kcDialog({ title, body, buttons: [{ id: "ok", label: "OK", primary: true }] });
+}
+
+/* ------------------------------- main flow ---------------------------- */
+function importAttendanceCsv()
+{
+  const input = kcEl("input", { type: "file", accept: ".csv,text/csv" });
+  input.onchange = () =>
+  {
+    const file = input.files && input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => kcRunImport(String(reader.result), file.name).catch(e =>
+    { console.error(e); alert("The import failed and nothing was added: " + e.message); });
+    reader.onerror = () => alert("Could not read that file.");
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+async function kcRunImport(text, fileName)
+{
+  /* 1. parse + clean */
+  const { records, stats } = kcCleanRecords(kcParseCsv(text));
+  if(records.length === 0)
+  {
+    await kcInfoDialog("Nothing to import", ["No attendance records were recognized in " + fileName + ". Expected KinderConnect columns: FamilyName, ChildName, AttendanceDate, AttendanceReason, TimeIn, ..."], stats.invalid);
+    return;
+  }
+
+  /* 2. months */
+  const allMonths = [...new Set(records.map(r => r.date.slice(0, 7)))].sort();
+  const missing = allMonths.filter(m => !project.months.includes(m));
+  let monthsToAdd = [];
+  if(missing.length)
+  {
+    const chosen = await kcMonthsDialog(missing);
+    if(chosen === null) return;
+    monthsToAdd = chosen;
+  }
+  const allowed = new Set(project.months.concat(monthsToAdd));
+  const skippedMonth = records.filter(r => !allowed.has(r.date.slice(0, 7))).length;
+
+  /* 3. children */
+  const groups = kcGroupChildren(records.filter(r => allowed.has(r.date.slice(0, 7))));
+  const plan = [];                         // {group, childId, isNew, name}
+  const skippedFamilies = new Set();
+  const pendingIds = new Set();
+  let skippedChildRecords = 0;
+  for(const g of groups)
+  {
+    if(skippedFamilies.has(g.family)){ skippedChildRecords += g.records.length; continue; }
+    const d = await kcChildDialog(g, pendingIds);
+    if(d.action === "cancel") return;
+    if(d.action === "skipFamily"){ skippedFamilies.add(g.family); skippedChildRecords += g.records.length; continue; }
+    if(d.action === "skip"){ skippedChildRecords += g.records.length; continue; }
+    if(d.action === "new") pendingIds.add(d.id);
+    plan.push({ group: g, childId: d.id, isNew: d.action === "new", name: d.name });
+  }
+
+  /* 4. absent / holiday decisions */
+  const report = { months: 0, children: 0, attended: 0, scheduled: 0, holiday: 0, duplicate: 0,
+                   rejected: [], skippedMonth, skippedChildRecords, skippedExceptions: 0 };
+  const exceptionPlan = [];                // {childId, label, entries[]}
+  for(const p of plan)
+  {
+    const label = p.isNew ? p.name : (project.children.find(c => c.id === p.childId) || {}).name || p.childId;
+    p.label = label;
+    const items = [];
+    for(const r of p.group.records)
+    {
+      if(r.status === "absent")
+      {
+        if(p.isNew || !kcHasType(p.childId, r.date, KC_IMPORT.TYPE_SCHEDULED)) items.push({ date: r.date, kind: "absent" });
+        else report.duplicate++;
+      }
+      else if(r.status === "holiday")
+      {
+        if(p.isNew || !kcHasType(p.childId, r.date, KC_IMPORT.TYPE_HOLIDAY)) items.push({ date: r.date, kind: "holiday" });
+        else report.duplicate++;
+      }
+    }
+    if(!items.length) continue;
+    const att = p.group.records.filter(r => r.status === "attended");
+    const defStart = att.length ? kcMostCommon(att.map(r => r.start)) : 7 * 60;
+    const defEnd = att.length ? kcMostCommon(att.map(r => r.end)) : 15 * 60;
+    const entries = await kcExceptionsDialog(label, items, defStart, defEnd);
+    if(entries === null) return;
+    report.skippedExceptions += items.length - entries.length;
+    exceptionPlan.push({ childId: p.childId, label, entries });
+  }
+
+  /* 5. final confirmation */
+  const attendedCount = plan.reduce((n, p) => n + p.group.records.filter(r => r.status === "attended").length, 0);
+  const excCount = exceptionPlan.reduce((n, e) => n + e.entries.length, 0);
+  const confirm = await kcDialog({
+    title: "Confirm import",
+    body: kcEl("div", {},
+      kcEl("p", {}, "Months to add: " + (monthsToAdd.length ? monthsToAdd.join(", ") : "none")),
+      kcEl("p", {}, "Children: " + plan.length + " (" + plan.filter(p => p.isNew).length + " new)"),
+      kcEl("p", {}, "Attended records: " + attendedCount),
+      kcEl("p", {}, "Absent/holiday days to add: " + excCount),
+      kcEl("p", { className: "kc-muted" }, "Cleaned from file: " + stats.duplicates + " duplicate rows, " + stats.headerRows + " repeated header rows, " +
+        stats.blankRows + " blank rows, " + stats.junkRows + " non-data rows removed.")),
+    buttons: [{ id: "cancel", label: "Cancel" }, { id: "ok", label: "Import now", primary: true }]
+  });
+  if(confirm.id !== "ok") return;
+
+  /* 6. commit (everything below goes through the project's own rules) */
+  monthsToAdd.forEach(m => { if(!project.months.includes(m)){ project.months.push(m); report.months++; } });
+  project.months.sort();
+
+  for(const p of plan)
+  {
+    if(p.isNew)
+    {
+      project.children.push({ id: p.childId, name: p.name });
+      if(!project.activeChildId) project.activeChildId = p.childId;
+      report.children++;
+    }
+    for(const r of p.group.records)
+      if(r.status === "attended" && kcAdd(p.childId, r.date, KC_IMPORT.TYPE_ATTENDED, r.start, r.end, report, p.label) === "added")
+        report.attended++;
+  }
+  for(const e of exceptionPlan)
+    for(const x of e.entries)
+    {
+      if(x.kind === "holiday")
+      {
+        const h = kcAdd(e.childId, x.date, KC_IMPORT.TYPE_HOLIDAY, x.start, x.end, report, e.label);
+        if(h === "rejected") continue;               // don't add the paired Scheduled entry
+        if(h === "added") report.holiday++;
+      }
+      if(kcAdd(e.childId, x.date, KC_IMPORT.TYPE_SCHEDULED, x.start, x.end, report, e.label) === "added") report.scheduled++;
+    }
+
+  saveProject();
+  renderApp();
+
+  const lines = [
+    "Months added: " + report.months + ". Children added: " + report.children + ".",
+    "Attended entries added: " + report.attended + ". Scheduled entries added: " + report.scheduled + ". Holiday entries added: " + report.holiday + ".",
+    "Already present (not re-added): " + report.duplicate + ". Skipped for months not added: " + report.skippedMonth +
+      ". Skipped for children/families not imported: " + report.skippedChildRecords + ". Absent/holiday days skipped: " + report.skippedExceptions + ".",
+    "Rejected by project rules: " + report.rejected.length + "."
+  ];
+  const detail = report.rejected.concat(stats.invalid.map(s => "Unreadable row: " + s), stats.conflicts.map(s => "Conflict: " + s));
+  await kcInfoDialog("Import complete", lines, detail);
+}
+// End of import functions
 
 document.addEventListener("DOMContentLoaded", () => init());
 </script>
